@@ -5,8 +5,6 @@ import {
   ActivityIndicator,
   Platform,
   type PressableProps,
-  type ViewStyle,
-  type TextStyle,
 } from 'react-native';
 
 export interface ButtonProps extends Omit<PressableProps, 'children'> {

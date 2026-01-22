@@ -45,7 +45,7 @@ development_status:
   0-2-initialize-frontend-monorepo-with-turborepo: done
   0-3-configure-shared-ui-package-with-nativewind-tailwind: done
   0-4-setup-local-development-environment: done
-  0-5-configure-local-ci-lint-and-tests: backlog
+  0-5-configure-local-ci-lint-and-tests: review
   0-6-configure-hey-api-for-client-generation: backlog
   0-7-establish-multi-tenancy-patterns-and-base-models: backlog
   0-8-create-seed-data-scripts: backlog

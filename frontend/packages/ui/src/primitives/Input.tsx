@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TextInput,
-  Platform,
   type TextInputProps,
 } from 'react-native';
 
