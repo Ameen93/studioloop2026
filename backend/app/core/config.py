@@ -1,7 +1,7 @@
 import json
 import secrets
 import warnings
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, cast
 
 from pydantic import (
     AnyUrl,
@@ -19,7 +19,7 @@ from typing_extensions import Self
 def parse_cors(v: Any) -> list[str] | str:
     if isinstance(v, str):
         if v.startswith("["):
-            return json.loads(v)
+            return cast(list[str], json.loads(v))
         return [i.strip() for i in v.split(",") if i.strip()]
     elif isinstance(v, list):
         return v
