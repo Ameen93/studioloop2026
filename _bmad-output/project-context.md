@@ -17,9 +17,9 @@ _This file contains critical rules and patterns that AI agents must follow when 
 ### Backend
 - **Python**: 3.11+ (async/await throughout)
 - **FastAPI**: Latest (async routes required)
-- **PostgreSQL**: 16 with PostGIS
+- **PostgreSQL**: 17 (local via Docker, production on Fly.io)
 - **SQLModel**: Latest (async mode)
-- **Redis**: Latest (self-hosted on Fly.io)
+- **Redis**: 7 (local via Docker, production on Fly.io)
 - **Alembic**: Latest (migrations)
 - **Pydantic**: v2 (validation)
 
@@ -148,10 +148,30 @@ src/
 
 ---
 
+## Local Development Setup
+
+```bash
+# Start local services (Postgres + Redis + Adminer)
+docker compose -f docker-compose.local.yml up -d
+
+# Stop local services
+docker compose -f docker-compose.local.yml down
+
+# Access Adminer (DB UI)
+http://localhost:8080
+```
+
+**Local Service Ports:**
+- PostgreSQL: `localhost:5432`
+- Redis: `localhost:6379`
+- Adminer: `localhost:8080`
+
+---
+
 ## SA-Specific Rules
 
 - **POPIA compliance**: All user data deletable, consent tracked
-- **Hosting**: Fly.io Johannesburg (`jnb`) for data residency
+- **Hosting (Production)**: Fly.io Johannesburg (`jnb`) for data residency
 - **Payments**: Ozow (primary), PayFast (secondary)
 - **Notifications**: WhatsApp Business API preferred
 - **Phone validation**: SA format (+27...)
@@ -196,5 +216,5 @@ const useBookingStore = create<BookingStore>((set) => ({
 
 ---
 
-_Last updated: 2026-01-21_
-_Source: architecture.md_
+_Last updated: 2026-01-22_
+_Source: architecture.md, local-first development strategy_
