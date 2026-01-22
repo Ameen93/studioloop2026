@@ -42,7 +42,7 @@ development_status:
   epic-0: in-progress
   0-1-initialize-backend-with-fastapi-template: review
   0-2-initialize-frontend-monorepo-with-turborepo: review
-  0-3-configure-shared-ui-package-with-nativewind-tailwind: in-progress
+  0-3-configure-shared-ui-package-with-nativewind-tailwind: done
   0-4-deploy-database-infrastructure-to-fly-io: backlog
   0-5-configure-ci-cd-pipelines-with-github-actions: backlog
   0-6-configure-hey-api-for-client-generation: backlog

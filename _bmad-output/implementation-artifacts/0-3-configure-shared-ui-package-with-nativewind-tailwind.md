@@ -1,6 +1,6 @@
 # Story 0.3: Configure Shared UI Package with NativeWind/Tailwind
 
-Status: review
+Status: done
 
 ## Story
 
