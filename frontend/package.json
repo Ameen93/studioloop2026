@@ -1,0 +1,26 @@
+{
+  "name": "@sl/frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "StudioLoop frontend monorepo",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "type-check": "turbo type-check"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.28.1",
+  "devDependencies": {
+    "@types/node": "^25.0.9",
+    "esbuild": "^0.27.2",
+    "turbo": "^2.7.5",
+    "typescript": "^5.9.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
+  }
+}

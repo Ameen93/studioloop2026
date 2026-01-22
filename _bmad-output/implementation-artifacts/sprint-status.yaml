@@ -1,0 +1,209 @@
+# generated: 2026-01-21
+# project: studioloop
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-01-21
+project: studioloop
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+  # Epic 0: Project Foundation & Developer Experience (7 stories)
+  epic-0: in-progress
+  0-1-initialize-backend-with-fastapi-template: review
+  0-2-initialize-frontend-monorepo-with-turborepo: review
+  0-3-configure-shared-ui-package-with-nativewind-tailwind: ready-for-dev
+  0-4-deploy-database-infrastructure-to-fly-io: backlog
+  0-5-configure-ci-cd-pipelines-with-github-actions: backlog
+  0-6-configure-hey-api-for-client-generation: backlog
+  0-7-establish-multi-tenancy-patterns-and-base-models: backlog
+  epic-0-retrospective: optional
+
+  # Epic 1: Authentication & Identity Platform (10 stories)
+  epic-1: backlog
+  1-1-consumer-email-registration: backlog
+  1-2-consumer-email-login: backlog
+  1-3-staff-email-login: backlog
+  1-4-jwt-token-refresh: backlog
+  1-5-password-reset-via-email: backlog
+  1-6-user-profile-management: backlog
+  1-7-popia-account-deletion: backlog
+  1-8-role-based-access-control: backlog
+  1-9-google-social-login: backlog
+  1-10-apple-social-login: backlog
+  epic-1-retrospective: optional
+
+  # Epic 2: Gym Onboarding & Configuration (11 stories)
+  epic-2: backlog
+  2-1-gym-registration-and-owner-account: backlog
+  2-2-gym-profile-configuration: backlog
+  2-3-operating-hours-configuration: backlog
+  2-4-holiday-closures-management: backlog
+  2-5-cancellation-policy-configuration: backlog
+  2-6-marketplace-participation-toggle: backlog
+  2-7-saas-subscription-tier-view: backlog
+  2-8-space-creation-and-management: backlog
+  2-9-space-amenities-and-equipment: backlog
+  2-10-space-double-booking-prevention: backlog
+  2-11-member-data-spreadsheet-import: backlog
+  epic-2-retrospective: optional
+
+  # Epic 3: Staff Management & Permissions (8 stories)
+  epic-3: backlog
+  3-1-add-staff-member: backlog
+  3-2-staff-role-assignment: backlog
+  3-3-staff-permission-matrix: backlog
+  3-4-staff-working-hours-configuration: backlog
+  3-5-instructor-pay-rate-configuration: backlog
+  3-6-instructor-schedule-view: backlog
+  3-7-instructor-earnings-view: backlog
+  3-8-deactivate-staff-member: backlog
+  epic-3-retrospective: optional
+
+  # Epic 4: Membership Plans & Consumer Enrollment (11 stories)
+  epic-4: backlog
+  4-1-create-membership-plan: backlog
+  4-2-configure-membership-benefits: backlog
+  4-3-configure-membership-rules: backlog
+  4-4-consumer-views-gym-membership-plans: backlog
+  4-5-consumer-enrolls-in-membership: backlog
+  4-6-consumer-views-all-memberships: backlog
+  4-7-consumer-views-membership-benefits: backlog
+  4-8-consumer-upgrades-downgrades-membership: backlog
+  4-9-consumer-accepts-digital-waiver: backlog
+  4-10-gym-views-member-list: backlog
+  4-11-gym-views-member-details: backlog
+  epic-4-retrospective: optional
+
+  # Epic 5: Class Scheduling System (11 stories)
+  epic-5: backlog
+  5-1-create-class-template: backlog
+  5-2-schedule-individual-class-session: backlog
+  5-3-schedule-recurring-class-sessions: backlog
+  5-4-assign-instructor-to-class: backlog
+  5-5-class-approval-workflow-instructor-creates: backlog
+  5-6-class-approval-workflow-manager-approves: backlog
+  5-7-class-approval-workflow-manager-creates: backlog
+  5-8-cancel-class-session: backlog
+  5-9-set-class-capacity-and-waitlist: backlog
+  5-10-set-marketplace-pricing-for-class: backlog
+  5-11-view-class-schedule-calendar: backlog
+  epic-5-retrospective: optional
+
+  # Epic 6: Booking & Check-in (13 stories)
+  epic-6: backlog
+  6-1-book-class-with-membership: backlog
+  6-2-book-class-with-pay-per-class: backlog
+  6-3-cancel-booking: backlog
+  6-4-join-waitlist: backlog
+  6-5-waitlist-spot-offer: backlog
+  6-6-accept-waitlist-offer: backlog
+  6-7-waitlist-offer-expiry: backlog
+  6-8-consumer-qr-code-display: backlog
+  6-9-staff-qr-code-scanner: backlog
+  6-10-manual-check-in-fallback: backlog
+  6-11-membership-validation-on-check-in: backlog
+  6-12-booking-source-tracking: backlog
+  6-13-offline-qr-check-in: backlog
+  epic-6-retrospective: optional
+
+  # Epic 7: Marketplace Discovery & Subscriptions (13 stories)
+  epic-7: backlog
+  7-1-browse-marketplace-classes: backlog
+  7-2-filter-classes-by-type: backlog
+  7-3-filter-classes-by-location: backlog
+  7-4-filter-classes-by-date-and-time: backlog
+  7-5-filter-classes-by-price-and-availability: backlog
+  7-6-view-gym-profile: backlog
+  7-7-view-class-details: backlog
+  7-8-subscribe-to-marketplace-plan: backlog
+  7-9-book-class-with-marketplace-subscription: backlog
+  7-10-view-marketplace-subscription-status: backlog
+  7-11-manage-marketplace-subscription: backlog
+  7-12-share-class-details: backlog
+  7-13-invite-friends-via-referral-link: backlog
+  epic-7-retrospective: optional
+
+  # Epic 8: Payments & Billing (9 stories)
+  epic-8: backlog
+  8-1-payment-interface-abstraction: backlog
+  8-2-initiate-payment-flow: backlog
+  8-3-payment-webhook-processing: backlog
+  8-4-gym-payment-dashboard: backlog
+  8-5-failed-payment-detection: backlog
+  8-6-automatic-payment-retry: backlog
+  8-7-marketplace-payout-reports: backlog
+  8-8-consumer-payment-history: backlog
+  8-9-payment-receipt-generation: backlog
+  epic-8-retrospective: optional
+
+  # Epic 9: Notifications & Communication (10 stories)
+  epic-9: backlog
+  9-1-notification-infrastructure-setup: backlog
+  9-2-booking-confirmation-notifications: backlog
+  9-3-class-reminder-notifications: backlog
+  9-4-waitlist-notifications: backlog
+  9-5-payment-reminder-notifications: backlog
+  9-6-payment-failure-notifications: backlog
+  9-7-gym-to-member-messaging: backlog
+  9-8-whatsapp-critical-notifications: backlog
+  9-9-consumer-notification-preferences: backlog
+  9-10-in-app-notification-center: backlog
+  epic-9-retrospective: optional
+
+  # Epic 10: Reporting & Analytics (9 stories)
+  epic-10: backlog
+  10-1-revenue-reports: backlog
+  10-2-attendance-reports: backlog
+  10-3-membership-health-reports: backlog
+  10-4-class-performance-reports: backlog
+  10-5-staff-performance-reports: backlog
+  10-6-consumer-class-history: backlog
+  10-7-consumer-statistics-dashboard: backlog
+  10-8-at-risk-member-detection: backlog
+  10-9-gym-owner-dashboard: backlog
+  epic-10-retrospective: optional
+
+  # Epic 11: Platform Administration & Real-time (10 stories)
+  epic-11: backlog
+  11-1-gym-application-review: backlog
+  11-2-platform-gym-management: backlog
+  11-3-consumer-complaint-handling: backlog
+  11-4-account-credit-issuance: backlog
+  11-5-platform-health-monitoring: backlog
+  11-6-gym-level-data-access-for-support: backlog
+  11-7-real-time-class-availability: backlog
+  11-8-real-time-waitlist-updates: backlog
+  11-9-webhook-event-system: backlog
+  11-10-webhook-management: backlog
+  epic-11-retrospective: optional
