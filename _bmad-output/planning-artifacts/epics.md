@@ -587,9 +587,11 @@ This document provides the complete epic and story breakdown for StudioLoop, dec
 
 ---
 
-## Epic 0: Project Foundation & Developer Experience
+## Epic 0: Project Foundation & Developer Experience (Detailed Stories)
 
-**Goal:** Development team has a working, deployable infrastructure with all tooling configured.
+**Goal:** Development team has a fully working local development environment with all tooling configured.
+
+**Strategy:** Local-first development. Build and test the entire system locally before deploying to production infrastructure. Production deployment is deferred to Epic 16.
 
 **ARCHs covered:** ARCH-1 through ARCH-9, ARCH-24 through ARCH-30
 
