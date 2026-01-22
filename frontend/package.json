@@ -8,7 +8,8 @@
     "build": "turbo build",
     "lint": "turbo lint",
     "test": "turbo test",
-    "type-check": "turbo type-check"
+    "type-check": "turbo type-check",
+    "generate:api": "pnpm --filter @sl/api-client generate"
   },
   "keywords": [],
   "author": "",
