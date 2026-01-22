@@ -7,13 +7,14 @@ inputDocuments:
   - consumer-app-brainstorm.md
   - gym-management-app-brainstorm.md
 status: 'validated_complete'
-epicCount: 16
+epicCount: 17
 totalFRs: 85
 totalNFRs: 38
 totalARCHs: 30
-totalStories: 162
+totalStories: 169
 validatedAt: '2026-01-22'
-platformStrategy: 'web-first-validation'
+platformStrategy: 'local-first-then-deploy'
+developmentApproach: 'Build and test entire system locally before production deployment'
 appEpics:
   - epic: 12
     name: 'Gym Web Application'
@@ -373,24 +374,41 @@ This document provides the complete epic and story breakdown for StudioLoop, dec
 ## Epic List
 
 ### Epic 0: Project Foundation & Developer Experience
-**Goal:** Development team has a working, deployable infrastructure with all tooling configured.
+**Goal:** Development team has a fully working local development environment with all tooling configured.
 
 **FRs covered:** None (infrastructure-only)
 **ARCHs covered:** ARCH-1 through ARCH-9, ARCH-24 through ARCH-30
 
+**Strategy:** Local-first development. Build and test the entire system locally before deploying to production infrastructure. Production deployment is deferred to Epic 16.
+
 **Delivers:**
 - FastAPI backend initialized from Full Stack Template
 - Turborepo monorepo with gym-web, consumer-web, consumer-mobile, gym-mobile apps
-- PostgreSQL 16 + Redis deployed to Fly.io Johannesburg
-- CI/CD pipelines operational
+- PostgreSQL 16 + Redis running locally via Docker Compose
+- Local CI (linting + tests on push)
 - Hey API codegen configured
 - Naming conventions and multi-tenancy patterns established
+- Seed data scripts for testing
+- Local E2E testing setup
 
 **Development Priority:**
 1. Gym Web (validate gym features first)
 2. Consumer Web (validate consumer features)
 3. Consumer Mobile (port validated features)
 4. Gym Mobile (add QR scanner)
+
+**Stories:**
+| ID | Story | Description |
+|----|-------|-------------|
+| 0-1 | Initialize backend with FastAPI template | Set up FastAPI Full Stack Template with project structure |
+| 0-2 | Initialize frontend monorepo with Turborepo | Create pnpm workspace with all 4 apps and shared packages |
+| 0-3 | Configure shared UI package with NativeWind/Tailwind | Set up design system that works across web and mobile |
+| 0-4 | Setup local development environment | Docker Compose for Postgres + Redis, environment configuration |
+| 0-5 | Configure local CI (lint and tests) | GitHub Actions for linting, type-checking, and tests (no deployment) |
+| 0-6 | Configure Hey API for client generation | Generate TypeScript API client from OpenAPI schema |
+| 0-7 | Establish multi-tenancy patterns and base models | SQLModel base classes, gym_id filtering, row-level security |
+| 0-8 | Create seed data scripts | Scripts to populate database with realistic test data |
+| 0-9 | Configure local E2E testing setup | Playwright for web, Detox for mobile E2E tests |
 
 ---
 
@@ -644,44 +662,45 @@ So that components have consistent styling across all 4 frontend apps.
 
 ---
 
-### Story 0.4: Deploy Database Infrastructure to Fly.io
+### Story 0.4: Setup Local Development Environment
 
 As a **developer**,
-I want PostgreSQL 16 and Redis deployed to Fly.io Johannesburg,
-So that we have POPIA-compliant data residency.
+I want PostgreSQL and Redis running locally via Docker Compose,
+So that I can develop and test without cloud dependencies.
 
 **Acceptance Criteria:**
 
-**Given** a Fly.io account and CLI installed
-**When** I deploy database infrastructure
-**Then** PostgreSQL 16 with PostGIS is running in `jnb` region via Fly Postgres
-**And** Redis is running on a Fly.io machine in `jnb` region
-**And** connection strings are stored in Fly secrets
-**And** backend can connect to both PostgreSQL and Redis
-**And** database accepts connections with SSL enabled
-**And** `fly.toml` is configured for the backend deployment
+**Given** Docker is installed on the development machine
+**When** I run `docker compose -f docker-compose.local.yml up -d`
+**Then** PostgreSQL 17 is running and accessible at `localhost:5432`
+**And** Redis 7 is running and accessible at `localhost:6379`
+**And** Adminer is available at `localhost:8080` for database management
+**And** `.env` file contains correct `POSTGRES_*` and `REDIS_URL` variables
+**And** backend can connect to both PostgreSQL and Redis locally
+**And** `docker compose -f docker-compose.local.yml down` cleanly stops all services
+**And** data persists in Docker volumes across restarts
 
 ---
 
-### Story 0.5: Configure CI/CD Pipelines with GitHub Actions
+### Story 0.5: Configure Local CI (Lint and Tests)
 
 As a **developer**,
-I want CI/CD pipelines that lint, test, and deploy on merge,
-So that code quality is maintained and deployments are automated.
+I want CI pipelines that lint and test code on every PR,
+So that code quality is maintained during local development.
 
 **Acceptance Criteria:**
 
 **Given** a GitHub repository with the codebase
 **When** I configure GitHub Actions workflows
 **Then** `.github/workflows/ci.yml` runs lint, type-check, and tests on every PR
-**And** `.github/workflows/deploy-backend.yml` deploys backend to Fly.io on merge to main
-**And** `.github/workflows/deploy-gym-web.yml` deploys gym-web to Vercel/Fly.io on merge to main
-**And** `.github/workflows/deploy-consumer-web.yml` deploys consumer-web to Vercel/Fly.io on merge to main
-**And** `.github/workflows/deploy-mobile.yml` triggers EAS Build on mobile app changes
-**And** Turborepo remote caching is enabled for faster CI
+**And** backend linting runs with ruff
 **And** backend tests run with pytest
+**And** frontend linting runs with ESLint
+**And** frontend type-checking runs with TypeScript
 **And** frontend tests run with Jest
+**And** Turborepo caching is enabled for faster CI runs
 **And** PRs are blocked if CI fails
+**And** no deployment workflows are configured (deferred to Epic 16)
 
 ---
 
@@ -721,6 +740,79 @@ So that all future models follow consistent tenant security.
 **And** naming conventions follow snake_case per ARCH-24 (e.g., `created_at`, not `createdAt`)
 **And** all IDs use UUIDs per ARCH-27
 **And** API error response format matches architecture specification
+
+---
+
+### Story 0.8: Create Seed Data Scripts
+
+As a **developer**,
+I want scripts to populate the database with realistic test data,
+So that I can test features with meaningful data during development.
+
+**Acceptance Criteria:**
+
+**Given** the database schema is migrated
+**When** I run `python scripts/seed.py` (or equivalent)
+**Then** sample gyms are created with realistic SA gym names and locations
+**And** sample consumers are created with SA-style names and phone numbers
+**And** sample staff members are created with different roles (Owner, Manager, Front Desk, Instructor)
+**And** sample membership plans are created (Basic, Premium, Unlimited)
+**And** sample class templates are created (Yoga, Spin, HIIT, CrossFit)
+**And** sample class sessions are scheduled for the next 14 days
+**And** sample bookings exist for testing check-in flows
+**And** seed data is idempotent (can be run multiple times safely)
+**And** a `--reset` flag clears existing seed data before re-seeding
+
+---
+
+### Story 0.9: Configure Local E2E Testing Setup
+
+As a **developer**,
+I want E2E testing configured for web and mobile apps,
+So that I can verify complete user flows work correctly.
+
+**Acceptance Criteria:**
+
+**Given** the local development environment is running
+**When** I configure E2E testing
+**Then** Playwright is configured for gym-web and consumer-web apps
+**And** `pnpm test:e2e` runs web E2E tests against local backend
+**And** basic smoke tests exist: login, view dashboard, navigate pages
+**And** tests run in headless mode by default, with `--headed` option available
+**And** Detox is configured for consumer-mobile and gym-mobile apps (optional, can be deferred)
+**And** test database can be reset between test runs
+**And** E2E tests are NOT included in CI (run manually or in separate workflow)
+
+---
+
+## Epic 16: Production Deployment
+
+**Goal:** Deploy the complete system to production infrastructure after local development is complete.
+
+**Note:** This epic was created to hold infrastructure stories deferred from Epic 0 as part of the local-first development strategy. These stories should only be executed after all features are working locally.
+
+**FRs covered:** None (infrastructure-only)
+**ARCHs covered:** ARCH-3, ARCH-4, ARCH-5, ARCH-7, ARCH-8, ARCH-9
+
+**Delivers:**
+- PostgreSQL 16 + Redis deployed to Fly.io Johannesburg (POPIA compliance)
+- Backend deployed to Fly.io
+- Web apps deployed to Vercel or Fly.io
+- Mobile apps built via EAS Build
+- CI/CD deployment pipelines
+- Production monitoring (Sentry)
+- SSL/TLS configured for all domains
+
+**Stories:**
+| ID | Story | Description |
+|----|-------|-------------|
+| 16-1 | Deploy database infrastructure to Fly.io | PostgreSQL + Redis in Johannesburg region |
+| 16-2 | Configure CI/CD deployment pipelines | GitHub Actions for automated deployments |
+| 16-3 | Setup monitoring and error tracking | Sentry integration for all apps |
+| 16-4 | Configure production domains and SSL | DNS, SSL certificates, domain routing |
+| 16-5 | Deploy backend to Fly.io | FastAPI app deployed with secrets |
+| 16-6 | Deploy web apps to Vercel or Fly.io | gym-web and consumer-web production builds |
+| 16-7 | Configure EAS Build for mobile apps | iOS and Android builds for app stores |
 
 ---
 

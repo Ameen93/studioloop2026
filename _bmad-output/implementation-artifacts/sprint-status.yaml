@@ -38,15 +38,18 @@ tracking_system: file-system
 story_location: _bmad-output/implementation-artifacts
 
 development_status:
-  # Epic 0: Project Foundation & Developer Experience (7 stories)
+  # Epic 0: Project Foundation & Developer Experience (9 stories)
+  # NOTE: Infrastructure deployment moved to Epic 16 (local-first strategy)
   epic-0: in-progress
   0-1-initialize-backend-with-fastapi-template: review
   0-2-initialize-frontend-monorepo-with-turborepo: review
   0-3-configure-shared-ui-package-with-nativewind-tailwind: done
-  0-4-deploy-database-infrastructure-to-fly-io: ready-for-dev
-  0-5-configure-ci-cd-pipelines-with-github-actions: backlog
+  0-4-setup-local-development-environment: done
+  0-5-configure-local-ci-lint-and-tests: backlog
   0-6-configure-hey-api-for-client-generation: backlog
   0-7-establish-multi-tenancy-patterns-and-base-models: backlog
+  0-8-create-seed-data-scripts: backlog
+  0-9-configure-local-e2e-testing-setup: backlog
   epic-0-retrospective: optional
 
   # Epic 1: Authentication & Identity Platform (10 stories)
@@ -207,3 +210,15 @@ development_status:
   11-9-webhook-event-system: backlog
   11-10-webhook-management: backlog
   epic-11-retrospective: optional
+
+  # Epic 16: Production Deployment (deferred until local development complete)
+  # NOTE: This epic was created to hold infrastructure stories deferred from Epic 0
+  epic-16: backlog
+  16-1-deploy-database-infrastructure-to-fly-io: backlog
+  16-2-configure-ci-cd-deployment-pipelines: backlog
+  16-3-setup-monitoring-and-error-tracking: backlog
+  16-4-configure-production-domains-and-ssl: backlog
+  16-5-deploy-backend-to-fly-io: backlog
+  16-6-deploy-web-apps-to-vercel-or-fly: backlog
+  16-7-configure-eas-build-for-mobile-apps: backlog
+  epic-16-retrospective: optional
