@@ -41,8 +41,8 @@ development_status:
   # Epic 0: Project Foundation & Developer Experience (9 stories)
   # NOTE: Infrastructure deployment moved to Epic 16 (local-first strategy)
   epic-0: in-progress
-  0-1-initialize-backend-with-fastapi-template: review
-  0-2-initialize-frontend-monorepo-with-turborepo: review
+  0-1-initialize-backend-with-fastapi-template: done
+  0-2-initialize-frontend-monorepo-with-turborepo: done
   0-3-configure-shared-ui-package-with-nativewind-tailwind: done
   0-4-setup-local-development-environment: done
   0-5-configure-local-ci-lint-and-tests: backlog
