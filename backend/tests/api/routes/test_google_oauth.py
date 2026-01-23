@@ -348,6 +348,44 @@ class TestGoogleOAuthCallback:
                 assert response.status_code == 400
                 assert response.json()["detail"]["code"] == "OAUTH_USER_INFO_FAILED"
 
+    @patch("app.core.oauth.oauth")
+    def test_callback_rejects_inactive_consumer(self, mock_oauth, client, db: Session):
+        """Test callback rejects login for deactivated consumer."""
+        email = f"inactive-{uuid4().hex[:8]}@gmail.com"
+        google_id = f"google-{uuid4().hex[:8]}"
+
+        # Create inactive (deactivated) consumer
+        consumer = _create_consumer(
+            db,
+            email=email,
+            google_id=google_id,
+        )
+        consumer.is_active = False
+        db.add(consumer)
+        db.commit()
+
+        # Mock OAuth response for inactive user
+        mock_oauth.google.authorize_access_token = AsyncMock(
+            return_value={
+                "userinfo": {
+                    "sub": google_id,
+                    "email": email,
+                    "name": "Inactive User",
+                    "picture": None,
+                }
+            }
+        )
+
+        with patch.object(settings, "GOOGLE_CLIENT_ID", "test_client_id"):
+            with patch.object(settings, "GOOGLE_CLIENT_SECRET", "test_secret"):
+                response = client.get(
+                    f"{settings.API_V1_STR}/auth/consumer/google/callback",
+                    params={"code": "test_code", "state": "valid_state"},
+                )
+
+                assert response.status_code == 403
+                assert response.json()["detail"]["code"] == "ACCOUNT_DEACTIVATED"
+
 
 class TestSetPassword:
     """Tests for POST /auth/consumer/set-password endpoint."""
