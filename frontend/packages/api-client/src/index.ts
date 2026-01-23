@@ -1,4 +1,5 @@
-// API Client package
-// This will contain generated API client and TanStack Query hooks
+// API Client package - main entry point
+// Re-exports generated types, SDK, and client
 
-export const API_VERSION = '0.0.1';
+export * from './generated';
+export { client } from './generated/client.gen';

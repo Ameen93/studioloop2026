@@ -18,6 +18,10 @@
     },
     "type-check": {
       "dependsOn": ["^build"]
+    },
+    "generate": {
+      "cache": false,
+      "outputs": ["src/generated/**"]
     }
   }
 }
