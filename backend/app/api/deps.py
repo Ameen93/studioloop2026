@@ -74,7 +74,7 @@ def get_current_active_superuser(current_user: CurrentUser) -> User:
 def get_current_gym(
     gym_id: Annotated[UUID, Path(description="Gym ID (tenant identifier)")],
     session: SessionDep,
-    current_user: CurrentUser,
+    _current_user: CurrentUser,  # Ensures user is authenticated; used for access validation in future
 ) -> Gym:
     """Get gym by ID with access validation.
 
