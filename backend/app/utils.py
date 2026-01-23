@@ -121,3 +121,70 @@ def verify_password_reset_token(token: str) -> str | None:
         return str(decoded_token["sub"])
     except InvalidTokenError:
         return None
+
+
+def generate_email_verification_token(email: str) -> str:
+    """Generate a JWT token for email verification.
+
+    Token expires in 24 hours.
+
+    Args:
+        email: The email address to verify
+
+    Returns:
+        Encoded JWT token string
+    """
+    delta = timedelta(hours=24)
+    now = datetime.now(timezone.utc)
+    expires = now + delta
+    encoded_jwt = jwt.encode(
+        {"exp": expires.timestamp(), "nbf": now, "sub": email, "type": "email_verification"},
+        settings.SECRET_KEY,
+        algorithm=security.ALGORITHM,
+    )
+    return encoded_jwt
+
+
+def verify_email_verification_token(token: str) -> str | None:
+    """Verify an email verification token.
+
+    Args:
+        token: The JWT token to verify
+
+    Returns:
+        Email address if valid, None otherwise
+    """
+    try:
+        decoded_token = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
+        )
+        if decoded_token.get("type") != "email_verification":
+            return None
+        return str(decoded_token["sub"])
+    except InvalidTokenError:
+        return None
+
+
+def generate_email_verification_email(email_to: str, token: str) -> EmailData:
+    """Generate email verification email content.
+
+    Args:
+        email_to: Recipient email address
+        token: Verification token
+
+    Returns:
+        EmailData with subject and HTML content
+    """
+    project_name = settings.PROJECT_NAME
+    subject = f"{project_name} - Verify your email"
+    link = f"{settings.FRONTEND_HOST}/verify-email?token={token}"
+    html_content = render_email_template(
+        template_name="verify_email.html",
+        context={
+            "project_name": settings.PROJECT_NAME,
+            "email": email_to,
+            "valid_hours": 24,
+            "link": link,
+        },
+    )
+    return EmailData(html_content=html_content, subject=subject)

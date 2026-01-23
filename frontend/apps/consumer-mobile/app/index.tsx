@@ -1,28 +1,14 @@
-import { Text, View, StyleSheet } from 'react-native';
+/**
+ * Index screen - redirects to appropriate initial screen.
+ *
+ * For now, redirects to registration. In the future, this
+ * will check auth state and redirect accordingly.
+ */
 
-export default function HomeScreen() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>StudioLoop Consumer</Text>
-      <Text style={styles.subtitle}>Welcome to the Consumer App</Text>
-    </View>
-  );
+import { Redirect } from 'expo-router';
+
+export default function IndexScreen() {
+  // TODO: Check if user is authenticated and redirect to main app
+  // For now, redirect to registration
+  return <Redirect href="/(auth)/register" />;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-  },
-});

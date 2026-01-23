@@ -9,6 +9,32 @@ export type BodyLoginLoginAccessToken = {
     client_secret?: string | null;
 };
 
+/**
+ * Schema for consumer registration.
+ */
+export type ConsumerCreate = {
+    email: string;
+    password: string;
+    first_name: string;
+    last_name: string;
+    phone?: string | null;
+};
+
+/**
+ * Schema for consumer in API responses.
+ */
+export type ConsumerPublic = {
+    id: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    phone?: string | null;
+    role: UserRole;
+    avatar_url?: string | null;
+    is_email_verified: boolean;
+    is_active: boolean;
+};
+
 export type HttpValidationError = {
     detail?: Array<ValidationError>;
 };
@@ -82,6 +108,14 @@ export type UserRegister = {
     password: string;
     full_name?: string | null;
 };
+
+/**
+ * User roles for platform access control (ARCH-13).
+ *
+ * Consumers have the 'consumer' role by default.
+ * Staff roles (owner, manager, etc.) are assigned when joining a gym.
+ */
+export type UserRole = 'consumer' | 'owner' | 'manager' | 'front_desk' | 'instructor';
 
 export type UserUpdate = {
     email?: string | null;
@@ -226,6 +260,85 @@ export type LoginRecoverPasswordHtmlContentResponses = {
 };
 
 export type LoginRecoverPasswordHtmlContentResponse = LoginRecoverPasswordHtmlContentResponses[keyof LoginRecoverPasswordHtmlContentResponses];
+
+export type ConsumerAuthRegisterConsumerData = {
+    body: ConsumerCreate;
+    path?: never;
+    query?: never;
+    url: '/api/v1/auth/consumer/register';
+};
+
+export type ConsumerAuthRegisterConsumerErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ConsumerAuthRegisterConsumerError = ConsumerAuthRegisterConsumerErrors[keyof ConsumerAuthRegisterConsumerErrors];
+
+export type ConsumerAuthRegisterConsumerResponses = {
+    /**
+     * Successful Response
+     */
+    201: ConsumerPublic;
+};
+
+export type ConsumerAuthRegisterConsumerResponse = ConsumerAuthRegisterConsumerResponses[keyof ConsumerAuthRegisterConsumerResponses];
+
+export type ConsumerAuthVerifyEmailData = {
+    body?: never;
+    path?: never;
+    query: {
+        token: string;
+    };
+    url: '/api/v1/auth/consumer/verify-email';
+};
+
+export type ConsumerAuthVerifyEmailErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ConsumerAuthVerifyEmailError = ConsumerAuthVerifyEmailErrors[keyof ConsumerAuthVerifyEmailErrors];
+
+export type ConsumerAuthVerifyEmailResponses = {
+    /**
+     * Successful Response
+     */
+    200: Message;
+};
+
+export type ConsumerAuthVerifyEmailResponse = ConsumerAuthVerifyEmailResponses[keyof ConsumerAuthVerifyEmailResponses];
+
+export type ConsumerAuthResendVerificationEmailData = {
+    body?: never;
+    path?: never;
+    query: {
+        email: string;
+    };
+    url: '/api/v1/auth/consumer/resend-verification';
+};
+
+export type ConsumerAuthResendVerificationEmailErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ConsumerAuthResendVerificationEmailError = ConsumerAuthResendVerificationEmailErrors[keyof ConsumerAuthResendVerificationEmailErrors];
+
+export type ConsumerAuthResendVerificationEmailResponses = {
+    /**
+     * Successful Response
+     */
+    200: Message;
+};
+
+export type ConsumerAuthResendVerificationEmailResponse = ConsumerAuthResendVerificationEmailResponses[keyof ConsumerAuthResendVerificationEmailResponses];
 
 export type UsersReadUsersData = {
     body?: never;
@@ -682,7 +795,7 @@ export type HealthHealthCheckResponses = {
      * Successful Response
      */
     200: {
-        [key: string]: unknown;
+        [key: string]: string;
     };
 };
 

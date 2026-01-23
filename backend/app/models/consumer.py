@@ -5,12 +5,27 @@ Unlike gym-scoped data, consumers are NOT isolated by gym_id
 because they can book at multiple gyms.
 """
 
+from enum import Enum
 from uuid import UUID
 
 from pydantic import EmailStr
 from sqlmodel import Field, SQLModel
 
 from app.models.base import BaseModel, SoftDeleteMixin
+
+
+class UserRole(str, Enum):
+    """User roles for platform access control (ARCH-13).
+
+    Consumers have the 'consumer' role by default.
+    Staff roles (owner, manager, etc.) are assigned when joining a gym.
+    """
+
+    CONSUMER = "consumer"
+    OWNER = "owner"
+    MANAGER = "manager"
+    FRONT_DESK = "front_desk"
+    INSTRUCTOR = "instructor"
 
 
 class ConsumerBase(SQLModel):
@@ -22,10 +37,13 @@ class ConsumerBase(SQLModel):
         max_length=255,
         description="Consumer email (unique across platform)",
     )
-    full_name: str | None = Field(
-        default=None,
-        max_length=255,
-        description="Consumer full name",
+    first_name: str = Field(
+        max_length=100,
+        description="Consumer first name",
+    )
+    last_name: str = Field(
+        max_length=100,
+        description="Consumer last name",
     )
     phone: str | None = Field(
         default=None,
@@ -51,6 +69,12 @@ class Consumer(SoftDeleteMixin, BaseModel, ConsumerBase, table=True):
 
     __tablename__ = "consumers"
 
+    # Role for access control (ARCH-13)
+    role: UserRole = Field(
+        default=UserRole.CONSUMER,
+        description="User role for access control",
+    )
+
     # Authentication (if using separate from User model)
     hashed_password: str | None = Field(
         default=None,
@@ -62,6 +86,13 @@ class Consumer(SoftDeleteMixin, BaseModel, ConsumerBase, table=True):
         default=None,
         max_length=500,
         description="Profile picture URL",
+    )
+
+    # Legacy full_name field (kept for backward compatibility)
+    full_name: str | None = Field(
+        default=None,
+        max_length=255,
+        description="Full name (deprecated, use first_name + last_name)",
     )
 
     # Verification status
@@ -86,25 +117,35 @@ class Consumer(SoftDeleteMixin, BaseModel, ConsumerBase, table=True):
 
 
 # Schema classes for API request/response
-class ConsumerCreate(ConsumerBase):
+class ConsumerCreate(SQLModel):
     """Schema for consumer registration."""
 
+    email: EmailStr = Field(max_length=255)
     password: str = Field(min_length=8, max_length=128)
+    first_name: str = Field(min_length=1, max_length=100)
+    last_name: str = Field(min_length=1, max_length=100)
+    phone: str | None = Field(default=None, max_length=50)
 
 
 class ConsumerUpdate(SQLModel):
     """Schema for updating consumer profile - all fields optional."""
 
-    full_name: str | None = Field(default=None, max_length=255)
+    first_name: str | None = Field(default=None, max_length=100)
+    last_name: str | None = Field(default=None, max_length=100)
     phone: str | None = Field(default=None, max_length=50)
     avatar_url: str | None = Field(default=None, max_length=500)
     accepts_marketing: bool | None = None
 
 
-class ConsumerPublic(ConsumerBase):
+class ConsumerPublic(SQLModel):
     """Schema for consumer in API responses."""
 
     id: UUID
+    email: EmailStr
+    first_name: str
+    last_name: str
+    phone: str | None = None
+    role: UserRole
     avatar_url: str | None = None
     is_email_verified: bool
     is_active: bool
