@@ -1,6 +1,6 @@
 # Story 1.7: POPIA Account Deletion
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -26,51 +26,51 @@ So that I can exercise my POPIA right to erasure.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create account deletion request endpoint (AC: #1, #6)
-  - [ ] 1.1 Create `DELETE /auth/consumer/me` endpoint in `consumers.py`
-  - [ ] 1.2 Require authenticated consumer via `CurrentConsumer` dependency
-  - [ ] 1.3 Require password confirmation in request body for security
-  - [ ] 1.4 Call `consumer.soft_delete()` to mark account as deleted
-  - [ ] 1.5 Increment `token_version` to invalidate ALL existing tokens
-  - [ ] 1.6 Set `deletion_requested_at` timestamp for 30-day countdown
-  - [ ] 1.7 Return success response with logout instructions
+- [x] Task 1: Create account deletion request endpoint (AC: #1, #6)
+  - [x] 1.1 Create `DELETE /auth/consumer/me` endpoint in `consumers.py`
+  - [x] 1.2 Require authenticated consumer via `CurrentConsumer` dependency
+  - [x] 1.3 Require password confirmation in request body for security
+  - [x] 1.4 Call `consumer.soft_delete()` to mark account as deleted
+  - [x] 1.5 Increment `token_version` to invalidate ALL existing tokens
+  - [x] 1.6 Set `deletion_requested_at` timestamp for 30-day countdown
+  - [x] 1.7 Return success response with logout instructions
 
-- [ ] Task 2: Add deletion tracking fields to Consumer model (AC: #3)
-  - [ ] 2.1 Add `deletion_requested_at: datetime | None` field to Consumer model
-  - [ ] 2.2 Create Alembic migration for new field
-  - [ ] 2.3 Field tracks when 30-day deletion window started
+- [x] Task 2: Add deletion tracking fields to Consumer model (AC: #3)
+  - [x] 2.1 Add `deletion_requested_at: datetime | None` field to Consumer model
+  - [x] 2.2 Create Alembic migration for new field
+  - [x] 2.3 Field tracks when 30-day deletion window started
 
-- [ ] Task 3: Send deletion confirmation email (AC: #2)
-  - [ ] 3.1 Create email template `account_deletion_confirmation.html`
-  - [ ] 3.2 Add `generate_account_deletion_email()` function in `utils.py`
-  - [ ] 3.3 Send email after successful deletion request
-  - [ ] 3.4 Include: confirmation message, 30-day timeline, contact info for reversal
+- [x] Task 3: Send deletion confirmation email (AC: #2)
+  - [x] 3.1 Create email template (inline HTML in generate function)
+  - [x] 3.2 Add `generate_account_deletion_email()` function in `utils.py`
+  - [x] 3.3 Send email after successful deletion request
+  - [x] 3.4 Include: confirmation message, 30-day timeline, contact info for reversal
 
-- [ ] Task 4: Create account deletion request schema
-  - [ ] 4.1 Create `AccountDeletionRequest` schema with `password: str` field
-  - [ ] 4.2 Add to `models/__init__.py` exports
+- [x] Task 4: Create account deletion request schema
+  - [x] 4.1 Create `AccountDeletionRequest` schema with `password: str` field
+  - [x] 4.2 Add to `models/__init__.py` exports
 
-- [ ] Task 5: Prevent deleted account login (AC: #6)
-  - [ ] 5.1 Verify `is_active=False` check in consumer login already rejects deleted accounts
-  - [ ] 5.2 Verify `CurrentConsumer` dependency rejects inactive consumers
-  - [ ] 5.3 Ensure error message is generic (no enumeration: "Invalid credentials")
+- [x] Task 5: Prevent deleted account login (AC: #6)
+  - [x] 5.1 Verify `is_active=False` check in consumer login already rejects deleted accounts
+  - [x] 5.2 Verify `CurrentConsumer` dependency rejects inactive consumers
+  - [x] 5.3 Ensure error message is generic (no enumeration: "Invalid credentials")
 
-- [ ] Task 6: Add backend tests for account deletion
-  - [ ] 6.1 Test DELETE /me with correct password succeeds (200)
-  - [ ] 6.2 Test DELETE /me sets `is_active=False` and `deleted_at`
-  - [ ] 6.3 Test DELETE /me sets `deletion_requested_at` timestamp
-  - [ ] 6.4 Test DELETE /me increments `token_version` (invalidates tokens)
-  - [ ] 6.5 Test DELETE /me with wrong password fails (401 INVALID_CREDENTIALS)
-  - [ ] 6.6 Test DELETE /me without authentication fails (401)
-  - [ ] 6.7 Test deleted consumer cannot login (401 INVALID_CREDENTIALS)
-  - [ ] 6.8 Test deleted consumer's existing tokens are invalidated (401 on /me)
-  - [ ] 6.9 Test email is sent on successful deletion (mock)
+- [x] Task 6: Add backend tests for account deletion
+  - [x] 6.1 Test DELETE /me with correct password succeeds (200)
+  - [x] 6.2 Test DELETE /me sets `is_active=False` and `deleted_at`
+  - [x] 6.3 Test DELETE /me sets `deletion_requested_at` timestamp
+  - [x] 6.4 Test DELETE /me increments `token_version` (invalidates tokens)
+  - [x] 6.5 Test DELETE /me with wrong password fails (401 INVALID_CREDENTIALS)
+  - [x] 6.6 Test DELETE /me without authentication fails (401)
+  - [x] 6.7 Test deleted consumer cannot login (401 INVALID_CREDENTIALS)
+  - [x] 6.8 Test deleted consumer's existing tokens are invalidated (401 on /me)
+  - [x] 6.9 Test email is sent on successful deletion (mock)
 
-- [ ] Task 7: Document DEFERRED items for future implementation
-  - [ ] 7.1 Document: Booking anonymization (requires Booking model - Epic 6)
-  - [ ] 7.2 Document: Membership cancellation (requires Membership model - Epic 4)
-  - [ ] 7.3 Document: Background job for 30-day data purge (requires job scheduler)
-  - [ ] 7.4 Document: Admin endpoint to view pending deletions
+- [x] Task 7: Document DEFERRED items for future implementation
+  - [x] 7.1 Document: Booking anonymization (requires Booking model - Epic 6)
+  - [x] 7.2 Document: Membership cancellation (requires Membership model - Epic 4)
+  - [x] 7.3 Document: Background job for 30-day data purge (requires job scheduler)
+  - [x] 7.4 Document: Admin endpoint to view pending deletions
 
 ## Dev Notes
 
@@ -474,20 +474,30 @@ def downgrade():
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes
 
-(To be filled by dev agent after implementation)
+- Implemented POPIA-compliant account deletion with soft-delete pattern
+- Added `deletion_requested_at` field to Consumer model for 30-day tracking
+- Created `DELETE /auth/consumer/me` endpoint requiring password confirmation
+- Session invalidation via `token_version` increment (all tokens immediately invalid)
+- Confirmation email includes 30-day timeline and contact info for reversal
+- Verified existing login/auth code already rejects inactive accounts with generic errors
+- 14 comprehensive tests covering all ACs and edge cases
+- All 220 tests pass, no regressions
+- Deferred items documented: booking anonymization (Epic 6), membership cancellation (Epic 4), 30-day purge job
+
+**Note on AC #4 and #5:** Booking anonymization and membership cancellation are deferred as the Booking and Membership models don't exist yet. These will be implemented in Epic 4 (Memberships) and Epic 6 (Bookings) respectively.
 
 ### File List
 
 **Modified:**
-- `backend/app/api/routes/consumers.py` - Add DELETE /me endpoint
-- `backend/app/models/consumer.py` - Add deletion_requested_at field
-- `backend/app/models/__init__.py` - Export AccountDeletionRequest
-- `backend/app/utils.py` - Add generate_account_deletion_email()
+- `backend/app/api/routes/consumers.py` - Added DELETE /me endpoint with password verification
+- `backend/app/models/consumer.py` - Added deletion_requested_at field and AccountDeletionRequest schema
+- `backend/app/models/__init__.py` - Exported AccountDeletionRequest
+- `backend/app/utils.py` - Added generate_account_deletion_email() function
 
 **Created:**
-- `backend/alembic/versions/xxxx_add_deletion_requested_at.py` - Migration
-- `backend/tests/api/routes/test_account_deletion.py` - Tests
+- `backend/app/alembic/versions/e4cc4075ca9f_add_deletion_requested_at_to_consumers.py` - Migration
+- `backend/tests/api/routes/test_account_deletion.py` - 14 comprehensive tests
