@@ -51,6 +51,12 @@ class Staff(SoftDeleteMixin, GymScopedModel, table=True):
     phone: str | None = Field(default=None, max_length=20)
     is_email_verified: bool = Field(default=False)
 
+    # Token rotation (ARCH-12)
+    token_version: int = Field(
+        default=1,
+        description="Incremented on token refresh to invalidate old refresh tokens",
+    )
+
     # Relationship to gym
     gym: "Gym" = Relationship(back_populates="staff")
 

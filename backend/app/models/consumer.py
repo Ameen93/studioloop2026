@@ -111,6 +111,12 @@ class Consumer(SoftDeleteMixin, BaseModel, ConsumerBase, table=True):
         description="Consent to receive marketing communications",
     )
 
+    # Token rotation (ARCH-12)
+    token_version: int = Field(
+        default=1,
+        description="Incremented on token refresh to invalidate old refresh tokens",
+    )
+
     # Relationships (to be populated as domain models are created)
     # bookings: list["Booking"] = Relationship(back_populates="consumer")
     # memberships: list["Membership"] = Relationship(back_populates="consumer")
