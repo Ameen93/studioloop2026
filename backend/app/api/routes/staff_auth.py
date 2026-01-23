@@ -243,7 +243,7 @@ def forgot_password(
     # But ALWAYS return success to prevent enumeration
     if staff and staff.is_active:
         if settings.emails_enabled:
-            token = generate_password_reset_token(request_data.email)
+            token = generate_password_reset_token(request_data.email, account_type="staff")
             email_data = generate_reset_password_email(
                 email_to=staff.email,
                 email=request_data.email,
@@ -278,7 +278,7 @@ def reset_password(
     Raises:
         HTTPException: 400 INVALID_TOKEN if token is invalid/expired
     """
-    email = verify_password_reset_token(request_data.token)
+    email = verify_password_reset_token(request_data.token, expected_account_type="staff")
 
     if not email:
         raise HTTPException(

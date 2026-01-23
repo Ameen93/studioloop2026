@@ -184,7 +184,7 @@ class TestConsumerResetPassword:
         consumer = self._create_verified_consumer(db, email, "oldpassword123")
 
         # Generate valid reset token
-        token = generate_password_reset_token(email)
+        token = generate_password_reset_token(email, account_type="consumer")
 
         response = client.post(
             f"{settings.API_V1_STR}/auth/consumer/reset-password",
@@ -207,7 +207,7 @@ class TestConsumerResetPassword:
         consumer = self._create_verified_consumer(db, email, "oldpassword123")
         original_version = consumer.token_version
 
-        token = generate_password_reset_token(email)
+        token = generate_password_reset_token(email, account_type="consumer")
 
         response = client.post(
             f"{settings.API_V1_STR}/auth/consumer/reset-password",
@@ -237,7 +237,7 @@ class TestConsumerResetPassword:
         old_refresh_token = login_response.json()["refresh_token"]
 
         # Reset password
-        reset_token = generate_password_reset_token(email)
+        reset_token = generate_password_reset_token(email, account_type="consumer")
         reset_response = client.post(
             f"{settings.API_V1_STR}/auth/consumer/reset-password",
             json={"token": reset_token, "new_password": "newpassword123"},
@@ -259,7 +259,7 @@ class TestConsumerResetPassword:
         email = random_email()
         self._create_verified_consumer(db, email, "oldpassword123")
 
-        token = generate_password_reset_token(email)
+        token = generate_password_reset_token(email, account_type="consumer")
 
         # Reset password
         reset_response = client.post(
@@ -307,7 +307,7 @@ class TestConsumerResetPassword:
     def test_reset_password_nonexistent_user(self, client: TestClient) -> None:
         """Test reset-password for nonexistent user returns same error."""
         # Generate token for email that doesn't exist
-        token = generate_password_reset_token("nonexistent@test.com")
+        token = generate_password_reset_token("nonexistent@test.com", account_type="consumer")
 
         response = client.post(
             f"{settings.API_V1_STR}/auth/consumer/reset-password",
@@ -323,7 +323,7 @@ class TestConsumerResetPassword:
         email = random_email()
         self._create_inactive_consumer(db, email)
 
-        token = generate_password_reset_token(email)
+        token = generate_password_reset_token(email, account_type="consumer")
 
         response = client.post(
             f"{settings.API_V1_STR}/auth/consumer/reset-password",
@@ -339,7 +339,7 @@ class TestConsumerResetPassword:
         email = random_email()
         self._create_verified_consumer(db, email, "oldpassword123")
 
-        token = generate_password_reset_token(email)
+        token = generate_password_reset_token(email, account_type="consumer")
 
         response = client.post(
             f"{settings.API_V1_STR}/auth/consumer/reset-password",
@@ -497,7 +497,7 @@ class TestStaffResetPassword:
         email = random_email()
         staff = self._create_active_staff(db, email, "oldpassword123", gym.id)
 
-        token = generate_password_reset_token(email)
+        token = generate_password_reset_token(email, account_type="staff")
 
         response = client.post(
             f"{settings.API_V1_STR}/auth/staff/reset-password",
@@ -521,7 +521,7 @@ class TestStaffResetPassword:
         staff = self._create_active_staff(db, email, "oldpassword123", gym.id)
         original_version = staff.token_version
 
-        token = generate_password_reset_token(email)
+        token = generate_password_reset_token(email, account_type="staff")
 
         response = client.post(
             f"{settings.API_V1_STR}/auth/staff/reset-password",
@@ -543,7 +543,7 @@ class TestStaffResetPassword:
         staff = self._create_active_staff(db, email, "oldpassword123", gym.id)
         original_role = staff.role.value
 
-        token = generate_password_reset_token(email)
+        token = generate_password_reset_token(email, account_type="staff")
 
         # Reset password
         reset_response = client.post(
@@ -581,7 +581,7 @@ class TestStaffResetPassword:
         old_refresh_token = login_response.json()["refresh_token"]
 
         # Reset password
-        reset_token = generate_password_reset_token(email)
+        reset_token = generate_password_reset_token(email, account_type="staff")
         reset_response = client.post(
             f"{settings.API_V1_STR}/auth/staff/reset-password",
             json={"token": reset_token, "new_password": "newpassword123"},
@@ -614,7 +614,7 @@ class TestStaffResetPassword:
         email = random_email()
         self._create_inactive_staff(db, email, gym.id)
 
-        token = generate_password_reset_token(email)
+        token = generate_password_reset_token(email, account_type="staff")
 
         response = client.post(
             f"{settings.API_V1_STR}/auth/staff/reset-password",
@@ -623,3 +623,167 @@ class TestStaffResetPassword:
 
         assert response.status_code == 400
         assert response.json()["detail"]["code"] == "INVALID_TOKEN"
+
+
+class TestCrossAccountResetRejection:
+    """Security tests for cross-account reset token rejection.
+
+    These tests verify that reset tokens are scoped to account type,
+    preventing a token generated for one account type from being used
+    to reset a password on a different account type.
+    """
+
+    def _get_test_gym(self, db: Session) -> Gym:
+        """Get first gym from seeded data."""
+        from sqlmodel import select
+
+        gym = db.exec(select(Gym)).first()
+        if not gym:
+            raise RuntimeError("No seeded gym found")
+        return gym
+
+    def _create_verified_consumer(
+        self, db: Session, email: str, password: str
+    ) -> Consumer:
+        """Helper to create a verified consumer."""
+        consumer = Consumer(
+            email=email,
+            first_name="Test",
+            last_name="Consumer",
+            hashed_password=get_password_hash(password),
+            is_email_verified=True,
+            is_active=True,
+            token_version=1,
+        )
+        db.add(consumer)
+        db.commit()
+        db.refresh(consumer)
+        return consumer
+
+    def _create_active_staff(
+        self, db: Session, email: str, password: str, gym_id
+    ) -> Staff:
+        """Helper to create an active staff member."""
+        staff = Staff(
+            email=email,
+            first_name="Test",
+            last_name="Staff",
+            hashed_password=get_password_hash(password),
+            role=StaffRole.MANAGER,
+            gym_id=gym_id,
+            is_active=True,
+            token_version=1,
+        )
+        db.add(staff)
+        db.commit()
+        db.refresh(staff)
+        return staff
+
+    def test_consumer_token_cannot_reset_staff_password(
+        self, client: TestClient, db: Session
+    ) -> None:
+        """Test that a consumer reset token cannot be used on staff endpoint.
+
+        This is a critical security test to prevent cross-account password resets
+        when the same email exists in both consumer and staff tables.
+        """
+        gym = self._get_test_gym(db)
+        email = random_email()
+
+        # Create both a consumer and staff with the same email
+        self._create_verified_consumer(db, email, "consumer_password")
+        staff = self._create_active_staff(db, email, "staff_password", gym.id)
+
+        # Generate a consumer reset token
+        consumer_token = generate_password_reset_token(email, account_type="consumer")
+
+        # Try to use the consumer token on the staff endpoint - should fail
+        response = client.post(
+            f"{settings.API_V1_STR}/auth/staff/reset-password",
+            json={"token": consumer_token, "new_password": "hacked_password"},
+        )
+
+        assert response.status_code == 400
+        assert response.json()["detail"]["code"] == "INVALID_TOKEN"
+
+        # Verify staff password was NOT changed
+        db.refresh(staff)
+        assert verify_password("staff_password", staff.hashed_password)
+
+    def test_staff_token_cannot_reset_consumer_password(
+        self, client: TestClient, db: Session
+    ) -> None:
+        """Test that a staff reset token cannot be used on consumer endpoint.
+
+        This is a critical security test to prevent cross-account password resets
+        when the same email exists in both consumer and staff tables.
+        """
+        gym = self._get_test_gym(db)
+        email = random_email()
+
+        # Create both a consumer and staff with the same email
+        consumer = self._create_verified_consumer(db, email, "consumer_password")
+        self._create_active_staff(db, email, "staff_password", gym.id)
+
+        # Generate a staff reset token
+        staff_token = generate_password_reset_token(email, account_type="staff")
+
+        # Try to use the staff token on the consumer endpoint - should fail
+        response = client.post(
+            f"{settings.API_V1_STR}/auth/consumer/reset-password",
+            json={"token": staff_token, "new_password": "hacked_password"},
+        )
+
+        assert response.status_code == 400
+        assert response.json()["detail"]["code"] == "INVALID_TOKEN"
+
+        # Verify consumer password was NOT changed
+        db.refresh(consumer)
+        assert verify_password("consumer_password", consumer.hashed_password)
+
+    def test_user_token_cannot_reset_consumer_password(
+        self, client: TestClient, db: Session
+    ) -> None:
+        """Test that an admin/user reset token cannot be used on consumer endpoint."""
+        email = random_email()
+        consumer = self._create_verified_consumer(db, email, "consumer_password")
+
+        # Generate a user (admin) reset token
+        user_token = generate_password_reset_token(email, account_type="user")
+
+        # Try to use the user token on the consumer endpoint - should fail
+        response = client.post(
+            f"{settings.API_V1_STR}/auth/consumer/reset-password",
+            json={"token": user_token, "new_password": "hacked_password"},
+        )
+
+        assert response.status_code == 400
+        assert response.json()["detail"]["code"] == "INVALID_TOKEN"
+
+        # Verify consumer password was NOT changed
+        db.refresh(consumer)
+        assert verify_password("consumer_password", consumer.hashed_password)
+
+    def test_user_token_cannot_reset_staff_password(
+        self, client: TestClient, db: Session
+    ) -> None:
+        """Test that an admin/user reset token cannot be used on staff endpoint."""
+        gym = self._get_test_gym(db)
+        email = random_email()
+        staff = self._create_active_staff(db, email, "staff_password", gym.id)
+
+        # Generate a user (admin) reset token
+        user_token = generate_password_reset_token(email, account_type="user")
+
+        # Try to use the user token on the staff endpoint - should fail
+        response = client.post(
+            f"{settings.API_V1_STR}/auth/staff/reset-password",
+            json={"token": user_token, "new_password": "hacked_password"},
+        )
+
+        assert response.status_code == 400
+        assert response.json()["detail"]["code"] == "INVALID_TOKEN"
+
+        # Verify staff password was NOT changed
+        db.refresh(staff)
+        assert verify_password("staff_password", staff.hashed_password)
