@@ -107,6 +107,8 @@ class Token(SQLModel):
 class TokenPayload(SQLModel):
     sub: str | None = None
     type: str | None = None  # "access" or "refresh" - used to validate token type
+    role: str | None = None  # Staff role (owner, manager, front_desk, instructor)
+    gym_id: str | None = None  # Gym ID for tenant context (staff tokens only)
 
 
 class NewPassword(SQLModel):
