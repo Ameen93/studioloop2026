@@ -138,7 +138,12 @@ def generate_email_verification_token(email: str) -> str:
     now = datetime.now(timezone.utc)
     expires = now + delta
     encoded_jwt = jwt.encode(
-        {"exp": expires.timestamp(), "nbf": now, "sub": email, "type": "email_verification"},
+        {
+            "exp": expires.timestamp(),
+            "nbf": now,
+            "sub": email,
+            "type": "email_verification",
+        },
         settings.SECRET_KEY,
         algorithm=security.ALGORITHM,
     )

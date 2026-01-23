@@ -125,9 +125,7 @@ def verify_email(
             },
         )
 
-    consumer = session.exec(
-        select(Consumer).where(Consumer.email == email)
-    ).first()
+    consumer = session.exec(select(Consumer).where(Consumer.email == email)).first()
 
     if not consumer:
         raise HTTPException(
@@ -167,9 +165,7 @@ def resend_verification_email(
         Message confirming email was sent (always returns success
         to prevent email enumeration)
     """
-    consumer = session.exec(
-        select(Consumer).where(Consumer.email == email)
-    ).first()
+    consumer = session.exec(select(Consumer).where(Consumer.email == email)).first()
 
     # Always return success to prevent email enumeration
     if not consumer:
