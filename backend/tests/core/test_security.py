@@ -1,12 +1,17 @@
 """Tests for password hashing and security utilities.
 
 Verifies ARCH-11 compliance: Argon2 password hashing via pwdlib.
+Verifies ARCH-12 compliance: Token type validation.
 """
+
+from datetime import timedelta
 
 import pytest
 from passlib.context import CryptContext
 
 from app.core.security import (
+    create_access_token,
+    create_refresh_token,
     get_password_hash,
     needs_rehash,
     verify_password,
@@ -114,3 +119,62 @@ class TestPasswordStrength:
         hashed = get_password_hash(password)
 
         assert verify_password(password, hashed) is True
+
+
+class TestTokenTypes:
+    """Tests for JWT token type claims (ARCH-12)."""
+
+    def test_access_token_has_access_type(self) -> None:
+        """Verify access tokens include type='access' claim."""
+        import jwt
+
+        from app.core.config import settings
+        from app.core.security import ALGORITHM
+
+        token = create_access_token(
+            subject="test-user-id", expires_delta=timedelta(hours=1)
+        )
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+
+        assert payload["type"] == "access"
+        assert payload["sub"] == "test-user-id"
+
+    def test_refresh_token_has_refresh_type(self) -> None:
+        """Verify refresh tokens include type='refresh' claim."""
+        import jwt
+
+        from app.core.config import settings
+        from app.core.security import ALGORITHM
+
+        token = create_refresh_token(
+            subject="test-user-id", expires_delta=timedelta(days=7)
+        )
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+
+        assert payload["type"] == "refresh"
+        assert payload["sub"] == "test-user-id"
+
+    def test_access_and_refresh_tokens_are_different(self) -> None:
+        """Verify access and refresh tokens have different type claims."""
+        import jwt
+
+        from app.core.config import settings
+        from app.core.security import ALGORITHM
+
+        access_token = create_access_token(
+            subject="test-user-id", expires_delta=timedelta(hours=1)
+        )
+        refresh_token = create_refresh_token(
+            subject="test-user-id", expires_delta=timedelta(days=7)
+        )
+
+        access_payload = jwt.decode(
+            access_token, settings.SECRET_KEY, algorithms=[ALGORITHM]
+        )
+        refresh_payload = jwt.decode(
+            refresh_token, settings.SECRET_KEY, algorithms=[ALGORITHM]
+        )
+
+        assert access_payload["type"] == "access"
+        assert refresh_payload["type"] == "refresh"
+        assert access_payload["type"] != refresh_payload["type"]

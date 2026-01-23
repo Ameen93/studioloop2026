@@ -48,9 +48,7 @@ class TestGymScopedRepositoryIsolation:
             assert space.name == "Main Studio"
         finally:
             # Cleanup: delete space first, then gym
-            test_session.execute(
-                Space.__table__.delete().where(Space.gym_id == gym.id)
-            )
+            test_session.execute(Space.__table__.delete().where(Space.gym_id == gym.id))
             test_session.delete(gym)
             test_session.commit()
 
@@ -186,8 +184,7 @@ class TestGymScopedRepositoryIsolation:
         try:
             # Create multiple spaces in gym_a
             spaces = [
-                Space(name=f"Space {i}", gym_id=gym_a.id, capacity=10)
-                for i in range(3)
+                Space(name=f"Space {i}", gym_id=gym_a.id, capacity=10) for i in range(3)
             ]
             test_session.add_all(spaces)
             test_session.commit()
@@ -233,9 +230,7 @@ class TestGymScopedRepositorySoftDelete:
             assert result.deleted_at is not None
         finally:
             # Cleanup (hard delete)
-            test_session.execute(
-                Space.__table__.delete().where(Space.gym_id == gym.id)
-            )
+            test_session.execute(Space.__table__.delete().where(Space.gym_id == gym.id))
             test_session.delete(gym)
             test_session.commit()
 
@@ -259,9 +254,7 @@ class TestGymScopedRepositorySoftDelete:
             assert result is None
         finally:
             # Cleanup
-            test_session.execute(
-                Space.__table__.delete().where(Space.gym_id == gym.id)
-            )
+            test_session.execute(Space.__table__.delete().where(Space.gym_id == gym.id))
             test_session.delete(gym)
             test_session.commit()
 
@@ -289,9 +282,7 @@ class TestGymScopedRepositorySoftDelete:
             assert space2.id in space_ids
         finally:
             # Cleanup
-            test_session.execute(
-                Space.__table__.delete().where(Space.gym_id == gym.id)
-            )
+            test_session.execute(Space.__table__.delete().where(Space.gym_id == gym.id))
             test_session.delete(gym)
             test_session.commit()
 
@@ -315,8 +306,6 @@ class TestGymScopedRepositorySoftDelete:
             assert space.id in space_ids
         finally:
             # Cleanup
-            test_session.execute(
-                Space.__table__.delete().where(Space.gym_id == gym.id)
-            )
+            test_session.execute(Space.__table__.delete().where(Space.gym_id == gym.id))
             test_session.delete(gym)
             test_session.commit()
