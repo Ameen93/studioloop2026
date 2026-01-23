@@ -15,7 +15,7 @@ foreign key constraints:
 
 from sqlmodel import Session, delete
 
-from app.models import Consumer, Gym, Space
+from app.models import Consumer, Gym, Space, Staff
 
 # Placeholder imports for future models
 from app.seed.bookings import seed_bookings
@@ -109,11 +109,10 @@ def reset_seed_data(session: Session) -> None:
     """
     print("Deleting seed data in reverse dependency order...")
 
-    # Note: Deferred models don't exist yet, but we include the pattern
-    # for when they are created. The delete will simply do nothing if
-    # the table doesn't exist.
+    # Delete gym-scoped children first (in reverse dependency order)
+    print("  - Deleting Staff...")
+    session.exec(delete(Staff))  # type: ignore[call-overload]
 
-    # Delete gym-scoped children first
     print("  - Deleting Spaces...")
     session.exec(delete(Space))  # type: ignore[call-overload]
 

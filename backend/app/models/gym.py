@@ -5,11 +5,15 @@ architecture. All gym-scoped data (spaces, staff, classes, etc.) is isolated
 by gym_id.
 """
 
+from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, Relationship, SQLModel
 
 from app.models.base import BaseModel, SoftDeleteMixin
+
+if TYPE_CHECKING:
+    from app.models.staff import Staff
 
 
 class GymBase(SQLModel):
@@ -52,9 +56,8 @@ class Gym(SoftDeleteMixin, BaseModel, GymBase, table=True):
 
     __tablename__ = "gyms"
 
-    # Relationships (to be populated as domain models are created)
-    # spaces: list["Space"] = Relationship(back_populates="gym")
-    # staff: list["Staff"] = Relationship(back_populates="gym")
+    # Relationships
+    staff: list["Staff"] = Relationship(back_populates="gym")
 
     # Contact information
     email: str | None = Field(
