@@ -226,6 +226,66 @@ def generate_email_verification_email(email_to: str, token: str) -> EmailData:
     return EmailData(html_content=html_content, subject=subject)
 
 
+def generate_account_deletion_email(email_to: str, first_name: str) -> EmailData:
+    """Generate account deletion confirmation email (POPIA compliance).
+
+    Informs the consumer that their deletion request has been received
+    and their data will be removed within 30 days per POPIA requirements.
+
+    Args:
+        email_to: Recipient email address
+        first_name: Consumer's first name for personalization
+
+    Returns:
+        EmailData with subject and HTML content
+    """
+    project_name = settings.PROJECT_NAME
+    subject = f"{project_name} - Account Deletion Confirmation"
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title>Account Deletion Confirmation</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h1 style="color: #e53e3e;">Account Deletion Request Received</h1>
+
+            <p>Hi {first_name},</p>
+
+            <p>We've received your request to delete your {project_name} account.</p>
+
+            <p><strong>What happens next:</strong></p>
+            <ul>
+                <li>Your account has been <strong>deactivated immediately</strong></li>
+                <li>You will no longer be able to log in</li>
+                <li>All your personal data will be <strong>permanently deleted within 30 days</strong>
+                    as required by POPIA (Protection of Personal Information Act)</li>
+                <li>Your booking history will be anonymized for gym record-keeping purposes</li>
+            </ul>
+
+            <p style="background-color: #fff3cd; padding: 15px; border-radius: 5px;">
+                <strong>Changed your mind?</strong><br>
+                If you did not request this deletion or wish to cancel it, please contact us
+                immediately at <a href="mailto:support@studioloop.co.za">support@studioloop.co.za</a>
+                within 30 days.
+            </p>
+
+            <p>Thank you for using {project_name}. We're sorry to see you go.</p>
+
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+            <p style="font-size: 12px; color: #666;">
+                This email was sent to {email_to} because an account deletion was requested.
+                If you did not make this request, please contact us immediately.
+            </p>
+        </div>
+    </body>
+    </html>
+    """
+    return EmailData(html_content=html_content, subject=subject)
+
+
 # SA Phone Number Validation
 # Format: +27XXXXXXXXX (11-12 digits starting with +27)
 SA_PHONE_PATTERN = re.compile(r"^\+27[1-9]\d{8,9}$")

@@ -21,7 +21,13 @@ from app.models.base import (
     SoftDeleteMixin,
     TimestampMixin,
 )
-from app.models.consumer import Consumer, ConsumerCreate, ConsumerPublic, ConsumerUpdate
+from app.models.consumer import (
+    AccountDeletionRequest,
+    Consumer,
+    ConsumerCreate,
+    ConsumerPublic,
+    ConsumerUpdate,
+)
 
 # Domain models
 from app.models.gym import Gym, GymCreate, GymPublic, GymUpdate
@@ -66,6 +72,7 @@ __all__ = [
     "GymCreate",
     "GymUpdate",
     "GymPublic",
+    "AccountDeletionRequest",
     "Consumer",
     "ConsumerCreate",
     "ConsumerUpdate",
