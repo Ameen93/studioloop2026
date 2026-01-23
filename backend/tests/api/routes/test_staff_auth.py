@@ -53,7 +53,7 @@ class TestStaffLogin:
 
         gym = Gym(
             name="Test Gym",
-            slug=f"test-gym-{random_lower_string(6)}",
+            slug=f"test-gym-{random_lower_string()}",
             description="Test gym for staff auth tests",
         )
         db.add(gym)
@@ -271,7 +271,7 @@ class TestStaffModel:
         if not gym:
             gym = Gym(
                 name="Test Gym for Model",
-                slug=f"test-gym-model-{random_lower_string(6)}",
+                slug=f"test-gym-model-{random_lower_string()}",
             )
             db.add(gym)
             db.commit()
@@ -300,7 +300,7 @@ class TestStaffModel:
         if not gym:
             gym = Gym(
                 name="Test Gym for Roles",
-                slug=f"test-gym-roles-{random_lower_string(6)}",
+                slug=f"test-gym-roles-{random_lower_string()}",
             )
             db.add(gym)
             db.commit()
