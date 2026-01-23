@@ -39,6 +39,7 @@ from app.models_legacy import (
     ItemUpdate,
     Message,
     NewPassword,
+    RefreshTokenRequest,
     Token,
     TokenPayload,
     UpdatePassword,
@@ -95,5 +96,6 @@ __all__ = [
     "Message",
     "Token",
     "TokenPayload",
+    "RefreshTokenRequest",
     "NewPassword",
 ]

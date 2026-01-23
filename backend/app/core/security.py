@@ -54,17 +54,20 @@ def create_refresh_token(
     expires_delta: timedelta,
     role: str | None = None,
     gym_id: str | None = None,
+    token_version: int | None = None,
 ) -> str:
     """Create a JWT refresh token (ARCH-12).
 
     Refresh tokens have longer expiry and include a type claim
-    to differentiate from access tokens.
+    to differentiate from access tokens. Token version is used
+    for rotation - older versions are rejected on refresh.
 
     Args:
         subject: The token subject (typically user ID)
         expires_delta: Token validity duration
         role: Optional staff role claim (for staff tokens)
         gym_id: Optional gym ID for tenant context (for staff tokens)
+        token_version: Version number for token rotation
 
     Returns:
         Encoded JWT refresh token string
@@ -75,6 +78,8 @@ def create_refresh_token(
         to_encode["role"] = role
     if gym_id:
         to_encode["gym_id"] = gym_id
+    if token_version is not None:
+        to_encode["token_version"] = token_version
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 

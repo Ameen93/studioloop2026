@@ -109,6 +109,14 @@ class TokenPayload(SQLModel):
     type: str | None = None  # "access" or "refresh" - used to validate token type
     role: str | None = None  # Staff role (owner, manager, front_desk, instructor)
     gym_id: str | None = None  # Gym ID for tenant context (staff tokens only)
+    token_version: int | None = None  # For refresh token rotation (ARCH-12)
+
+
+# Request body for token refresh endpoint (ARCH-12)
+class RefreshTokenRequest(SQLModel):
+    """Request body for token refresh endpoint."""
+
+    refresh_token: str
 
 
 class NewPassword(SQLModel):
