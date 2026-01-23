@@ -100,24 +100,54 @@ def generate_new_account_email(
     return EmailData(html_content=html_content, subject=subject)
 
 
-def generate_password_reset_token(email: str) -> str:
+def generate_password_reset_token(email: str, account_type: str) -> str:
+    """Generate a JWT token for password reset.
+
+    Args:
+        email: The email address requesting reset
+        account_type: The account type ("consumer" or "staff") to scope the token
+
+    Returns:
+        Encoded JWT token string with account_type claim
+    """
     delta = timedelta(hours=settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS)
     now = datetime.now(timezone.utc)
     expires = now + delta
     exp = expires.timestamp()
     encoded_jwt = jwt.encode(
-        {"exp": exp, "nbf": now, "sub": email},
+        {
+            "exp": exp,
+            "nbf": now,
+            "sub": email,
+            "type": "password_reset",
+            "account_type": account_type,
+        },
         settings.SECRET_KEY,
         algorithm=security.ALGORITHM,
     )
     return encoded_jwt
 
 
-def verify_password_reset_token(token: str) -> str | None:
+def verify_password_reset_token(token: str, expected_account_type: str) -> str | None:
+    """Verify a password reset token and validate account type.
+
+    Args:
+        token: The JWT token to verify
+        expected_account_type: The account type this endpoint expects ("consumer" or "staff")
+
+    Returns:
+        Email address if valid and account_type matches, None otherwise
+    """
     try:
         decoded_token = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
         )
+        # Validate token type
+        if decoded_token.get("type") != "password_reset":
+            return None
+        # Validate account type matches the endpoint
+        if decoded_token.get("account_type") != expected_account_type:
+            return None
         return str(decoded_token["sub"])
     except InvalidTokenError:
         return None
