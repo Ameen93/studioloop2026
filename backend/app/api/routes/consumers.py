@@ -616,6 +616,8 @@ def delete_consumer_account(
         HTTPException: 401 INVALID_CREDENTIALS if password is wrong
     """
     # Verify password for security (prevent unauthorized deletion)
+    # NOTE: Revisit for social login users (Stories 1.9/1.10) who may not have passwords
+    assert current_consumer.hashed_password, "Consumer must have password set"
     if not verify_password(deletion_request.password, current_consumer.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
