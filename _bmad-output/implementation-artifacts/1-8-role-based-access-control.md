@@ -1,6 +1,6 @@
 # Story 1.8: Role-Based Access Control
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -24,43 +24,43 @@ So that users only access features appropriate to their role.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create role-checking dependencies (AC: #1, #2)
-  - [ ] 1.1 Create `RoleChecker` class with `__call__` method for FastAPI dependency injection
-  - [ ] 1.2 Accept list of allowed roles in constructor
-  - [ ] 1.3 Extract role from JWT `token_data.role` claim
-  - [ ] 1.4 Raise 403 `FORBIDDEN` if role not in allowed list
-  - [ ] 1.5 Create convenience dependencies: `RequireOwner`, `RequireManager`, `RequireStaff`
+- [x] Task 1: Create role-checking dependencies (AC: #1, #2)
+  - [x] 1.1 Create `RoleChecker` class with `__call__` method for FastAPI dependency injection
+  - [x] 1.2 Accept list of allowed roles in constructor
+  - [x] 1.3 Extract role from JWT `token_data.role` claim
+  - [x] 1.4 Raise 403 `FORBIDDEN` if role not in allowed list
+  - [x] 1.5 Create convenience dependencies: `RequireOwner`, `RequireManager`, `RequireStaff`
 
-- [ ] Task 2: Create gym-scoped access validation dependency (AC: #3)
-  - [ ] 2.1 Create `get_current_staff_for_gym` dependency
-  - [ ] 2.2 Extract `gym_id` from JWT claims
-  - [ ] 2.3 Compare JWT `gym_id` with path parameter `gym_id`
-  - [ ] 2.4 Raise 403 `FORBIDDEN` if gym_id mismatch
-  - [ ] 2.5 Create `StaffGymDep` annotated type for use in routes
+- [x] Task 2: Create gym-scoped access validation dependency (AC: #3)
+  - [x] 2.1 Create `get_current_staff_for_gym` dependency
+  - [x] 2.2 Extract `gym_id` from JWT claims
+  - [x] 2.3 Compare JWT `gym_id` with path parameter `gym_id`
+  - [x] 2.4 Raise 403 `FORBIDDEN` if gym_id mismatch
+  - [x] 2.5 Create `StaffGymDep` annotated type for use in routes
 
-- [ ] Task 3: Create role hierarchy utilities (AC: #5)
-  - [ ] 3.1 Define role hierarchy: OWNER > MANAGER > FRONT_DESK / INSTRUCTOR
-  - [ ] 3.2 Create `has_permission` function to check role hierarchy
-  - [ ] 3.3 Create `RequireOwnerOrManager` dependency for elevated operations
+- [x] Task 3: Create role hierarchy utilities (AC: #5)
+  - [x] 3.1 Define role hierarchy: OWNER > MANAGER > FRONT_DESK / INSTRUCTOR
+  - [x] 3.2 Create `has_permission` function to check role hierarchy
+  - [x] 3.3 Create `RequireOwnerOrManager` dependency for elevated operations
 
-- [ ] Task 4: Update existing staff routes with role guards (AC: #4, #5)
-  - [ ] 4.1 Add role guards to staff auth routes (no changes needed - login is public)
-  - [ ] 4.2 Document which routes will need protection in future epics
+- [x] Task 4: Update existing staff routes with role guards (AC: #4, #5)
+  - [x] 4.1 Add role guards to staff auth routes (no changes needed - login is public)
+  - [x] 4.2 Document which routes will need protection in future epics
 
-- [ ] Task 5: Create protected route examples for testing (AC: #1-5)
-  - [ ] 5.1 Create example routes demonstrating role-based access
-  - [ ] 5.2 Owner-only route example
-  - [ ] 5.3 Manager-or-above route example
-  - [ ] 5.4 Any-staff route example
+- [x] Task 5: Create protected route examples for testing (AC: #1-5)
+  - [x] 5.1 Create example routes demonstrating role-based access
+  - [x] 5.2 Owner-only route example
+  - [x] 5.3 Manager-or-above route example
+  - [x] 5.4 Any-staff route example
 
-- [ ] Task 6: Add backend tests for RBAC (AC: #1-5)
-  - [ ] 6.1 Test RoleChecker allows valid roles
-  - [ ] 6.2 Test RoleChecker rejects unauthorized roles with 403
-  - [ ] 6.3 Test gym_id validation passes for matching gym
-  - [ ] 6.4 Test gym_id validation fails for mismatched gym with 403
-  - [ ] 6.5 Test consumer token cannot access staff routes
-  - [ ] 6.6 Test front_desk cannot access owner-only routes
-  - [ ] 6.7 Test role hierarchy (manager can do front_desk tasks)
+- [x] Task 6: Add backend tests for RBAC (AC: #1-5)
+  - [x] 6.1 Test RoleChecker allows valid roles
+  - [x] 6.2 Test RoleChecker rejects unauthorized roles with 403
+  - [x] 6.3 Test gym_id validation passes for matching gym
+  - [x] 6.4 Test gym_id validation fails for mismatched gym with 403
+  - [x] 6.5 Test consumer token cannot access staff routes
+  - [x] 6.6 Test front_desk cannot access owner-only routes
+  - [x] 6.7 Test role hierarchy (manager can do front_desk tasks)
 
 ## Dev Notes
 
@@ -407,11 +407,26 @@ Key patterns from `project-context.md` (if exists):
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- Implemented `RoleChecker` class in deps.py with `__call__` for FastAPI DI
+- Created convenience dependencies: `RequireOwner`, `RequireOwnerOrManager`, `RequireManager`, `RequireStaff`
+- Added `ROLE_HIERARCHY` dict and `has_permission()` function for role level checks
+- Created `get_current_staff_for_gym()` dependency for gym-scoped access validation
+- Added `StaffGymDep` annotated type for combined auth + gym validation
+- Created example routes in `rbac_examples.py` demonstrating all RBAC patterns
+- Added 18 comprehensive tests covering all acceptance criteria
+- All tests pass (18 new RBAC tests + 236 existing, 2 pre-existing seed failures unrelated)
+- mypy and ruff checks pass
+
 ### File List
+
+- `backend/app/api/deps.py` - UPDATED: Added RBAC section with RoleChecker, role hierarchy, gym-scoped validation
+- `backend/app/api/routes/rbac_examples.py` - NEW: Example protected routes for testing
+- `backend/app/api/main.py` - UPDATED: Registered rbac_examples router
+- `backend/tests/api/routes/test_rbac.py` - NEW: 18 comprehensive RBAC tests
 
