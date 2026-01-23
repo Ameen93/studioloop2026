@@ -21,6 +21,14 @@ export type ConsumerCreate = {
 };
 
 /**
+ * Schema for consumer login request.
+ */
+export type ConsumerLoginRequest = {
+    email: string;
+    password: string;
+};
+
+/**
  * Schema for consumer in API responses.
  */
 export type ConsumerPublic = {
@@ -33,6 +41,15 @@ export type ConsumerPublic = {
     avatar_url?: string | null;
     is_email_verified: boolean;
     is_active: boolean;
+};
+
+/**
+ * Token response for consumer authentication (ARCH-12).
+ */
+export type ConsumerToken = {
+    access_token: string;
+    refresh_token: string;
+    token_type?: string;
 };
 
 export type HttpValidationError = {
@@ -339,6 +356,31 @@ export type ConsumerAuthResendVerificationEmailResponses = {
 };
 
 export type ConsumerAuthResendVerificationEmailResponse = ConsumerAuthResendVerificationEmailResponses[keyof ConsumerAuthResendVerificationEmailResponses];
+
+export type ConsumerAuthLoginConsumerData = {
+    body: ConsumerLoginRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/auth/consumer/login';
+};
+
+export type ConsumerAuthLoginConsumerErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ConsumerAuthLoginConsumerError = ConsumerAuthLoginConsumerErrors[keyof ConsumerAuthLoginConsumerErrors];
+
+export type ConsumerAuthLoginConsumerResponses = {
+    /**
+     * Successful Response
+     */
+    200: ConsumerToken;
+};
+
+export type ConsumerAuthLoginConsumerResponse = ConsumerAuthLoginConsumerResponses[keyof ConsumerAuthLoginConsumerResponses];
 
 export type UsersReadUsersData = {
     body?: never;

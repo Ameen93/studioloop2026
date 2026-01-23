@@ -9,6 +9,6 @@ import { Redirect } from 'expo-router';
 
 export default function IndexScreen() {
   // TODO: Check if user is authenticated and redirect to main app
-  // For now, redirect to registration
-  return <Redirect href="/(auth)/register" />;
+  // For now, redirect to login
+  return <Redirect href="/(auth)/login" />;
 }

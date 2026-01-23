@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Login } from './routes/auth/Login';
 import { Register } from './routes/auth/Register';
 import { VerifyEmail } from './routes/auth/VerifyEmail';
 import { VerifyEmailSent } from './routes/auth/VerifyEmailSent';
@@ -19,12 +20,13 @@ function App() {
       <BrowserRouter>
         <Routes>
           {/* Auth routes */}
+          <Route path="/auth/login" element={<Login />} />
           <Route path="/auth/register" element={<Register />} />
           <Route path="/auth/verify-email" element={<VerifyEmail />} />
           <Route path="/auth/verify-email-sent" element={<VerifyEmailSent />} />
 
-          {/* Default redirect */}
-          <Route path="/" element={<Navigate to="/auth/register" replace />} />
+          {/* Default redirect - go to login for authenticated users */}
+          <Route path="/" element={<Navigate to="/auth/login" replace />} />
 
           {/* Catch all - 404 */}
           <Route
