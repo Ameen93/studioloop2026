@@ -790,6 +790,17 @@ async def google_callback(
     ).first()
 
     if consumer:
+        # Block login for inactive/deactivated accounts (same as email login)
+        if not consumer.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "code": "ACCOUNT_DEACTIVATED",
+                    "message": "This account has been deactivated",
+                    "details": {},
+                },
+            )
+
         # Existing user - link Google if not already linked
         if not consumer.google_id:
             consumer.google_id = google_id
