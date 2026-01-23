@@ -45,25 +45,15 @@ class TestStaffLogin:
         db.refresh(staff)
         return staff
 
-    def _get_or_create_gym(self, db: Session) -> Gym:
-        """Get existing gym or create one for testing."""
+    def _get_gym(self, db: Session) -> Gym:
+        """Get an existing seed gym for testing."""
         gym = db.exec(select(Gym)).first()
-        if gym:
-            return gym
-
-        gym = Gym(
-            name="Test Gym",
-            slug=f"test-gym-{random_lower_string()}",
-            description="Test gym for staff auth tests",
-        )
-        db.add(gym)
-        db.commit()
-        db.refresh(gym)
+        assert gym is not None, "Seed gym should exist (seeded in conftest.py)"
         return gym
 
     def test_staff_login_success_owner(self, client: TestClient, db: Session) -> None:
         """Test successful staff login returns tokens with role/gym_id (AC #1, #2)."""
-        gym = self._get_or_create_gym(db)
+        gym = self._get_gym(db)
         email = random_email()
         password = random_lower_string()
         self._create_staff(db, str(gym.id), email, password, StaffRole.OWNER)
@@ -91,7 +81,7 @@ class TestStaffLogin:
 
     def test_staff_login_manager_role(self, client: TestClient, db: Session) -> None:
         """Test manager login returns role: manager (AC #1)."""
-        gym = self._get_or_create_gym(db)
+        gym = self._get_gym(db)
         email = random_email()
         password = random_lower_string()
         self._create_staff(db, str(gym.id), email, password, StaffRole.MANAGER)
@@ -107,7 +97,7 @@ class TestStaffLogin:
 
     def test_staff_login_front_desk_role(self, client: TestClient, db: Session) -> None:
         """Test front_desk login returns role: front_desk (AC #1)."""
-        gym = self._get_or_create_gym(db)
+        gym = self._get_gym(db)
         email = random_email()
         password = random_lower_string()
         self._create_staff(db, str(gym.id), email, password, StaffRole.FRONT_DESK)
@@ -123,7 +113,7 @@ class TestStaffLogin:
 
     def test_staff_login_instructor_role(self, client: TestClient, db: Session) -> None:
         """Test instructor login returns role: instructor (AC #1)."""
-        gym = self._get_or_create_gym(db)
+        gym = self._get_gym(db)
         email = random_email()
         password = random_lower_string()
         self._create_staff(db, str(gym.id), email, password, StaffRole.INSTRUCTOR)
@@ -139,7 +129,7 @@ class TestStaffLogin:
 
     def test_staff_token_has_role_claim(self, client: TestClient, db: Session) -> None:
         """Test JWT payload contains role claim (AC #1)."""
-        gym = self._get_or_create_gym(db)
+        gym = self._get_gym(db)
         email = random_email()
         password = random_lower_string()
         staff = self._create_staff(db, str(gym.id), email, password, StaffRole.OWNER)
@@ -168,7 +158,7 @@ class TestStaffLogin:
         self, client: TestClient, db: Session
     ) -> None:
         """Test JWT payload contains gym_id claim (AC #2)."""
-        gym = self._get_or_create_gym(db)
+        gym = self._get_gym(db)
         email = random_email()
         password = random_lower_string()
         self._create_staff(db, str(gym.id), email, password, StaffRole.MANAGER)
@@ -195,7 +185,7 @@ class TestStaffLogin:
         self, client: TestClient, db: Session
     ) -> None:
         """Test login with wrong password returns 401 INVALID_CREDENTIALS."""
-        gym = self._get_or_create_gym(db)
+        gym = self._get_gym(db)
         email = random_email()
         password = random_lower_string()
         self._create_staff(db, str(gym.id), email, password, StaffRole.OWNER)
@@ -226,7 +216,7 @@ class TestStaffLogin:
         self, client: TestClient, db: Session
     ) -> None:
         """Test login with inactive staff returns 401 INVALID_CREDENTIALS (AC #5)."""
-        gym = self._get_or_create_gym(db)
+        gym = self._get_gym(db)
         email = random_email()
         password = random_lower_string()
         self._create_staff(
@@ -268,14 +258,7 @@ class TestStaffModel:
     def test_staff_belongs_to_gym(self, db: Session) -> None:
         """Test staff has gym_id FK relationship."""
         gym = db.exec(select(Gym)).first()
-        if not gym:
-            gym = Gym(
-                name="Test Gym for Model",
-                slug=f"test-gym-model-{random_lower_string()}",
-            )
-            db.add(gym)
-            db.commit()
-            db.refresh(gym)
+        assert gym is not None, "Seed gym should exist"
 
         staff = Staff(
             gym_id=gym.id,
@@ -297,14 +280,7 @@ class TestStaffModel:
     def test_staff_role_enum(self, db: Session) -> None:
         """Test all staff roles can be created."""
         gym = db.exec(select(Gym)).first()
-        if not gym:
-            gym = Gym(
-                name="Test Gym for Roles",
-                slug=f"test-gym-roles-{random_lower_string()}",
-            )
-            db.add(gym)
-            db.commit()
-            db.refresh(gym)
+        assert gym is not None, "Seed gym should exist"
 
         for role in StaffRole:
             staff = Staff(
