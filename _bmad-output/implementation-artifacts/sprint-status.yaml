@@ -40,21 +40,21 @@ story_location: _bmad-output/implementation-artifacts
 development_status:
   # Epic 0: Project Foundation & Developer Experience (9 stories)
   # NOTE: Infrastructure deployment moved to Epic 16 (local-first strategy)
-  epic-0: in-progress
+  epic-0: done
   0-1-initialize-backend-with-fastapi-template: done
   0-2-initialize-frontend-monorepo-with-turborepo: done
   0-3-configure-shared-ui-package-with-nativewind-tailwind: done
   0-4-setup-local-development-environment: done
-  0-5-configure-local-ci-lint-and-tests: review
-  0-6-configure-hey-api-for-client-generation: review
+  0-5-configure-local-ci-lint-and-tests: done
+  0-6-configure-hey-api-for-client-generation: done
   0-7-establish-multi-tenancy-patterns-and-base-models: done
-  0-8-create-seed-data-scripts: in-progress
-  0-9-configure-local-e2e-testing-setup: review
-  epic-0-retrospective: optional
+  0-8-create-seed-data-scripts: done
+  0-9-configure-local-e2e-testing-setup: done
+  epic-0-retrospective: done
 
   # Epic 1: Authentication & Identity Platform (10 stories)
-  epic-1: backlog
-  1-1-consumer-email-registration: backlog
+  epic-1: in-progress
+  1-1-consumer-email-registration: dev-complete
   1-2-consumer-email-login: backlog
   1-3-staff-email-login: backlog
   1-4-jwt-token-refresh: backlog

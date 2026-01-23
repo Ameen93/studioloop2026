@@ -129,7 +129,8 @@ class TestSeedDataIntegrity:
         ).first()
 
         assert test_consumer is not None, "Test consumer should exist"
-        assert test_consumer.full_name == "Test User"
+        assert test_consumer.first_name == "Test"
+        assert test_consumer.last_name == "User"
         assert test_consumer.is_email_verified is True
 
     def test_gyms_have_sa_data(self, db_session: Session) -> None:
