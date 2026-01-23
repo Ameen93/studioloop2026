@@ -9,19 +9,26 @@
     "lint": "turbo lint",
     "test": "turbo test",
     "type-check": "turbo type-check",
-    "generate:api": "pnpm --filter @sl/api-client generate"
+    "generate:api": "pnpm --filter @sl/api-client generate",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:reset-db": "./scripts/reset-test-db.sh"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.28.1",
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "@types/node": "^25.0.9",
     "esbuild": "^0.27.2",
     "turbo": "^2.7.5",
     "typescript": "^5.9.3"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild"]
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }
