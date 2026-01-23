@@ -4,7 +4,6 @@ Creates realistic gym spaces/studios for each seeded gym.
 Spaces are gym-scoped and demonstrate the multi-tenancy pattern.
 """
 
-
 from typing import Any
 
 from sqlmodel import Session, select

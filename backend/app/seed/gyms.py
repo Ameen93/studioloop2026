@@ -112,9 +112,7 @@ def seed_gyms(session: Session) -> list[Gym]:
 
     for gym_data in SEED_GYMS:
         # Check if gym already exists by unique slug
-        existing = session.exec(
-            select(Gym).where(Gym.slug == gym_data["slug"])
-        ).first()
+        existing = session.exec(select(Gym).where(Gym.slug == gym_data["slug"])).first()
 
         if existing:
             gyms.append(existing)
