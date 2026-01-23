@@ -21,7 +21,7 @@ from app.core.security import (
     needs_rehash,
     verify_password,
 )
-from app.models import Message, RefreshTokenRequest, TokenPayload
+from app.models import ForgotPasswordRequest, Message, NewPassword, RefreshTokenRequest, TokenPayload
 from app.models.consumer import (
     Consumer,
     ConsumerCreate,
@@ -33,8 +33,11 @@ from app.models.consumer import (
 from app.utils import (
     generate_email_verification_email,
     generate_email_verification_token,
+    generate_password_reset_token,
+    generate_reset_password_email,
     send_email,
     verify_email_verification_token,
+    verify_password_reset_token,
 )
 
 router = APIRouter(prefix="/auth/consumer", tags=["consumer-auth"])
@@ -395,3 +398,101 @@ def refresh_consumer_token(
         refresh_token=refresh_token,
         token_type="bearer",
     )
+
+
+@router.post("/forgot-password")
+def forgot_password(
+    session: SessionDep,
+    request_data: ForgotPasswordRequest,
+) -> Message:
+    """Request password reset email (Story 1.5, AC #1, #5).
+
+    Always returns success, regardless of whether email exists.
+    Only sends email if consumer exists, is active, AND email is verified.
+    This prevents email enumeration attacks.
+
+    Args:
+        session: Database session
+        request_data: Contains the email address
+
+    Returns:
+        Message confirming request received (always success)
+    """
+    consumer = session.exec(
+        select(Consumer).where(Consumer.email == request_data.email)
+    ).first()
+
+    # Only send email if consumer exists, is active, and email verified
+    # But ALWAYS return success to prevent enumeration
+    if consumer and consumer.is_active and consumer.is_email_verified:
+        if settings.emails_enabled:
+            token = generate_password_reset_token(request_data.email)
+            email_data = generate_reset_password_email(
+                email_to=consumer.email,
+                email=request_data.email,
+                token=token,
+            )
+            send_email(
+                email_to=consumer.email,
+                subject=email_data.subject,
+                html_content=email_data.html_content,
+            )
+
+    return Message(message="If the email exists, a password reset link has been sent")
+
+
+@router.post("/reset-password")
+def reset_password(
+    session: SessionDep,
+    request_data: NewPassword,
+) -> Message:
+    """Reset password using token from email (Story 1.5, AC #2, #3, #4).
+
+    Validates token, updates password, and invalidates all existing sessions
+    by incrementing token_version.
+
+    Args:
+        session: Database session
+        request_data: Contains the token and new password
+
+    Returns:
+        Message confirming password was reset
+
+    Raises:
+        HTTPException: 400 INVALID_TOKEN if token is invalid/expired
+    """
+    email = verify_password_reset_token(request_data.token)
+
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "INVALID_TOKEN",
+                "message": "Invalid or expired reset token",
+                "details": {},
+            },
+        )
+
+    consumer = session.exec(select(Consumer).where(Consumer.email == email)).first()
+
+    # Use same error for not found/inactive to prevent enumeration
+    if not consumer or not consumer.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "INVALID_TOKEN",
+                "message": "Invalid or expired reset token",
+                "details": {},
+            },
+        )
+
+    # Update password with Argon2 hash (ARCH-11)
+    consumer.hashed_password = get_password_hash(request_data.new_password)
+
+    # CRITICAL: Invalidate all existing sessions (ARCH-12)
+    consumer.token_version += 1
+
+    session.add(consumer)
+    session.commit()
+
+    return Message(message="Password has been reset successfully")

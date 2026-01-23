@@ -31,6 +31,7 @@ from app.models.staff import Staff, StaffLoginRequest, StaffRole, StaffToken
 # Re-export existing models from old location for backward compatibility
 # TODO: Migrate these to app.models.auth in future story
 from app.models_legacy import (
+    ForgotPasswordRequest,
     Item,
     ItemBase,
     ItemCreate,
@@ -98,4 +99,5 @@ __all__ = [
     "TokenPayload",
     "RefreshTokenRequest",
     "NewPassword",
+    "ForgotPasswordRequest",
 ]

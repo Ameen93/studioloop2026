@@ -23,8 +23,14 @@ from app.core.security import (
     needs_rehash,
     verify_password,
 )
-from app.models import RefreshTokenRequest, TokenPayload
+from app.models import ForgotPasswordRequest, Message, NewPassword, RefreshTokenRequest, TokenPayload
 from app.models.staff import Staff, StaffLoginRequest, StaffToken
+from app.utils import (
+    generate_password_reset_token,
+    generate_reset_password_email,
+    send_email,
+    verify_password_reset_token,
+)
 
 router = APIRouter(prefix="/auth/staff", tags=["staff-auth"])
 
@@ -211,3 +217,99 @@ def refresh_staff_token(
         role=staff.role.value,
         gym_id=str(staff.gym_id),
     )
+
+
+@router.post("/forgot-password")
+def forgot_password(
+    session: SessionDep,
+    request_data: ForgotPasswordRequest,
+) -> Message:
+    """Request password reset email for staff (Story 1.5, AC #1, #5).
+
+    Always returns success, regardless of whether email exists.
+    Only sends email if staff exists and is active.
+    This prevents email enumeration attacks.
+
+    Args:
+        session: Database session
+        request_data: Contains the email address
+
+    Returns:
+        Message confirming request received (always success)
+    """
+    staff = session.exec(select(Staff).where(Staff.email == request_data.email)).first()
+
+    # Only send email if staff exists and is active
+    # But ALWAYS return success to prevent enumeration
+    if staff and staff.is_active:
+        if settings.emails_enabled:
+            token = generate_password_reset_token(request_data.email)
+            email_data = generate_reset_password_email(
+                email_to=staff.email,
+                email=request_data.email,
+                token=token,
+            )
+            send_email(
+                email_to=staff.email,
+                subject=email_data.subject,
+                html_content=email_data.html_content,
+            )
+
+    return Message(message="If the email exists, a password reset link has been sent")
+
+
+@router.post("/reset-password")
+def reset_password(
+    session: SessionDep,
+    request_data: NewPassword,
+) -> Message:
+    """Reset staff password using token from email (Story 1.5, AC #2, #3, #4).
+
+    Validates token, updates password, and invalidates all existing sessions
+    by incrementing token_version.
+
+    Args:
+        session: Database session
+        request_data: Contains the token and new password
+
+    Returns:
+        Message confirming password was reset
+
+    Raises:
+        HTTPException: 400 INVALID_TOKEN if token is invalid/expired
+    """
+    email = verify_password_reset_token(request_data.token)
+
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "INVALID_TOKEN",
+                "message": "Invalid or expired reset token",
+                "details": {},
+            },
+        )
+
+    staff = session.exec(select(Staff).where(Staff.email == email)).first()
+
+    # Use same error for not found/inactive to prevent enumeration
+    if not staff or not staff.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "INVALID_TOKEN",
+                "message": "Invalid or expired reset token",
+                "details": {},
+            },
+        )
+
+    # Update password with Argon2 hash (ARCH-11)
+    staff.hashed_password = get_password_hash(request_data.new_password)
+
+    # CRITICAL: Invalidate all existing sessions (ARCH-12)
+    staff.token_version += 1
+
+    session.add(staff)
+    session.commit()
+
+    return Message(message="Password has been reset successfully")

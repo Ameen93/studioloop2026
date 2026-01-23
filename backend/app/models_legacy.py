@@ -122,3 +122,10 @@ class RefreshTokenRequest(SQLModel):
 class NewPassword(SQLModel):
     token: str
     new_password: str = Field(min_length=8, max_length=128)
+
+
+# Request body for password reset request (Story 1.5)
+class ForgotPasswordRequest(SQLModel):
+    """Request body for forgot password endpoint."""
+
+    email: EmailStr
