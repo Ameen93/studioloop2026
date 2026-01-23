@@ -29,6 +29,17 @@ class UserRole(str, Enum):
     INSTRUCTOR = "instructor"
 
 
+class AuthProvider(str, Enum):
+    """Authentication provider types (ARCH-14).
+
+    Tracks how the user originally registered.
+    """
+
+    EMAIL = "email"
+    GOOGLE = "google"
+    APPLE = "apple"
+
+
 class ConsumerBase(SQLModel):
     """Base properties shared by Consumer schemas."""
 
@@ -125,6 +136,26 @@ class Consumer(SoftDeleteMixin, BaseModel, ConsumerBase, table=True):
         description="Timestamp when account deletion was requested (30-day countdown for POPIA)",
     )
 
+    # Social login fields (ARCH-14, Story 1.9)
+    google_id: str | None = Field(
+        default=None,
+        index=True,
+        max_length=255,
+        description="Google OAuth sub/ID for social login",
+        sa_column_kwargs={"unique": True, "nullable": True},
+    )
+    apple_id: str | None = Field(
+        default=None,
+        index=True,
+        max_length=255,
+        description="Apple Sign-In user identifier (Story 1.10)",
+        sa_column_kwargs={"unique": True, "nullable": True},
+    )
+    auth_provider: AuthProvider = Field(
+        default=AuthProvider.EMAIL,
+        description="Primary authentication provider used to create account",
+    )
+
     # Relationships (to be populated as domain models are created)
     # bookings: list["Booking"] = Relationship(back_populates="consumer")
     # memberships: list["Membership"] = Relationship(back_populates="consumer")
@@ -163,6 +194,10 @@ class ConsumerPublic(SQLModel):
     avatar_url: str | None = None
     is_email_verified: bool
     is_active: bool
+    # Social login fields (Story 1.9)
+    google_id: str | None = None
+    apple_id: str | None = None
+    auth_provider: AuthProvider = AuthProvider.EMAIL
 
 
 class ConsumerLoginRequest(SQLModel):

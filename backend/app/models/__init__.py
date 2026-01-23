@@ -23,10 +23,12 @@ from app.models.base import (
 )
 from app.models.consumer import (
     AccountDeletionRequest,
+    AuthProvider,
     Consumer,
     ConsumerCreate,
     ConsumerPublic,
     ConsumerUpdate,
+    UserRole,
 )
 
 # Domain models
@@ -73,10 +75,12 @@ __all__ = [
     "GymUpdate",
     "GymPublic",
     "AccountDeletionRequest",
+    "AuthProvider",
     "Consumer",
     "ConsumerCreate",
     "ConsumerUpdate",
     "ConsumerPublic",
+    "UserRole",
     "Space",
     "SpaceCreate",
     "SpaceUpdate",
