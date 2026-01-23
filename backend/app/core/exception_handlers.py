@@ -54,7 +54,7 @@ def _create_error_response(
 
 
 async def not_found_error_handler(
-    request: Request,
+    _request: Request,
     exc: NotFoundError,
 ) -> JSONResponse:
     """Handle NotFoundError exceptions."""
@@ -67,7 +67,7 @@ async def not_found_error_handler(
 
 
 async def validation_error_handler(
-    request: Request,
+    _request: Request,
     exc: ValidationError,
 ) -> JSONResponse:
     """Handle ValidationError exceptions."""
@@ -80,7 +80,7 @@ async def validation_error_handler(
 
 
 async def conflict_error_handler(
-    request: Request,
+    _request: Request,
     exc: ConflictError,
 ) -> JSONResponse:
     """Handle ConflictError exceptions."""
@@ -93,7 +93,7 @@ async def conflict_error_handler(
 
 
 async def permission_denied_error_handler(
-    request: Request,
+    _request: Request,
     exc: PermissionDeniedError,
 ) -> JSONResponse:
     """Handle PermissionDeniedError exceptions."""
@@ -106,7 +106,7 @@ async def permission_denied_error_handler(
 
 
 async def tenant_access_error_handler(
-    request: Request,
+    _request: Request,
     exc: TenantAccessError,
 ) -> JSONResponse:
     """Handle TenantAccessError exceptions.
@@ -123,7 +123,7 @@ async def tenant_access_error_handler(
 
 
 async def business_rule_error_handler(
-    request: Request,
+    _request: Request,
     exc: BusinessRuleError,
 ) -> JSONResponse:
     """Handle BusinessRuleError exceptions."""
@@ -136,7 +136,7 @@ async def business_rule_error_handler(
 
 
 async def studioloop_error_handler(
-    request: Request,
+    _request: Request,
     exc: StudioLoopError,
 ) -> JSONResponse:
     """Catch-all handler for any StudioLoopError not handled above."""

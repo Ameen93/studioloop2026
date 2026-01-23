@@ -21,10 +21,10 @@ from app.models.base import (
     SoftDeleteMixin,
     TimestampMixin,
 )
+from app.models.consumer import Consumer, ConsumerCreate, ConsumerPublic, ConsumerUpdate
 
 # Domain models
 from app.models.gym import Gym, GymCreate, GymPublic, GymUpdate
-from app.models.consumer import Consumer, ConsumerCreate, ConsumerPublic, ConsumerUpdate
 from app.models.space import Space, SpaceCreate, SpacePublic, SpaceUpdate
 
 # Re-export existing models from old location for backward compatibility
