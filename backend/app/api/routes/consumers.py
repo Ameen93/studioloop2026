@@ -21,7 +21,13 @@ from app.core.security import (
     needs_rehash,
     verify_password,
 )
-from app.models import ForgotPasswordRequest, Message, NewPassword, RefreshTokenRequest, TokenPayload
+from app.models import (
+    ForgotPasswordRequest,
+    Message,
+    NewPassword,
+    RefreshTokenRequest,
+    TokenPayload,
+)
 from app.models.consumer import (
     Consumer,
     ConsumerCreate,
