@@ -280,3 +280,117 @@ def get_gym_id_from_path(
 
 
 GymIdDep = Annotated[UUID, Depends(get_gym_id_from_path)]
+
+
+# =============================================================================
+# Role-Based Access Control (RBAC) - Story 1.8
+# =============================================================================
+
+# Role hierarchy for permission inheritance (ARCH-13)
+ROLE_HIERARCHY = {
+    "owner": 4,
+    "manager": 3,
+    "front_desk": 2,
+    "instructor": 2,  # Same level as front_desk (peer roles)
+    "consumer": 1,
+}
+
+
+def has_permission(user_role: str, required_role: str) -> bool:
+    """Check if user role has at least required permission level.
+
+    Args:
+        user_role: The role the user has
+        required_role: The minimum role required
+
+    Returns:
+        True if user_role >= required_role in hierarchy
+    """
+    return ROLE_HIERARCHY.get(user_role, 0) >= ROLE_HIERARCHY.get(required_role, 0)
+
+
+class RoleChecker:
+    """FastAPI dependency for role-based access control (ARCH-13).
+
+    Usage:
+        @router.get("/admin", dependencies=[Depends(RoleChecker(["owner", "manager"]))])
+        def admin_route(): ...
+
+        # Or as a parameter dependency:
+        @router.get("/admin")
+        def admin_route(
+            _role_check: Annotated[None, Depends(RoleChecker(["owner"]))]
+        ): ...
+    """
+
+    def __init__(self, allowed_roles: list[str]):
+        """Initialize RoleChecker with allowed roles.
+
+        Args:
+            allowed_roles: List of role names that are permitted access
+        """
+        self.allowed_roles = allowed_roles
+
+    def __call__(
+        self,
+        current_staff: CurrentStaff,
+    ) -> None:
+        """Check if current staff has required role.
+
+        Args:
+            current_staff: Authenticated staff from JWT
+
+        Raises:
+            HTTPException: 403 FORBIDDEN if role not allowed
+        """
+        if current_staff.role.value not in self.allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "code": "FORBIDDEN",
+                    "message": "Insufficient permissions",
+                    "details": {"required_roles": self.allowed_roles},
+                },
+            )
+
+
+# Convenience dependencies for common role requirements
+RequireOwner = Depends(RoleChecker(["owner"]))
+RequireOwnerOrManager = Depends(RoleChecker(["owner", "manager"]))
+RequireManager = Depends(RoleChecker(["owner", "manager"]))  # Alias for clarity
+RequireStaff = Depends(RoleChecker(["owner", "manager", "front_desk", "instructor"]))
+
+
+def get_current_staff_for_gym(
+    gym_id: Annotated[UUID, Path(description="Gym ID (tenant identifier)")],
+    current_staff: CurrentStaff,
+) -> Staff:
+    """Validate staff member has access to the specified gym.
+
+    Compares gym_id from path with staff's gym_id to ensure
+    tenant isolation (multi-tenancy).
+
+    Args:
+        gym_id: UUID from path parameter
+        current_staff: Authenticated staff from JWT
+
+    Returns:
+        Staff model if authorized
+
+    Raises:
+        HTTPException: 403 FORBIDDEN if gym_id mismatch
+    """
+    if str(current_staff.gym_id) != str(gym_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "FORBIDDEN",
+                "message": "Access denied to this gym",
+                "details": {},
+            },
+        )
+    return current_staff
+
+
+# Annotated type for gym-scoped staff dependency
+StaffGymDep = Annotated[Staff, Depends(get_current_staff_for_gym)]

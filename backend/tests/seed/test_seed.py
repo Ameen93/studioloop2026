@@ -20,8 +20,14 @@ from app.seed.spaces import GYM_SPACE_ASSIGNMENTS
 
 @pytest.fixture(scope="module")
 def db_session():
-    """Provide a database session for tests."""
+    """Provide a clean database session for seed tests.
+
+    Resets seed data before tests to ensure isolation from other test modules
+    that may have created test data (e.g., RBAC tests creating test gyms).
+    """
     with Session(engine) as session:
+        # Reset to clean slate - seed tests need to verify exact counts
+        reset_seed_data(session)
         yield session
 
 
