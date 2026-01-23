@@ -432,7 +432,9 @@ def forgot_password(
     # But ALWAYS return success to prevent enumeration
     if consumer and consumer.is_active and consumer.is_email_verified:
         if settings.emails_enabled:
-            token = generate_password_reset_token(request_data.email, account_type="consumer")
+            token = generate_password_reset_token(
+                request_data.email, account_type="consumer"
+            )
             email_data = generate_reset_password_email(
                 email_to=consumer.email,
                 email=request_data.email,
@@ -467,7 +469,9 @@ def reset_password(
     Raises:
         HTTPException: 400 INVALID_TOKEN if token is invalid/expired
     """
-    email = verify_password_reset_token(request_data.token, expected_account_type="consumer")
+    email = verify_password_reset_token(
+        request_data.token, expected_account_type="consumer"
+    )
 
     if not email:
         raise HTTPException(
