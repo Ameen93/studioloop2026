@@ -5,19 +5,15 @@
  * displays the result to the user.
  */
 
-import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { consumerAuthVerifyEmailOptions } from '@sl/api-client/hooks';
 
-type VerificationStatus = 'loading' | 'success' | 'error' | 'no-token';
-
 export function VerifyEmail() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
-  const [status, setStatus] = useState<VerificationStatus>(token ? 'loading' : 'no-token');
 
-  const { data, error, isSuccess, isError } = useQuery({
+  const { isSuccess, isError, isPending } = useQuery({
     ...consumerAuthVerifyEmailOptions({
       query: { token: token || '' },
     }),
@@ -25,13 +21,8 @@ export function VerifyEmail() {
     retry: false,
   });
 
-  useEffect(() => {
-    if (isSuccess && data) {
-      setStatus('success');
-    } else if (isError) {
-      setStatus('error');
-    }
-  }, [isSuccess, isError, data]);
+  // Derive status from query state
+  const status = !token ? 'no-token' : isPending ? 'loading' : isSuccess ? 'success' : isError ? 'error' : 'loading';
 
   if (status === 'no-token') {
     return (

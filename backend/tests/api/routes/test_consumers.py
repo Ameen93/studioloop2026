@@ -12,7 +12,6 @@ Verifies Story 1.1 acceptance criteria:
 from unittest.mock import patch
 from uuid import UUID
 
-import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
