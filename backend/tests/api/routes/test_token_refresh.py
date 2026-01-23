@@ -481,9 +481,7 @@ class TestStaffTokenRefresh:
         )
         assert payload["gym_id"] == str(gym.id)
 
-    def test_staff_refresh_expired_token(
-        self, client: TestClient, db: Session
-    ) -> None:
+    def test_staff_refresh_expired_token(self, client: TestClient, db: Session) -> None:
         """Test expired staff refresh token returns 401 (AC #4)."""
         gym = self._get_gym(db)
         email = random_email()
@@ -540,9 +538,7 @@ class TestStaffTokenRefresh:
         gym = self._get_gym(db)
         email = random_email()
         password = random_lower_string()
-        staff = self._create_staff(
-            db, str(gym.id), email, password, is_active=False
-        )
+        staff = self._create_staff(db, str(gym.id), email, password, is_active=False)
 
         refresh_token = create_refresh_token(
             subject=str(staff.id),
