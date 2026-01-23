@@ -83,13 +83,11 @@ class TestSeedCounts:
     """Tests verifying expected record counts after seeding."""
 
     def test_gym_count_matches_seed_data(self, db_session: Session) -> None:
-        """Number of seed gyms should match SEED_GYMS list."""
+        """Number of gyms should match SEED_GYMS list."""
         seed_all(db_session)
 
-        # Filter for only seed gyms by their slugs (other tests may create test gyms)
-        seed_slugs = {gym["slug"] for gym in SEED_GYMS}
-        gyms = db_session.exec(select(Gym).where(Gym.slug.in_(seed_slugs))).all()
-        assert len(gyms) == len(SEED_GYMS), f"Expected {len(SEED_GYMS)} seed gyms"
+        gyms = db_session.exec(select(Gym)).all()
+        assert len(gyms) == len(SEED_GYMS), f"Expected {len(SEED_GYMS)} gyms"
 
     def test_consumer_count_matches_seed_data(self, db_session: Session) -> None:
         """Number of consumers should match SEED_CONSUMERS list."""
@@ -136,12 +134,10 @@ class TestSeedDataIntegrity:
         assert test_consumer.is_email_verified is True
 
     def test_gyms_have_sa_data(self, db_session: Session) -> None:
-        """Seed gyms should have South African location data."""
+        """Gyms should have South African location data."""
         seed_all(db_session)
 
-        # Filter for only seed gyms by their slugs (other tests may create test gyms)
-        seed_slugs = {gym["slug"] for gym in SEED_GYMS}
-        gyms = db_session.exec(select(Gym).where(Gym.slug.in_(seed_slugs))).all()
+        gyms = db_session.exec(select(Gym)).all()
 
         for gym in gyms:
             assert gym.country == "ZA", f"Gym {gym.name} should have ZA country code"

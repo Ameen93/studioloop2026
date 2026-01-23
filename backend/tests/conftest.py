@@ -8,6 +8,7 @@ from app.core.config import settings
 from app.core.db import engine, init_db
 from app.main import app
 from app.models import Consumer, Gym, Item, Space, Staff, User
+from app.seed import seed_all
 from tests.utils.user import authentication_token_from_email
 from tests.utils.utils import get_superuser_token_headers
 
@@ -16,6 +17,8 @@ from tests.utils.utils import get_superuser_token_headers
 def db() -> Generator[Session, None, None]:
     with Session(engine) as session:
         init_db(session)
+        # Seed test data so gyms are available for all tests
+        seed_all(session)
         yield session
         # Clean up in reverse dependency order (children before parents)
         session.execute(delete(Staff))
