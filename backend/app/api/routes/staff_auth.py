@@ -13,7 +13,7 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import ValidationError
 from sqlmodel import select
 
-from app.api.deps import SessionDep
+from app.api.deps import CurrentStaff, SessionDep
 from app.core import security
 from app.core.config import settings
 from app.core.security import (
@@ -30,11 +30,18 @@ from app.models import (
     RefreshTokenRequest,
     TokenPayload,
 )
-from app.models.staff import Staff, StaffLoginRequest, StaffToken
+from app.models.staff import (
+    Staff,
+    StaffLoginRequest,
+    StaffPublic,
+    StaffToken,
+    StaffUpdate,
+)
 from app.utils import (
     generate_password_reset_token,
     generate_reset_password_email,
     send_email,
+    validate_sa_phone,
     verify_password_reset_token,
 )
 
@@ -323,3 +330,84 @@ def reset_password(
     session.commit()
 
     return Message(message="Password has been reset successfully")
+
+
+@router.get("/me", response_model=StaffPublic)
+def get_current_staff_profile(
+    current_staff: CurrentStaff,
+) -> Staff:
+    """Get current staff member's profile (Story 1.6, AC #5).
+
+    Returns the authenticated staff member's profile information.
+    Requires a valid access token.
+
+    Args:
+        current_staff: Authenticated staff from JWT token
+
+    Returns:
+        StaffPublic with profile data including role and gym_id
+    """
+    return current_staff
+
+
+@router.patch("/me", response_model=StaffPublic)
+def update_staff_profile(
+    session: SessionDep,
+    current_staff: CurrentStaff,
+    update_data: StaffUpdate,
+) -> Staff:
+    """Update current staff member's profile (Story 1.6, AC #5).
+
+    Allows partial updates - only provided fields are updated.
+    Phone number must be in SA format (+27...) if provided.
+    Role and gym_id cannot be changed via this endpoint.
+
+    Args:
+        session: Database session
+        current_staff: Authenticated staff from JWT token
+        update_data: Fields to update (first_name, last_name, phone)
+
+    Returns:
+        StaffPublic with updated profile data
+
+    Raises:
+        HTTPException: 400 INVALID_PHONE_FORMAT if phone format is invalid
+    """
+    # Validate phone if provided (not None and not empty string in update)
+    update_dict = update_data.model_dump(exclude_unset=True)
+
+    # Reject null for non-nullable fields
+    non_nullable_fields = ["first_name", "last_name"]
+    for field in non_nullable_fields:
+        if field in update_dict and update_dict[field] is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "code": "INVALID_FIELD_VALUE",
+                    "message": f"{field} cannot be null",
+                    "details": {"field": field},
+                },
+            )
+
+    if "phone" in update_dict and update_dict["phone"] is not None:
+        try:
+            update_dict["phone"] = validate_sa_phone(update_dict["phone"])
+        except ValueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "code": "INVALID_PHONE_FORMAT",
+                    "message": str(e),
+                    "details": {"field": "phone"},
+                },
+            )
+
+    # Update only provided fields
+    for field, value in update_dict.items():
+        setattr(current_staff, field, value)
+
+    session.add(current_staff)
+    session.commit()
+    session.refresh(current_staff)
+
+    return current_staff

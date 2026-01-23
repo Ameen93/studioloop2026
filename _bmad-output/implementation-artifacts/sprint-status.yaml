@@ -59,7 +59,7 @@ development_status:
   1-3-staff-email-login: done
   1-4-jwt-token-refresh: review
   1-5-password-reset-via-email: review
-  1-6-user-profile-management: ready-for-dev
+  1-6-user-profile-management: review
   1-7-popia-account-deletion: backlog
   1-8-role-based-access-control: backlog
   1-9-google-social-login: backlog
