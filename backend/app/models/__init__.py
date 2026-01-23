@@ -26,6 +26,7 @@ from app.models.consumer import Consumer, ConsumerCreate, ConsumerPublic, Consum
 # Domain models
 from app.models.gym import Gym, GymCreate, GymPublic, GymUpdate
 from app.models.space import Space, SpaceCreate, SpacePublic, SpaceUpdate
+from app.models.staff import Staff, StaffLoginRequest, StaffRole, StaffToken
 
 # Re-export existing models from old location for backward compatibility
 # TODO: Migrate these to app.models.auth in future story
@@ -71,6 +72,10 @@ __all__ = [
     "SpaceCreate",
     "SpaceUpdate",
     "SpacePublic",
+    "Staff",
+    "StaffRole",
+    "StaffLoginRequest",
+    "StaffToken",
     # Legacy models (from models_legacy.py)
     "User",
     "UserBase",

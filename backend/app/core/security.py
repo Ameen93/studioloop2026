@@ -22,23 +22,39 @@ _legacy_pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 ALGORITHM = "HS256"
 
 
-def create_access_token(subject: str | Any, expires_delta: timedelta) -> str:
+def create_access_token(
+    subject: str | Any,
+    expires_delta: timedelta,
+    role: str | None = None,
+    gym_id: str | None = None,
+) -> str:
     """Create a JWT access token.
 
     Args:
         subject: The token subject (typically user ID)
         expires_delta: Token validity duration
+        role: Optional staff role claim (for staff tokens)
+        gym_id: Optional gym ID for tenant context (for staff tokens)
 
     Returns:
         Encoded JWT token string
     """
     expire = datetime.now(timezone.utc) + expires_delta
     to_encode = {"exp": expire, "sub": str(subject), "type": "access"}
+    if role:
+        to_encode["role"] = role
+    if gym_id:
+        to_encode["gym_id"] = gym_id
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
 
-def create_refresh_token(subject: str | Any, expires_delta: timedelta) -> str:
+def create_refresh_token(
+    subject: str | Any,
+    expires_delta: timedelta,
+    role: str | None = None,
+    gym_id: str | None = None,
+) -> str:
     """Create a JWT refresh token (ARCH-12).
 
     Refresh tokens have longer expiry and include a type claim
@@ -47,12 +63,18 @@ def create_refresh_token(subject: str | Any, expires_delta: timedelta) -> str:
     Args:
         subject: The token subject (typically user ID)
         expires_delta: Token validity duration
+        role: Optional staff role claim (for staff tokens)
+        gym_id: Optional gym ID for tenant context (for staff tokens)
 
     Returns:
         Encoded JWT refresh token string
     """
     expire = datetime.now(timezone.utc) + expires_delta
     to_encode = {"exp": expire, "sub": str(subject), "type": "refresh"}
+    if role:
+        to_encode["role"] = role
+    if gym_id:
+        to_encode["gym_id"] = gym_id
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
