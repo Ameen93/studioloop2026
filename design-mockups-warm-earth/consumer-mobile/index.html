@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudioLoop - Consumer Mobile (Warm Earth Theme)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --cream: #FDF6E3;
+            --cream-dark: #F5ECD7;
+            --terracotta: #C45D35;
+            --terracotta-light: #E07B52;
+            --sage: #7A9E7E;
+            --sage-light: #9BB89E;
+            --brown: #3D2B1F;
+            --brown-light: #5C4033;
+            --taupe: #8B7355;
+            --sand: #D4C4A8;
+            --glass-bg: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --glass-shadow: 0 8px 32px rgba(61, 43, 31, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, var(--cream) 0%, var(--cream-dark) 100%);
+            color: var(--brown);
+            min-height: 100vh;
+            padding: 40px 24px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--terracotta);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 24px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--terracotta), var(--terracotta-light));
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            margin: 0 auto 20px;
+            box-shadow: 0 8px 30px rgba(196, 93, 53, 0.3);
+        }
+
+        h1 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: var(--taupe);
+        }
+
+        .theme-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 100px;
+            padding: 10px 20px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--brown);
+        }
+
+        /* Design System */
+        .design-system {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 32px;
+            margin-bottom: 48px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        .design-system h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--taupe);
+        }
+
+        .colors {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .color-swatch {
+            text-align: center;
+        }
+
+        .swatch {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            margin-bottom: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .color-name {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--brown);
+        }
+
+        .color-hex {
+            font-size: 10px;
+            color: var(--taupe);
+        }
+
+        .features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .feature-tag {
+            padding: 8px 16px;
+            background: rgba(196, 93, 53, 0.1);
+            border-radius: 100px;
+            font-size: 12px;
+            color: var(--terracotta);
+            font-weight: 500;
+        }
+
+        /* Screen Grid */
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--taupe);
+            margin-bottom: 24px;
+        }
+
+        .screens-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 24px;
+        }
+
+        .screen-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            overflow: hidden;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: block;
+            box-shadow: var(--glass-shadow);
+        }
+
+        .screen-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 50px rgba(61, 43, 31, 0.15);
+        }
+
+        .screen-preview {
+            height: 280px;
+            background: linear-gradient(135deg, var(--cream), var(--cream-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .screen-preview iframe {
+            width: 430px;
+            height: 932px;
+            border: none;
+            transform: scale(0.3);
+            transform-origin: center center;
+            pointer-events: none;
+        }
+
+        .screen-placeholder {
+            font-size: 48px;
+        }
+
+        .screen-info {
+            padding: 20px;
+        }
+
+        .screen-number {
+            font-size: 10px;
+            color: var(--taupe);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .screen-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--brown);
+            margin-bottom: 6px;
+        }
+
+        .screen-desc {
+            font-size: 12px;
+            color: var(--taupe);
+            line-height: 1.4;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding-top: 48px;
+            border-top: 1px solid var(--sand);
+            margin-top: 48px;
+        }
+
+        .footer p {
+            font-size: 13px;
+            color: var(--taupe);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <a href="../index.html" class="back-link">← Back to All Themes</a>
+            <div class="logo">📱</div>
+            <h1>Consumer Mobile</h1>
+            <p class="subtitle">Warm Earth + Glassmorphism Theme</p>
+            <div class="theme-badge">
+                🎨 Warm Earth Colors • ✨ Glassmorphism • 🌿 Natural Tones
+            </div>
+        </header>
+
+        <section class="design-system">
+            <h2>Design System</h2>
+            <div class="colors">
+                <div class="color-swatch">
+                    <div class="swatch" style="background: #FDF6E3;"></div>
+                    <div class="color-name">Cream</div>
+                    <div class="color-hex">#FDF6E3</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="swatch" style="background: #C45D35;"></div>
+                    <div class="color-name">Terracotta</div>
+                    <div class="color-hex">#C45D35</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="swatch" style="background: #7A9E7E;"></div>
+                    <div class="color-name">Sage</div>
+                    <div class="color-hex">#7A9E7E</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="swatch" style="background: #3D2B1F;"></div>
+                    <div class="color-name">Brown</div>
+                    <div class="color-hex">#3D2B1F</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="swatch" style="background: #8B7355;"></div>
+                    <div class="color-name">Taupe</div>
+                    <div class="color-hex">#8B7355</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="swatch" style="background: #D4C4A8;"></div>
+                    <div class="color-name">Sand</div>
+                    <div class="color-hex">#D4C4A8</div>
+                </div>
+            </div>
+            <div class="features">
+                <span class="feature-tag">Glassmorphism</span>
+                <span class="feature-tag">backdrop-filter: blur(20px)</span>
+                <span class="feature-tag">Rounded Corners (24px)</span>
+                <span class="feature-tag">Soft Shadows</span>
+                <span class="feature-tag">Natural Gradients</span>
+                <span class="feature-tag">Semi-transparent Cards</span>
+            </div>
+        </section>
+
+        <h2 class="section-title">All Screens (8)</h2>
+        <div class="screens-grid">
+            <a href="01-home.html" class="screen-card">
+                <div class="screen-preview">
+                    <span class="screen-placeholder">🏠</span>
+                </div>
+                <div class="screen-info">
+                    <div class="screen-number">Screen 01</div>
+                    <div class="screen-name">Home</div>
+                    <div class="screen-desc">Dashboard with upcoming classes and recommendations</div>
+                </div>
+            </a>
+
+            <a href="02-discover.html" class="screen-card">
+                <div class="screen-preview">
+                    <span class="screen-placeholder">🔍</span>
+                </div>
+                <div class="screen-info">
+                    <div class="screen-number">Screen 02</div>
+                    <div class="screen-name">Discover</div>
+                    <div class="screen-desc">Browse and filter classes by category</div>
+                </div>
+            </a>
+
+            <a href="03-class-detail.html" class="screen-card">
+                <div class="screen-preview">
+                    <span class="screen-placeholder">🧘</span>
+                </div>
+                <div class="screen-info">
+                    <div class="screen-number">Screen 03</div>
+                    <div class="screen-name">Class Detail</div>
+                    <div class="screen-desc">Full class info with booking option</div>
+                </div>
+            </a>
+
+            <a href="04-my-classes.html" class="screen-card">
+                <div class="screen-preview">
+                    <span class="screen-placeholder">📋</span>
+                </div>
+                <div class="screen-info">
+                    <div class="screen-number">Screen 04</div>
+                    <div class="screen-name">My Classes</div>
+                    <div class="screen-desc">View and manage booked classes</div>
+                </div>
+            </a>
+
+            <a href="05-qr-code.html" class="screen-card">
+                <div class="screen-preview">
+                    <span class="screen-placeholder">📱</span>
+                </div>
+                <div class="screen-info">
+                    <div class="screen-number">Screen 05</div>
+                    <div class="screen-name">QR Check-in</div>
+                    <div class="screen-desc">QR code for class check-in</div>
+                </div>
+            </a>
+
+            <a href="06-profile.html" class="screen-card">
+                <div class="screen-preview">
+                    <span class="screen-placeholder">👤</span>
+                </div>
+                <div class="screen-info">
+                    <div class="screen-number">Screen 06</div>
+                    <div class="screen-name">Profile</div>
+                    <div class="screen-desc">User profile and settings</div>
+                </div>
+            </a>
+
+            <a href="07-login.html" class="screen-card">
+                <div class="screen-preview">
+                    <span class="screen-placeholder">🔐</span>
+                </div>
+                <div class="screen-info">
+                    <div class="screen-number">Screen 07</div>
+                    <div class="screen-name">Login</div>
+                    <div class="screen-desc">Sign in with email or social</div>
+                </div>
+            </a>
+
+            <a href="08-register.html" class="screen-card">
+                <div class="screen-preview">
+                    <span class="screen-placeholder">✨</span>
+                </div>
+                <div class="screen-info">
+                    <div class="screen-number">Screen 08</div>
+                    <div class="screen-name">Register</div>
+                    <div class="screen-desc">Create a new account</div>
+                </div>
+            </a>
+        </div>
+
+        <footer class="footer">
+            <p>StudioLoop • Warm Earth + Glassmorphism Theme • Consumer Mobile App</p>
+        </footer>
+    </div>
+</body>
+</html>

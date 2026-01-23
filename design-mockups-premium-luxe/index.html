@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudioLoop - Design Mockups</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --gold: #d4a855;
+            --gold-light: #f5e6c8;
+            --black: #0a0a0a;
+            --charcoal: #1a1a1a;
+            --gray: #2a2a2a;
+            --gray-light: #3a3a3a;
+            --text: #ffffff;
+            --text-muted: #8a8a8a;
+        }
+
+        body {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--black);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 60px 40px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .logo {
+            font-size: 72px;
+            margin-bottom: 24px;
+        }
+
+        .brand {
+            font-size: 48px;
+            font-weight: 300;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .brand span {
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        .tagline {
+            font-size: 16px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: var(--gold);
+            color: var(--black);
+            padding: 8px 20px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* Stats */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            padding: 32px;
+            background: var(--charcoal);
+            border: 1px solid var(--gray-light);
+            border-radius: 20px;
+            margin-bottom: 60px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 48px;
+            font-weight: 300;
+            color: var(--gold);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* Apps Grid */
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            margin-bottom: 60px;
+        }
+
+        .app-card {
+            background: var(--charcoal);
+            border: 1px solid var(--gray-light);
+            border-radius: 24px;
+            padding: 32px;
+            text-decoration: none;
+            color: var(--text);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .app-card:hover {
+            border-color: var(--gold);
+            transform: translateY(-4px);
+        }
+
+        .app-card::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(212, 168, 85, 0.1) 0%, transparent 70%);
+        }
+
+        .app-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .app-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .app-description {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+
+        .app-meta {
+            display: flex;
+            gap: 24px;
+        }
+
+        .app-stat {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .app-stat-value {
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        .app-views {
+            display: flex;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .view-badge {
+            padding: 6px 12px;
+            background: var(--gray);
+            border-radius: 100px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* Design System Section */
+        .section {
+            margin-bottom: 60px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        /* Color Palette */
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 16px;
+        }
+
+        .color-card {
+            background: var(--charcoal);
+            border: 1px solid var(--gray-light);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .color-swatch {
+            height: 80px;
+        }
+
+        .color-info {
+            padding: 16px;
+        }
+
+        .color-name {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .color-value {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+
+        /* Typography */
+        .typography-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .type-card {
+            background: var(--charcoal);
+            border: 1px solid var(--gray-light);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .type-sample {
+            margin-bottom: 16px;
+        }
+
+        .type-h1 {
+            font-size: 32px;
+            font-weight: 600;
+        }
+
+        .type-h2 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .type-body {
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .type-caption {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .type-label {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding-top: 40px;
+            border-top: 1px solid var(--gray-light);
+        }
+
+        .footer-text {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .footer-link {
+            color: var(--gold);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">🏋️</div>
+            <h1 class="brand">Studio<span>Loop</span></h1>
+            <p class="tagline">Fitness Marketplace & Gym Management Platform</p>
+            <span class="badge">Premium Luxe Design System</span>
+        </header>
+
+        <div class="stats-bar">
+            <div class="stat">
+                <div class="stat-value">4</div>
+                <div class="stat-label">Applications</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">17</div>
+                <div class="stat-label">Screens Built</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">95</div>
+                <div class="stat-label">Total Planned</div>
+            </div>
+        </div>
+
+        <div class="apps-grid">
+            <a href="consumer-mobile/index.html" class="app-card">
+                <div class="app-icon">📱</div>
+                <h2 class="app-title">Consumer Mobile</h2>
+                <p class="app-description">
+                    iOS and Android app for fitness enthusiasts to discover classes,
+                    book sessions, and manage their fitness journey.
+                </p>
+                <div class="app-meta">
+                    <span class="app-stat">
+                        <span class="app-stat-value">8</span> screens
+                    </span>
+                    <span class="app-stat">
+                        <span class="app-stat-value">23</span> planned
+                    </span>
+                </div>
+                <div class="app-views">
+                    <span class="view-badge">iOS</span>
+                    <span class="view-badge">Android</span>
+                </div>
+            </a>
+
+            <a href="consumer-web/desktop/index.html" class="app-card">
+                <div class="app-icon">🖥️</div>
+                <h2 class="app-title">Consumer Web</h2>
+                <p class="app-description">
+                    Responsive web application for consumers to browse and book
+                    fitness classes from any device.
+                </p>
+                <div class="app-meta">
+                    <span class="app-stat">
+                        <span class="app-stat-value">2</span> screens
+                    </span>
+                    <span class="app-stat">
+                        <span class="app-stat-value">46</span> planned
+                    </span>
+                </div>
+                <div class="app-views">
+                    <span class="view-badge">Desktop</span>
+                    <span class="view-badge">Mobile</span>
+                </div>
+            </a>
+
+            <a href="gym-web/desktop/index.html" class="app-card">
+                <div class="app-icon">💼</div>
+                <h2 class="app-title">Gym Web Dashboard</h2>
+                <p class="app-description">
+                    Comprehensive management dashboard for gym owners and staff
+                    to manage classes, members, and operations.
+                </p>
+                <div class="app-meta">
+                    <span class="app-stat">
+                        <span class="app-stat-value">7</span> screens
+                    </span>
+                    <span class="app-stat">
+                        <span class="app-stat-value">70</span> planned
+                    </span>
+                </div>
+                <div class="app-views">
+                    <span class="view-badge">Desktop</span>
+                    <span class="view-badge">Mobile</span>
+                </div>
+            </a>
+
+            <a href="gym-mobile/index.html" class="app-card">
+                <div class="app-icon">📲</div>
+                <h2 class="app-title">Gym Mobile</h2>
+                <p class="app-description">
+                    Staff mobile app for quick check-ins, class management,
+                    and on-the-go gym operations.
+                </p>
+                <div class="app-meta">
+                    <span class="app-stat">
+                        <span class="app-stat-value">2</span> screens
+                    </span>
+                    <span class="app-stat">
+                        <span class="app-stat-value">14</span> planned
+                    </span>
+                </div>
+                <div class="app-views">
+                    <span class="view-badge">iOS</span>
+                    <span class="view-badge">Android</span>
+                </div>
+            </a>
+        </div>
+
+        <section class="section">
+            <h2 class="section-title">Color Palette</h2>
+            <div class="color-grid">
+                <div class="color-card">
+                    <div class="color-swatch" style="background: #d4a855;"></div>
+                    <div class="color-info">
+                        <div class="color-name">Gold</div>
+                        <div class="color-value">#d4a855</div>
+                    </div>
+                </div>
+                <div class="color-card">
+                    <div class="color-swatch" style="background: #f5e6c8;"></div>
+                    <div class="color-info">
+                        <div class="color-name">Gold Light</div>
+                        <div class="color-value">#f5e6c8</div>
+                    </div>
+                </div>
+                <div class="color-card">
+                    <div class="color-swatch" style="background: #0a0a0a;"></div>
+                    <div class="color-info">
+                        <div class="color-name">Black</div>
+                        <div class="color-value">#0a0a0a</div>
+                    </div>
+                </div>
+                <div class="color-card">
+                    <div class="color-swatch" style="background: #1a1a1a;"></div>
+                    <div class="color-info">
+                        <div class="color-name">Charcoal</div>
+                        <div class="color-value">#1a1a1a</div>
+                    </div>
+                </div>
+                <div class="color-card">
+                    <div class="color-swatch" style="background: #2a2a2a;"></div>
+                    <div class="color-info">
+                        <div class="color-name">Gray</div>
+                        <div class="color-value">#2a2a2a</div>
+                    </div>
+                </div>
+                <div class="color-card">
+                    <div class="color-swatch" style="background: #3a3a3a;"></div>
+                    <div class="color-info">
+                        <div class="color-name">Gray Light</div>
+                        <div class="color-value">#3a3a3a</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Typography</h2>
+            <div class="typography-grid">
+                <div class="type-card">
+                    <div class="type-sample type-h1">Heading 1</div>
+                    <div class="type-label">32px / Semi-bold / Outfit</div>
+                </div>
+                <div class="type-card">
+                    <div class="type-sample type-h2">Heading 2</div>
+                    <div class="type-label">24px / Semi-bold / Outfit</div>
+                </div>
+                <div class="type-card">
+                    <div class="type-sample type-body">Body text for paragraphs and descriptions</div>
+                    <div class="type-label">16px / Regular / Outfit</div>
+                </div>
+                <div class="type-card">
+                    <div class="type-sample type-caption">Caption Text</div>
+                    <div class="type-label">12px / Semi-bold / Uppercase / 2px spacing</div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <p class="footer-text">
+                StudioLoop Design Mockups • Premium Luxe Theme •
+                <a href="SCREEN-LIST.md" class="footer-link">View Full Screen List</a>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

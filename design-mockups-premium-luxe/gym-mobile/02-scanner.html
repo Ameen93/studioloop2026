@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudioLoop Gym Mobile - QR Scanner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --gold: #d4a855;
+            --gold-light: #f5e6c8;
+            --black: #0a0a0a;
+            --charcoal: #1a1a1a;
+            --gray: #2a2a2a;
+            --gray-light: #3a3a3a;
+            --text: #ffffff;
+            --text-muted: #8a8a8a;
+            --success: #22c55e;
+        }
+
+        body {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--black);
+            color: var(--text);
+            max-width: 430px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-btn {
+            width: 44px;
+            height: 44px;
+            background: var(--charcoal);
+            border: 1px solid var(--gray-light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .header-title {
+            font-size: 16px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .placeholder {
+            width: 44px;
+        }
+
+        /* Scanner View */
+        .scanner-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .scanner-frame-container {
+            position: relative;
+            margin-bottom: 32px;
+        }
+
+        .scanner-frame {
+            width: 280px;
+            height: 280px;
+            border: 3px solid var(--gold);
+            border-radius: 24px;
+            position: relative;
+            background: var(--charcoal);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .scanner-corners {
+            position: absolute;
+            inset: -3px;
+        }
+
+        .scanner-corner {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--gold);
+        }
+
+        .scanner-corner.tl {
+            top: 0;
+            left: 0;
+            border-right: none;
+            border-bottom: none;
+            border-radius: 24px 0 0 0;
+        }
+
+        .scanner-corner.tr {
+            top: 0;
+            right: 0;
+            border-left: none;
+            border-bottom: none;
+            border-radius: 0 24px 0 0;
+        }
+
+        .scanner-corner.bl {
+            bottom: 0;
+            left: 0;
+            border-right: none;
+            border-top: none;
+            border-radius: 0 0 0 24px;
+        }
+
+        .scanner-corner.br {
+            bottom: 0;
+            right: 0;
+            border-left: none;
+            border-top: none;
+            border-radius: 0 0 24px 0;
+        }
+
+        .scanner-line {
+            position: absolute;
+            left: 20px;
+            right: 20px;
+            height: 3px;
+            background: var(--gold);
+            border-radius: 2px;
+            animation: scan 2s ease-in-out infinite;
+        }
+
+        @keyframes scan {
+            0%, 100% { top: 40px; }
+            50% { top: calc(100% - 43px); }
+        }
+
+        .scanner-icon {
+            font-size: 80px;
+            opacity: 0.3;
+        }
+
+        .scanner-text {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .scanner-text h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .scanner-text p {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* Current Class Info */
+        .current-class {
+            width: 100%;
+            background: var(--charcoal);
+            border: 1px solid var(--gray-light);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .current-class-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .current-class-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--success);
+            border-radius: 100px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .current-class-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .current-class-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .current-class-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .current-class-meta {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .current-class-count {
+            text-align: right;
+        }
+
+        .current-class-count-value {
+            font-size: 24px;
+            font-weight: 300;
+            color: var(--gold);
+        }
+
+        .current-class-count-label {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* Action Buttons */
+        .actions {
+            width: 100%;
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 16px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--gold);
+            color: var(--black);
+        }
+
+        .btn-secondary {
+            background: var(--charcoal);
+            border: 1px solid var(--gray-light);
+            color: var(--text);
+        }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            background: var(--charcoal);
+            border-top: 1px solid var(--gray-light);
+            padding: 14px 24px 26px;
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-item.active {
+            color: var(--gold);
+        }
+
+        .nav-icon {
+            font-size: 22px;
+        }
+
+        /* Screen Label */
+        .screen-label {
+            position: fixed;
+            top: 10px;
+            right: 70px;
+            background: var(--gold);
+            color: var(--black);
+            padding: 6px 12px;
+            border-radius: 100px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div class="screen-label">Gym Mobile - Scanner</div>
+
+    <header class="header">
+        <button class="back-btn" onclick="history.back()">←</button>
+        <span class="header-title">QR Scanner</span>
+        <div class="placeholder"></div>
+    </header>
+
+    <main class="scanner-container">
+        <div class="scanner-frame-container">
+            <div class="scanner-frame">
+                <div class="scanner-corners">
+                    <div class="scanner-corner tl"></div>
+                    <div class="scanner-corner tr"></div>
+                    <div class="scanner-corner bl"></div>
+                    <div class="scanner-corner br"></div>
+                </div>
+                <div class="scanner-line"></div>
+                <div class="scanner-icon">📷</div>
+            </div>
+        </div>
+
+        <div class="scanner-text">
+            <h2>Scan Member QR Code</h2>
+            <p>Position the QR code within the frame to automatically check in the member</p>
+        </div>
+
+        <div class="current-class">
+            <div class="current-class-header">
+                <span class="current-class-badge">
+                    <span class="current-class-dot"></span>
+                    <span>Live Now</span>
+                </span>
+            </div>
+            <div class="current-class-info">
+                <div>
+                    <div class="current-class-name">Sunrise Yoga</div>
+                    <div class="current-class-meta">Sarah M. • 06:30 AM</div>
+                </div>
+                <div class="current-class-count">
+                    <div class="current-class-count-value">12/15</div>
+                    <div class="current-class-count-label">checked in</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button class="btn btn-secondary">✏️ Manual</button>
+            <button class="btn btn-primary">💡 Flash</button>
+        </div>
+    </main>
+
+    <nav class="bottom-nav">
+        <a href="01-dashboard.html" class="nav-item">
+            <span class="nav-icon">📊</span>
+            <span>Dashboard</span>
+        </a>
+        <a href="02-scanner.html" class="nav-item active">
+            <span class="nav-icon">📱</span>
+            <span>Scanner</span>
+        </a>
+        <a href="#" class="nav-item">
+            <span class="nav-icon">📅</span>
+            <span>Classes</span>
+        </a>
+        <a href="#" class="nav-item">
+            <span class="nav-icon">⚙️</span>
+            <span>Settings</span>
+        </a>
+    </nav>
+</body>
+</html>
