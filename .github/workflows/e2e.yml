@@ -106,12 +106,22 @@ jobs:
 
       - name: Install Playwright browsers
         working-directory: ./frontend
-        run: npx playwright install --with-deps ${{ github.event.inputs.browser || 'chromium' }}
+        run: |
+          if [ "${{ github.event.inputs.browser }}" = "all" ]; then
+            npx playwright install --with-deps chromium firefox webkit
+          else
+            npx playwright install --with-deps ${{ github.event.inputs.browser || 'chromium' }}
+          fi
 
       # Run E2E tests
       - name: Run E2E tests
         working-directory: ./frontend
-        run: pnpm test:e2e
+        run: |
+          if [ "${{ github.event.inputs.browser }}" = "all" ]; then
+            pnpm test:e2e --project=chromium --project=firefox --project=webkit
+          else
+            pnpm test:e2e
+          fi
         env:
           BASE_URL: http://localhost:5173
 
