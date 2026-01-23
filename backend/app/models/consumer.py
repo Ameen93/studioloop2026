@@ -5,6 +5,7 @@ Unlike gym-scoped data, consumers are NOT isolated by gym_id
 because they can book at multiple gyms.
 """
 
+from datetime import datetime
 from enum import Enum
 from uuid import UUID
 
@@ -117,6 +118,13 @@ class Consumer(SoftDeleteMixin, BaseModel, ConsumerBase, table=True):
         description="Incremented on token refresh to invalidate old refresh tokens",
     )
 
+    # POPIA Account Deletion (Story 1.7)
+    deletion_requested_at: datetime | None = Field(
+        default=None,
+        nullable=True,
+        description="Timestamp when account deletion was requested (30-day countdown for POPIA)",
+    )
+
     # Relationships (to be populated as domain models are created)
     # bookings: list["Booking"] = Relationship(back_populates="consumer")
     # memberships: list["Membership"] = Relationship(back_populates="consumer")
@@ -170,3 +178,13 @@ class ConsumerToken(SQLModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+
+
+class AccountDeletionRequest(SQLModel):
+    """Schema for account deletion request - requires password confirmation.
+
+    POPIA requires consumers to be able to request account deletion.
+    Password confirmation is required for security.
+    """
+
+    password: str = Field(min_length=8, description="Current password for confirmation")

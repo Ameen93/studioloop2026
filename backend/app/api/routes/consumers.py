@@ -4,7 +4,7 @@ Handles consumer registration, login, email verification, and token refresh.
 Implements ARCH-11 (Argon2 password hashing), ARCH-12 (JWT tokens), and ARCH-28 (error format).
 """
 
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 import jwt
 from fastapi import APIRouter, HTTPException, status
@@ -29,6 +29,7 @@ from app.models import (
     TokenPayload,
 )
 from app.models.consumer import (
+    AccountDeletionRequest,
     Consumer,
     ConsumerCreate,
     ConsumerLoginRequest,
@@ -38,6 +39,7 @@ from app.models.consumer import (
     UserRole,
 )
 from app.utils import (
+    generate_account_deletion_email,
     generate_email_verification_email,
     generate_email_verification_token,
     generate_password_reset_token,
@@ -588,3 +590,68 @@ def update_consumer_profile(
     session.refresh(current_consumer)
 
     return current_consumer
+
+
+@router.delete("/me", response_model=Message)
+def delete_consumer_account(
+    session: SessionDep,
+    current_consumer: CurrentConsumer,
+    deletion_request: AccountDeletionRequest,
+) -> Message:
+    """Delete consumer account (POPIA right to erasure - Story 1.7).
+
+    Requires password confirmation for security. Marks account for
+    deletion, invalidates all sessions, and schedules data cleanup
+    within 30 days per POPIA requirements.
+
+    Args:
+        session: Database session
+        current_consumer: Authenticated consumer from JWT token
+        deletion_request: Password confirmation
+
+    Returns:
+        Message confirming deletion scheduled
+
+    Raises:
+        HTTPException: 401 INVALID_CREDENTIALS if password is wrong
+    """
+    # Verify password for security (prevent unauthorized deletion)
+    # NOTE: Revisit for social login users (Stories 1.9/1.10) who may not have passwords
+    assert current_consumer.hashed_password, "Consumer must have password set"
+    if not verify_password(deletion_request.password, current_consumer.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "code": "INVALID_CREDENTIALS",
+                "message": "Invalid password",
+                "details": {},
+            },
+        )
+
+    # Mark account for deletion using SoftDeleteMixin
+    current_consumer.soft_delete()
+
+    # Set deletion requested timestamp for 30-day countdown (NFR13)
+    current_consumer.deletion_requested_at = datetime.now(timezone.utc)
+
+    # CRITICAL: Invalidate ALL tokens by incrementing version (ARCH-12)
+    current_consumer.token_version += 1
+
+    session.add(current_consumer)
+    session.commit()
+
+    # Send confirmation email
+    if settings.emails_enabled:
+        email_data = generate_account_deletion_email(
+            email_to=current_consumer.email,
+            first_name=current_consumer.first_name,
+        )
+        send_email(
+            email_to=current_consumer.email,
+            subject=email_data.subject,
+            html_content=email_data.html_content,
+        )
+
+    return Message(
+        message="Account deletion scheduled. Your data will be removed within 30 days."
+    )
