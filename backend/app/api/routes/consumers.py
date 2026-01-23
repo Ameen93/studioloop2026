@@ -1,15 +1,18 @@
 """Consumer authentication routes.
 
-Handles consumer registration, login, and email verification.
+Handles consumer registration, login, email verification, and token refresh.
 Implements ARCH-11 (Argon2 password hashing), ARCH-12 (JWT tokens), and ARCH-28 (error format).
 """
 
 from datetime import timedelta
 
+import jwt
 from fastapi import APIRouter, HTTPException, status
+from pydantic import ValidationError
 from sqlmodel import select
 
 from app.api.deps import SessionDep
+from app.core import security
 from app.core.config import settings
 from app.core.security import (
     create_access_token,
@@ -18,7 +21,7 @@ from app.core.security import (
     needs_rehash,
     verify_password,
 )
-from app.models import Message
+from app.models import Message, RefreshTokenRequest, TokenPayload
 from app.models.consumer import (
     Consumer,
     ConsumerCreate,
@@ -279,7 +282,7 @@ def login_consumer(
         session.add(consumer)
         session.commit()
 
-    # Generate tokens (ARCH-12)
+    # Generate tokens (ARCH-12) with token_version for rotation
     access_token = create_access_token(
         subject=str(consumer.id),
         expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
@@ -287,6 +290,104 @@ def login_consumer(
     refresh_token = create_refresh_token(
         subject=str(consumer.id),
         expires_delta=timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+        token_version=consumer.token_version,
+    )
+
+    return ConsumerToken(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+    )
+
+
+@router.post("/refresh", response_model=ConsumerToken)
+def refresh_consumer_token(
+    session: SessionDep,
+    refresh_data: RefreshTokenRequest,
+) -> ConsumerToken:
+    """Refresh consumer access token using refresh token (ARCH-12).
+
+    Validates the refresh token and issues a new access + refresh token pair.
+    Token version is validated and incremented to invalidate old refresh tokens.
+
+    Args:
+        session: Database session
+        refresh_data: Contains the refresh token
+
+    Returns:
+        ConsumerToken with new access_token and refresh_token
+
+    Raises:
+        HTTPException: 401 INVALID_TOKEN if refresh token is invalid/expired/replayed
+    """
+    try:
+        payload = jwt.decode(
+            refresh_data.refresh_token,
+            settings.SECRET_KEY,
+            algorithms=[security.ALGORITHM],
+        )
+        token_data = TokenPayload(**payload)
+    except (jwt.InvalidTokenError, ValidationError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "code": "INVALID_TOKEN",
+                "message": "Invalid or expired refresh token",
+                "details": {},
+            },
+        )
+
+    # Verify token type is "refresh"
+    if token_data.type != "refresh":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "code": "INVALID_TOKEN",
+                "message": "Invalid or expired refresh token",
+                "details": {},
+            },
+        )
+
+    # Get consumer from token subject
+    consumer = session.get(Consumer, token_data.sub)
+
+    # Return same error for missing/inactive consumer (no enumeration)
+    if not consumer or not consumer.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "code": "INVALID_TOKEN",
+                "message": "Invalid or expired refresh token",
+                "details": {},
+            },
+        )
+
+    # Validate token version for rotation (reject replayed tokens)
+    if token_data.token_version != consumer.token_version:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "code": "INVALID_TOKEN",
+                "message": "Invalid or expired refresh token",
+                "details": {},
+            },
+        )
+
+    # Increment token version to invalidate old refresh tokens
+    consumer.token_version += 1
+    session.add(consumer)
+    session.commit()
+    session.refresh(consumer)
+
+    # Generate new token pair with new version
+    access_token = create_access_token(
+        subject=str(consumer.id),
+        expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
+    )
+    refresh_token = create_refresh_token(
+        subject=str(consumer.id),
+        expires_delta=timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+        token_version=consumer.token_version,
     )
 
     return ConsumerToken(
