@@ -11,7 +11,7 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import ValidationError
 from sqlmodel import select
 
-from app.api.deps import SessionDep
+from app.api.deps import CurrentConsumer, SessionDep
 from app.core import security
 from app.core.config import settings
 from app.core.security import (
@@ -34,6 +34,7 @@ from app.models.consumer import (
     ConsumerLoginRequest,
     ConsumerPublic,
     ConsumerToken,
+    ConsumerUpdate,
     UserRole,
 )
 from app.utils import (
@@ -42,6 +43,7 @@ from app.utils import (
     generate_password_reset_token,
     generate_reset_password_email,
     send_email,
+    validate_sa_phone,
     verify_email_verification_token,
     verify_password_reset_token,
 )
@@ -506,3 +508,83 @@ def reset_password(
     session.commit()
 
     return Message(message="Password has been reset successfully")
+
+
+@router.get("/me", response_model=ConsumerPublic)
+def get_current_consumer_profile(
+    current_consumer: CurrentConsumer,
+) -> Consumer:
+    """Get current consumer's profile (Story 1.6, AC #1).
+
+    Returns the authenticated consumer's profile information.
+    Requires a valid access token.
+
+    Args:
+        current_consumer: Authenticated consumer from JWT token
+
+    Returns:
+        ConsumerPublic with profile data (excludes sensitive fields)
+    """
+    return current_consumer
+
+
+@router.patch("/me", response_model=ConsumerPublic)
+def update_consumer_profile(
+    session: SessionDep,
+    current_consumer: CurrentConsumer,
+    update_data: ConsumerUpdate,
+) -> Consumer:
+    """Update current consumer's profile (Story 1.6, AC #2, #3, #4).
+
+    Allows partial updates - only provided fields are updated.
+    Phone number must be in SA format (+27...) if provided.
+
+    Args:
+        session: Database session
+        current_consumer: Authenticated consumer from JWT token
+        update_data: Fields to update (first_name, last_name, phone)
+
+    Returns:
+        ConsumerPublic with updated profile data
+
+    Raises:
+        HTTPException: 400 INVALID_PHONE_FORMAT if phone format is invalid
+    """
+    # Validate phone if provided (not None and not empty string in update)
+    update_dict = update_data.model_dump(exclude_unset=True)
+
+    # Reject null for non-nullable fields
+    non_nullable_fields = ["first_name", "last_name", "accepts_marketing"]
+    for field in non_nullable_fields:
+        if field in update_dict and update_dict[field] is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "code": "INVALID_FIELD_VALUE",
+                    "message": f"{field} cannot be null",
+                    "details": {"field": field},
+                },
+            )
+
+    if "phone" in update_dict and update_dict["phone"] is not None:
+        try:
+            update_dict["phone"] = validate_sa_phone(update_dict["phone"])
+        except ValueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "code": "INVALID_PHONE_FORMAT",
+                    "message": str(e),
+                    "details": {"field": "phone"},
+                },
+            )
+
+    # Update only provided fields
+    for field, value in update_dict.items():
+        setattr(current_consumer, field, value)
+
+    session.add(current_consumer)
+    session.commit()
+    session.refresh(current_consumer)
+
+    return current_consumer

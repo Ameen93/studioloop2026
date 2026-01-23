@@ -19,10 +19,10 @@ from sqlmodel import Session
 from app.core.config import settings
 from app.core.security import ALGORITHM, get_password_hash, verify_password
 from app.models import Gym
-from app.models.consumer import Consumer, UserRole
+from app.models.consumer import Consumer
 from app.models.staff import Staff, StaffRole
 from app.utils import generate_password_reset_token
-from tests.utils.utils import random_email, random_lower_string
+from tests.utils.utils import random_email
 
 
 class TestConsumerForgotPassword:
@@ -90,7 +90,10 @@ class TestConsumerForgotPassword:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["message"] == "If the email exists, a password reset link has been sent"
+        assert (
+            data["message"]
+            == "If the email exists, a password reset link has been sent"
+        )
 
     def test_forgot_password_invalid_email_no_enumeration(
         self, client: TestClient
@@ -104,7 +107,10 @@ class TestConsumerForgotPassword:
         # Must return SAME response to prevent enumeration
         assert response.status_code == 200
         data = response.json()
-        assert data["message"] == "If the email exists, a password reset link has been sent"
+        assert (
+            data["message"]
+            == "If the email exists, a password reset link has been sent"
+        )
 
     def test_forgot_password_unverified_email_no_email_sent(
         self, client: TestClient, db: Session
@@ -281,7 +287,11 @@ class TestConsumerResetPassword:
         # Create an expired token
         expire = datetime.now(timezone.utc) - timedelta(hours=1)
         expired_token = jwt.encode(
-            {"exp": expire.timestamp(), "nbf": datetime.now(timezone.utc), "sub": "test@test.com"},
+            {
+                "exp": expire.timestamp(),
+                "nbf": datetime.now(timezone.utc),
+                "sub": "test@test.com",
+            },
             settings.SECRET_KEY,
             algorithm=ALGORITHM,
         )
@@ -307,7 +317,9 @@ class TestConsumerResetPassword:
     def test_reset_password_nonexistent_user(self, client: TestClient) -> None:
         """Test reset-password for nonexistent user returns same error."""
         # Generate token for email that doesn't exist
-        token = generate_password_reset_token("nonexistent@test.com", account_type="consumer")
+        token = generate_password_reset_token(
+            "nonexistent@test.com", account_type="consumer"
+        )
 
         response = client.post(
             f"{settings.API_V1_STR}/auth/consumer/reset-password",
@@ -318,7 +330,9 @@ class TestConsumerResetPassword:
         assert response.status_code == 400
         assert response.json()["detail"]["code"] == "INVALID_TOKEN"
 
-    def test_reset_password_inactive_user(self, client: TestClient, db: Session) -> None:
+    def test_reset_password_inactive_user(
+        self, client: TestClient, db: Session
+    ) -> None:
         """Test reset-password for inactive user returns same error."""
         email = random_email()
         self._create_inactive_consumer(db, email)
@@ -410,7 +424,10 @@ class TestStaffForgotPassword:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["message"] == "If the email exists, a password reset link has been sent"
+        assert (
+            data["message"]
+            == "If the email exists, a password reset link has been sent"
+        )
 
     def test_forgot_password_invalid_email_no_enumeration(
         self, client: TestClient
@@ -423,7 +440,10 @@ class TestStaffForgotPassword:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["message"] == "If the email exists, a password reset link has been sent"
+        assert (
+            data["message"]
+            == "If the email exists, a password reset link has been sent"
+        )
 
     def test_forgot_password_inactive_no_email_sent(
         self, client: TestClient, db: Session

@@ -21,6 +21,8 @@ from app.core import security
 from app.core.config import settings
 from app.core.db import engine
 from app.models import Gym, TokenPayload, User
+from app.models.consumer import Consumer
+from app.models.staff import Staff
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
@@ -62,6 +64,136 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+def get_current_consumer(session: SessionDep, token: TokenDep) -> Consumer:
+    """Get the currently authenticated consumer from JWT token.
+
+    Validates the access token and returns the Consumer if valid.
+    Use this dependency for consumer-authenticated routes.
+
+    Args:
+        session: Database session
+        token: JWT access token from Authorization header
+
+    Returns:
+        Consumer model instance
+
+    Raises:
+        HTTPException: 401 if token is invalid or consumer not found/inactive
+    """
+    try:
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
+        )
+        token_data = TokenPayload(**payload)
+    except (InvalidTokenError, ValidationError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "code": "INVALID_TOKEN",
+                "message": "Could not validate credentials",
+                "details": {},
+            },
+        )
+    # Validate token type is "access" (reject refresh tokens)
+    if token_data.type != "access":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "code": "INVALID_TOKEN",
+                "message": "Could not validate credentials",
+                "details": {},
+            },
+        )
+    consumer = session.get(Consumer, token_data.sub)
+    if not consumer:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "code": "INVALID_TOKEN",
+                "message": "Could not validate credentials",
+                "details": {},
+            },
+        )
+    if not consumer.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "code": "INVALID_TOKEN",
+                "message": "Could not validate credentials",
+                "details": {},
+            },
+        )
+    return consumer
+
+
+CurrentConsumer = Annotated[Consumer, Depends(get_current_consumer)]
+
+
+def get_current_staff(session: SessionDep, token: TokenDep) -> Staff:
+    """Get the currently authenticated staff member from JWT token.
+
+    Validates the access token and returns the Staff if valid.
+    Use this dependency for staff-authenticated routes.
+
+    Args:
+        session: Database session
+        token: JWT access token from Authorization header
+
+    Returns:
+        Staff model instance
+
+    Raises:
+        HTTPException: 401 if token is invalid or staff not found/inactive
+    """
+    try:
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
+        )
+        token_data = TokenPayload(**payload)
+    except (InvalidTokenError, ValidationError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "code": "INVALID_TOKEN",
+                "message": "Could not validate credentials",
+                "details": {},
+            },
+        )
+    # Validate token type is "access" (reject refresh tokens)
+    if token_data.type != "access":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "code": "INVALID_TOKEN",
+                "message": "Could not validate credentials",
+                "details": {},
+            },
+        )
+    staff = session.get(Staff, token_data.sub)
+    if not staff:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "code": "INVALID_TOKEN",
+                "message": "Could not validate credentials",
+                "details": {},
+            },
+        )
+    if not staff.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "code": "INVALID_TOKEN",
+                "message": "Could not validate credentials",
+                "details": {},
+            },
+        )
+    return staff
+
+
+CurrentStaff = Annotated[Staff, Depends(get_current_staff)]
 
 
 def get_current_active_superuser(current_user: CurrentUser) -> User:

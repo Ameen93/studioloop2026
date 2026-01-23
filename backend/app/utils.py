@@ -1,4 +1,5 @@
 import logging
+import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -223,3 +224,35 @@ def generate_email_verification_email(email_to: str, token: str) -> EmailData:
         },
     )
     return EmailData(html_content=html_content, subject=subject)
+
+
+# SA Phone Number Validation
+# Format: +27XXXXXXXXX (11-12 digits starting with +27)
+SA_PHONE_PATTERN = re.compile(r"^\+27[1-9]\d{8,9}$")
+
+
+def validate_sa_phone(phone: str | None) -> str | None:
+    """Validate and normalize South African phone number.
+
+    Accepts phone numbers in SA international format (+27XXXXXXXXX).
+    Normalizes by removing whitespace and dashes.
+
+    Args:
+        phone: Phone number to validate (None is allowed for optional fields)
+
+    Returns:
+        Normalized phone number or None
+
+    Raises:
+        ValueError: If phone format is invalid
+    """
+    if phone is None:
+        return None
+
+    # Remove all whitespace and dashes for normalization
+    normalized = re.sub(r"[\s\-]", "", phone)
+
+    if not SA_PHONE_PATTERN.match(normalized):
+        raise ValueError("Phone must be in SA format: +27XXXXXXXXX")
+
+    return normalized

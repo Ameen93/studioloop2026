@@ -1,6 +1,6 @@
 # Story 1.6: User Profile Management
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -30,61 +30,61 @@ So that my account details are current.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create CurrentConsumer dependency (Authentication prerequisite)
-  - [ ] 1.1 Add `get_current_consumer()` function in `deps.py`
-  - [ ] 1.2 Decode JWT token and look up Consumer by `sub` (UUID)
-  - [ ] 1.3 Validate token type is "access" (reject refresh tokens)
-  - [ ] 1.4 Validate consumer is active
-  - [ ] 1.5 Create `CurrentConsumer = Annotated[Consumer, Depends(get_current_consumer)]`
+- [x] Task 1: Create CurrentConsumer dependency (Authentication prerequisite)
+  - [x] 1.1 Add `get_current_consumer()` function in `deps.py`
+  - [x] 1.2 Decode JWT token and look up Consumer by `sub` (UUID)
+  - [x] 1.3 Validate token type is "access" (reject refresh tokens)
+  - [x] 1.4 Validate consumer is active
+  - [x] 1.5 Create `CurrentConsumer = Annotated[Consumer, Depends(get_current_consumer)]`
 
-- [ ] Task 2: Create CurrentStaff dependency (Authentication prerequisite)
-  - [ ] 2.1 Add `get_current_staff()` function in `deps.py`
-  - [ ] 2.2 Decode JWT token and look up Staff by `sub` (UUID)
-  - [ ] 2.3 Validate token type is "access" (reject refresh tokens)
-  - [ ] 2.4 Validate staff is active
-  - [ ] 2.5 Create `CurrentStaff = Annotated[Staff, Depends(get_current_staff)]`
+- [x] Task 2: Create CurrentStaff dependency (Authentication prerequisite)
+  - [x] 2.1 Add `get_current_staff()` function in `deps.py`
+  - [x] 2.2 Decode JWT token and look up Staff by `sub` (UUID)
+  - [x] 2.3 Validate token type is "access" (reject refresh tokens)
+  - [x] 2.4 Validate staff is active
+  - [x] 2.5 Create `CurrentStaff = Annotated[Staff, Depends(get_current_staff)]`
 
-- [ ] Task 3: Add SA phone validation utility
-  - [ ] 3.1 Create `validate_sa_phone()` function in `app/utils.py` or create `app/validators.py`
-  - [ ] 3.2 Validate format: +27XXXXXXXXX (11-12 digits starting with +27)
-  - [ ] 3.3 Allow None (phone is optional)
-  - [ ] 3.4 Return normalized format or raise validation error
+- [x] Task 3: Add SA phone validation utility
+  - [x] 3.1 Create `validate_sa_phone()` function in `app/utils.py`
+  - [x] 3.2 Validate format: +27XXXXXXXXX (11-12 digits starting with +27)
+  - [x] 3.3 Allow None (phone is optional)
+  - [x] 3.4 Return normalized format or raise validation error
 
-- [ ] Task 4: Create consumer profile endpoints (AC: #1, #2, #3, #4)
-  - [ ] 4.1 Create `GET /auth/consumer/me` endpoint to get current consumer profile
-  - [ ] 4.2 Create `PATCH /auth/consumer/me` endpoint to update profile
-  - [ ] 4.3 Use `CurrentConsumer` dependency for authentication
-  - [ ] 4.4 Accept partial updates (first_name, last_name, phone - all optional)
-  - [ ] 4.5 Validate phone with SA format if provided
-  - [ ] 4.6 Return updated `ConsumerPublic` response
+- [x] Task 4: Create consumer profile endpoints (AC: #1, #2, #3, #4)
+  - [x] 4.1 Create `GET /auth/consumer/me` endpoint to get current consumer profile
+  - [x] 4.2 Create `PATCH /auth/consumer/me` endpoint to update profile
+  - [x] 4.3 Use `CurrentConsumer` dependency for authentication
+  - [x] 4.4 Accept partial updates (first_name, last_name, phone - all optional)
+  - [x] 4.5 Validate phone with SA format if provided
+  - [x] 4.6 Return updated `ConsumerPublic` response
 
-- [ ] Task 5: Create staff profile endpoints (AC: #5)
-  - [ ] 5.1 Create `GET /auth/staff/me` endpoint to get current staff profile
-  - [ ] 5.2 Create `PATCH /auth/staff/me` endpoint to update profile
-  - [ ] 5.3 Use `CurrentStaff` dependency for authentication
-  - [ ] 5.4 Accept partial updates (first_name, last_name, phone - all optional)
-  - [ ] 5.5 Validate phone with SA format if provided
-  - [ ] 5.6 Create `StaffPublic` response schema if not exists
+- [x] Task 5: Create staff profile endpoints (AC: #5)
+  - [x] 5.1 Create `GET /auth/staff/me` endpoint to get current staff profile
+  - [x] 5.2 Create `PATCH /auth/staff/me` endpoint to update profile
+  - [x] 5.3 Use `CurrentStaff` dependency for authentication
+  - [x] 5.4 Accept partial updates (first_name, last_name, phone - all optional)
+  - [x] 5.5 Validate phone with SA format if provided
+  - [x] 5.6 Create `StaffPublic` response schema if not exists
 
-- [ ] Task 6: Update schemas
-  - [ ] 6.1 Verify `ConsumerUpdate` schema exists and has correct fields
-  - [ ] 6.2 Create `StaffUpdate` schema if not exists (first_name, last_name, phone - all optional)
-  - [ ] 6.3 Create `StaffPublic` schema if not exists (exclude hashed_password)
+- [x] Task 6: Update schemas
+  - [x] 6.1 Verify `ConsumerUpdate` schema exists and has correct fields
+  - [x] 6.2 Create `StaffUpdate` schema if not exists (first_name, last_name, phone - all optional)
+  - [x] 6.3 Create `StaffPublic` schema if not exists (exclude hashed_password)
 
-- [ ] Task 7: Add backend tests for profile management
-  - [ ] 7.1 Test consumer GET /me returns profile data
-  - [ ] 7.2 Test consumer GET /me requires authentication (401 without token)
-  - [ ] 7.3 Test consumer PATCH /me updates first_name
-  - [ ] 7.4 Test consumer PATCH /me updates last_name
-  - [ ] 7.5 Test consumer PATCH /me updates phone with valid SA format
-  - [ ] 7.6 Test consumer PATCH /me rejects invalid phone format (400)
-  - [ ] 7.7 Test consumer PATCH /me allows null phone (clear phone)
-  - [ ] 7.8 Test consumer PATCH /me partial update (only one field)
-  - [ ] 7.9 Test staff GET /me returns profile data with role and gym_id
-  - [ ] 7.10 Test staff PATCH /me updates profile fields
-  - [ ] 7.11 Test staff PATCH /me validates phone format
-  - [ ] 7.12 Test inactive consumer cannot access /me (401)
-  - [ ] 7.13 Test inactive staff cannot access /me (401)
+- [x] Task 7: Add backend tests for profile management
+  - [x] 7.1 Test consumer GET /me returns profile data
+  - [x] 7.2 Test consumer GET /me requires authentication (401 without token)
+  - [x] 7.3 Test consumer PATCH /me updates first_name
+  - [x] 7.4 Test consumer PATCH /me updates last_name
+  - [x] 7.5 Test consumer PATCH /me updates phone with valid SA format
+  - [x] 7.6 Test consumer PATCH /me rejects invalid phone format (400)
+  - [x] 7.7 Test consumer PATCH /me allows null phone (clear phone)
+  - [x] 7.8 Test consumer PATCH /me partial update (only one field)
+  - [x] 7.9 Test staff GET /me returns profile data with role and gym_id
+  - [x] 7.10 Test staff PATCH /me updates profile fields
+  - [x] 7.11 Test staff PATCH /me validates phone format
+  - [x] 7.12 Test inactive consumer cannot access /me (401)
+  - [x] 7.13 Test inactive staff cannot access /me (401)
 
 ## Dev Notes
 
@@ -407,3 +407,35 @@ backend/
 - [ ] `+278212345` - Invalid (too short)
 - [ ] `+2782123456789` - Invalid (too long)
 - [ ] `null` - Valid (phone is optional)
+
+---
+
+## Dev Agent Record
+
+### Agent Model Used
+
+Claude Opus 4.5 (claude-opus-4-5-20251101)
+
+### Completion Notes
+
+- Implemented `CurrentConsumer` and `CurrentStaff` authentication dependencies in `deps.py`
+- Added SA phone validation utility (`validate_sa_phone()`) to `utils.py` with normalization
+- Created consumer profile endpoints: `GET /auth/consumer/me` and `PATCH /auth/consumer/me`
+- Created staff profile endpoints: `GET /auth/staff/me` and `PATCH /auth/staff/me`
+- Added `StaffUpdate` and `StaffPublic` schemas to `staff.py`
+- Comprehensive test coverage: 27 tests covering all AC requirements
+- All 201 tests pass (27 new + 174 existing), no regressions
+- Phone validation supports normalization (removes spaces/dashes) and strict SA format (+27...)
+- Profile photo upload deferred to Epic 16 (CDN infrastructure required)
+
+### File List
+
+**Modified:**
+- `backend/app/api/deps.py` - Added CurrentConsumer, CurrentStaff dependencies
+- `backend/app/api/routes/consumers.py` - Added GET/PATCH /me endpoints
+- `backend/app/api/routes/staff_auth.py` - Added GET/PATCH /me endpoints
+- `backend/app/models/staff.py` - Added StaffUpdate, StaffPublic schemas
+- `backend/app/utils.py` - Added validate_sa_phone() function
+
+**Created:**
+- `backend/tests/api/routes/test_profile.py` - 27 comprehensive tests

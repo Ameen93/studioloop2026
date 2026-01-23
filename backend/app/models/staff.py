@@ -10,6 +10,7 @@ Staff roles determine permissions per ARCH-13 RBAC:
 
 from enum import Enum
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel
@@ -84,3 +85,25 @@ class StaffToken(SQLModel):
     token_type: str = "bearer"
     role: str  # Staff role for client-side routing
     gym_id: str  # Gym context for multi-tenancy
+
+
+class StaffUpdate(SQLModel):
+    """Schema for updating staff profile - all fields optional."""
+
+    first_name: str | None = Field(default=None, max_length=100)
+    last_name: str | None = Field(default=None, max_length=100)
+    phone: str | None = Field(default=None, max_length=50)
+
+
+class StaffPublic(SQLModel):
+    """Schema for staff in API responses (excludes sensitive fields)."""
+
+    id: UUID
+    email: EmailStr
+    first_name: str
+    last_name: str
+    phone: str | None = None
+    role: StaffRole
+    gym_id: UUID
+    is_email_verified: bool
+    is_active: bool
