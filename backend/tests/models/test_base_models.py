@@ -42,7 +42,9 @@ class TestTimestampMixin:
             assert gym.created_at is not None
             assert isinstance(gym.created_at, datetime)
             # Should be within last minute
-            assert (datetime.now(timezone.utc) - gym.created_at.replace(tzinfo=timezone.utc)).total_seconds() < 60
+            assert (
+                datetime.now(timezone.utc) - gym.created_at.replace(tzinfo=timezone.utc)
+            ).total_seconds() < 60
         finally:
             test_session.delete(gym)
             test_session.commit()

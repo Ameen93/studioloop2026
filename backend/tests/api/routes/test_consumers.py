@@ -1,4 +1,4 @@
-"""Tests for consumer registration and email verification endpoints.
+"""Tests for consumer registration, login, and email verification endpoints.
 
 Verifies Story 1.1 acceptance criteria:
 - AC #1: Registration with email, password, first_name, last_name creates account with role: consumer
@@ -7,6 +7,11 @@ Verifies Story 1.1 acceptance criteria:
 - AC #4: Cannot login until verified (separate test)
 - AC #5: Duplicate emails rejected with EMAIL_ALREADY_EXISTS
 - AC #6: UUIDs for primary keys
+
+Verifies Story 1.2 acceptance criteria:
+- AC #1: Login returns JWT access token (<24h) and refresh token
+- AC #4: Invalid credentials return 401 with INVALID_CREDENTIALS
+- AC #5: Unverified accounts cannot login with EMAIL_NOT_VERIFIED
 """
 
 from unittest.mock import patch
@@ -124,7 +129,9 @@ class TestConsumerRegistration:
         assert response2.status_code == 400
         result = response2.json()
         assert result["detail"]["code"] == "EMAIL_ALREADY_EXISTS"
-        assert result["detail"]["message"] == "An account with this email already exists"
+        assert (
+            result["detail"]["message"] == "An account with this email already exists"
+        )
         assert result["detail"]["details"]["field"] == "email"
 
     def test_register_consumer_invalid_email(self, client: TestClient) -> None:
@@ -293,9 +300,7 @@ class TestEmailVerification:
 class TestResendVerification:
     """Tests for POST /auth/consumer/resend-verification endpoint."""
 
-    def test_resend_verification_success(
-        self, client: TestClient, db: Session
-    ) -> None:
+    def test_resend_verification_success(self, client: TestClient, db: Session) -> None:
         """Test resending verification email."""
         email = random_email()
         data = {
@@ -338,3 +343,156 @@ class TestResendVerification:
         assert response.status_code == 200
         result = response.json()
         assert "verification link has been sent" in result["message"]
+
+
+class TestConsumerLogin:
+    """Tests for POST /auth/consumer/login endpoint.
+
+    Story 1.2 Acceptance Criteria:
+    - AC #1: Valid credentials return access_token and refresh_token
+    - AC #4: Invalid credentials return 401 INVALID_CREDENTIALS
+    - AC #5: Unverified accounts return 403 EMAIL_NOT_VERIFIED
+    """
+
+    def _create_verified_consumer(
+        self, client: TestClient, db: Session, email: str, password: str
+    ) -> Consumer:
+        """Helper to create a verified consumer for testing login."""
+        data = {
+            "email": email,
+            "password": password,
+            "first_name": "Test",
+            "last_name": "User",
+        }
+
+        with patch("app.api.routes.consumers.send_email"):
+            client.post(
+                f"{settings.API_V1_STR}/auth/consumer/register",
+                json=data,
+            )
+
+        # Mark as verified
+        consumer = db.exec(select(Consumer).where(Consumer.email == email)).first()
+        consumer.is_email_verified = True
+        db.add(consumer)
+        db.commit()
+        db.refresh(consumer)
+        return consumer
+
+    def test_login_success(self, client: TestClient, db: Session) -> None:
+        """Test successful login returns access_token and refresh_token (AC #1)."""
+        email = random_email()
+        password = random_lower_string()
+        self._create_verified_consumer(client, db, email, password)
+
+        response = client.post(
+            f"{settings.API_V1_STR}/auth/consumer/login",
+            json={"email": email, "password": password},
+        )
+
+        assert response.status_code == 200
+        result = response.json()
+
+        # Verify token response structure
+        assert "access_token" in result
+        assert "refresh_token" in result
+        assert result["token_type"] == "bearer"
+
+        # Verify tokens are non-empty strings
+        assert isinstance(result["access_token"], str)
+        assert len(result["access_token"]) > 0
+        assert isinstance(result["refresh_token"], str)
+        assert len(result["refresh_token"]) > 0
+
+    def test_login_invalid_password(self, client: TestClient, db: Session) -> None:
+        """Test login with wrong password returns 401 INVALID_CREDENTIALS (AC #4)."""
+        email = random_email()
+        password = random_lower_string()
+        self._create_verified_consumer(client, db, email, password)
+
+        response = client.post(
+            f"{settings.API_V1_STR}/auth/consumer/login",
+            json={"email": email, "password": "wrongpassword"},
+        )
+
+        assert response.status_code == 401
+        result = response.json()
+        assert result["detail"]["code"] == "INVALID_CREDENTIALS"
+        assert result["detail"]["message"] == "Invalid email or password"
+
+    def test_login_nonexistent_email(self, client: TestClient) -> None:
+        """Test login with non-existent email returns 401 (same as invalid password)."""
+        response = client.post(
+            f"{settings.API_V1_STR}/auth/consumer/login",
+            json={"email": "nonexistent@example.com", "password": "anypassword123"},
+        )
+
+        # Should return same error to prevent email enumeration
+        assert response.status_code == 401
+        result = response.json()
+        assert result["detail"]["code"] == "INVALID_CREDENTIALS"
+
+    def test_login_unverified_account(self, client: TestClient, db: Session) -> None:
+        """Test login with unverified account returns 403 EMAIL_NOT_VERIFIED (AC #5)."""
+        email = random_email()
+        password = random_lower_string()
+        data = {
+            "email": email,
+            "password": password,
+            "first_name": "Test",
+            "last_name": "User",
+        }
+
+        # Register but DON'T verify
+        with patch("app.api.routes.consumers.send_email"):
+            client.post(
+                f"{settings.API_V1_STR}/auth/consumer/register",
+                json=data,
+            )
+
+        response = client.post(
+            f"{settings.API_V1_STR}/auth/consumer/login",
+            json={"email": email, "password": password},
+        )
+
+        assert response.status_code == 403
+        result = response.json()
+        assert result["detail"]["code"] == "EMAIL_NOT_VERIFIED"
+        assert (
+            result["detail"]["message"] == "Please verify your email before logging in"
+        )
+        assert result["detail"]["details"]["email"] == email
+
+    def test_login_short_password_validation(self, client: TestClient) -> None:
+        """Test login with password < 8 chars returns 422 validation error."""
+        response = client.post(
+            f"{settings.API_V1_STR}/auth/consumer/login",
+            json={"email": "test@example.com", "password": "short"},
+        )
+
+        assert response.status_code == 422
+
+    def test_login_deactivated_account(self, client: TestClient, db: Session) -> None:
+        """Test login with deactivated account returns 401 INVALID_CREDENTIALS."""
+        email = random_email()
+        password = random_lower_string()
+
+        # Create and verify consumer
+        self._create_verified_consumer(client, db, email, password)
+
+        # Deactivate the consumer (soft-delete)
+        consumer = db.exec(select(Consumer).where(Consumer.email == email)).first()
+        consumer.is_active = False
+        db.add(consumer)
+        db.commit()
+
+        # Attempt login
+        response = client.post(
+            f"{settings.API_V1_STR}/auth/consumer/login",
+            json={"email": email, "password": password},
+        )
+
+        # Should return same error as invalid credentials (no enumeration)
+        assert response.status_code == 401
+        result = response.json()
+        assert result["detail"]["code"] == "INVALID_CREDENTIALS"

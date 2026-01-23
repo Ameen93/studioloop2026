@@ -166,7 +166,9 @@ class TestSeedReset:
         assert (
             len(db_session.exec(select(Consumer)).all()) == 0
         ), "Consumers should be cleared"
-        assert len(db_session.exec(select(Space)).all()) == 0, "Spaces should be cleared"
+        assert (
+            len(db_session.exec(select(Space)).all()) == 0
+        ), "Spaces should be cleared"
 
     def test_can_reseed_after_reset(self, db_session: Session) -> None:
         """Should be able to seed again after reset."""

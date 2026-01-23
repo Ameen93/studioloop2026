@@ -1,17 +1,32 @@
 """Consumer authentication routes.
 
-Handles consumer registration and email verification.
-Implements ARCH-11 (Argon2 password hashing) and ARCH-28 (error format).
+Handles consumer registration, login, and email verification.
+Implements ARCH-11 (Argon2 password hashing), ARCH-12 (JWT tokens), and ARCH-28 (error format).
 """
+
+from datetime import timedelta
 
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
 
 from app.api.deps import SessionDep
 from app.core.config import settings
-from app.core.security import get_password_hash
+from app.core.security import (
+    create_access_token,
+    create_refresh_token,
+    get_password_hash,
+    needs_rehash,
+    verify_password,
+)
 from app.models import Message
-from app.models.consumer import Consumer, ConsumerCreate, ConsumerPublic, UserRole
+from app.models.consumer import (
+    Consumer,
+    ConsumerCreate,
+    ConsumerLoginRequest,
+    ConsumerPublic,
+    ConsumerToken,
+    UserRole,
+)
 from app.utils import (
     generate_email_verification_email,
     generate_email_verification_token,
@@ -187,3 +202,95 @@ def resend_verification_email(
         )
 
     return Message(message="If the email exists, a verification link has been sent")
+
+
+@router.post("/login", response_model=ConsumerToken)
+def login_consumer(
+    session: SessionDep,
+    login_data: ConsumerLoginRequest,
+) -> ConsumerToken:
+    """Authenticate consumer and return JWT tokens (ARCH-10, ARCH-12).
+
+    Validates credentials and returns access + refresh tokens.
+    Upgrades legacy bcrypt hashes to Argon2 on successful login.
+
+    Args:
+        session: Database session
+        login_data: Email and password
+
+    Returns:
+        ConsumerToken with access_token, refresh_token, token_type
+
+    Raises:
+        HTTPException: 401 if credentials invalid (INVALID_CREDENTIALS)
+        HTTPException: 403 if email not verified (EMAIL_NOT_VERIFIED)
+    """
+    # Find consumer by email
+    consumer = session.exec(
+        select(Consumer).where(Consumer.email == login_data.email)
+    ).first()
+
+    # Use same error for invalid email or password (prevent enumeration)
+    if not consumer or not consumer.hashed_password:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "code": "INVALID_CREDENTIALS",
+                "message": "Invalid email or password",
+                "details": {},
+            },
+        )
+
+    if not verify_password(login_data.password, consumer.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "code": "INVALID_CREDENTIALS",
+                "message": "Invalid email or password",
+                "details": {},
+            },
+        )
+
+    # Check email verification (AC #5)
+    if not consumer.is_email_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "EMAIL_NOT_VERIFIED",
+                "message": "Please verify your email before logging in",
+                "details": {"email": consumer.email},
+            },
+        )
+
+    # Check if account is active (reject soft-deleted/deactivated accounts)
+    if not consumer.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "code": "INVALID_CREDENTIALS",
+                "message": "Invalid email or password",
+                "details": {},
+            },
+        )
+
+    # Upgrade legacy bcrypt hash to Argon2 (ARCH-11)
+    if needs_rehash(consumer.hashed_password):
+        consumer.hashed_password = get_password_hash(login_data.password)
+        session.add(consumer)
+        session.commit()
+
+    # Generate tokens (ARCH-12)
+    access_token = create_access_token(
+        subject=str(consumer.id),
+        expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
+    )
+    refresh_token = create_refresh_token(
+        subject=str(consumer.id),
+        expires_delta=timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+    )
+
+    return ConsumerToken(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+    )
