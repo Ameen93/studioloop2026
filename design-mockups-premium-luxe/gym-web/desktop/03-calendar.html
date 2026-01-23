@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudioLoop Gym - Class Calendar</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --gold: #d4a855;
+            --gold-light: #f5e6c8;
+            --black: #0a0a0a;
+            --charcoal: #1a1a1a;
+            --gray: #2a2a2a;
+            --gray-light: #3a3a3a;
+            --text: #ffffff;
+            --text-muted: #8a8a8a;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--black);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* Sidebar - Same as dashboard */
+        .sidebar {
+            width: 260px;
+            background: var(--charcoal);
+            border-right: 1px solid var(--gray-light);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon { font-size: 32px; }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+
+        .logo-text span {
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        .nav-menu {
+            flex: 1;
+            padding: 16px 12px;
+            overflow-y: auto;
+        }
+
+        .nav-section { margin-bottom: 24px; }
+
+        .nav-section-title {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            padding: 8px 12px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+            margin-bottom: 4px;
+        }
+
+        .nav-item:hover {
+            background: var(--gray);
+            color: var(--text);
+        }
+
+        .nav-item.active {
+            background: rgba(212, 168, 85, 0.15);
+            color: var(--gold);
+        }
+
+        .nav-icon { font-size: 18px; }
+
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid var(--gray-light);
+        }
+
+        .gym-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--gray);
+            border-radius: 12px;
+        }
+
+        .gym-avatar {
+            width: 40px;
+            height: 40px;
+            background: var(--gold);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .gym-name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .gym-plan {
+            font-size: 12px;
+            color: var(--gold);
+        }
+
+        /* Main Content */
+        .main {
+            flex: 1;
+            margin-left: 260px;
+            padding: 32px;
+        }
+
+        .main-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--gold);
+            color: var(--black);
+        }
+
+        .btn-secondary {
+            background: var(--charcoal);
+            border: 1px solid var(--gray-light);
+            color: var(--text);
+        }
+
+        /* Calendar Controls */
+        .calendar-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .date-nav {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .date-nav-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--charcoal);
+            border: 1px solid var(--gray-light);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            color: var(--text);
+        }
+
+        .current-period {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .view-toggle {
+            display: flex;
+            background: var(--charcoal);
+            border-radius: 10px;
+            padding: 4px;
+        }
+
+        .view-btn {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .view-btn.active {
+            background: var(--gold);
+            color: var(--black);
+            font-weight: 600;
+        }
+
+        /* Calendar Grid */
+        .calendar-container {
+            background: var(--charcoal);
+            border: 1px solid var(--gray-light);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .calendar-header {
+            display: grid;
+            grid-template-columns: 80px repeat(7, 1fr);
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        .calendar-header-cell {
+            padding: 16px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+        }
+
+        .calendar-header-cell.today {
+            color: var(--gold);
+        }
+
+        .calendar-body {
+            display: grid;
+            grid-template-columns: 80px repeat(7, 1fr);
+        }
+
+        .time-column {
+            border-right: 1px solid var(--gray-light);
+        }
+
+        .time-slot {
+            height: 80px;
+            padding: 8px 12px;
+            font-size: 12px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        .day-column {
+            border-right: 1px solid var(--gray-light);
+            position: relative;
+        }
+
+        .day-column:last-child {
+            border-right: none;
+        }
+
+        .hour-block {
+            height: 80px;
+            border-bottom: 1px solid var(--gray-light);
+            position: relative;
+        }
+
+        /* Class Events */
+        .class-event {
+            position: absolute;
+            left: 4px;
+            right: 4px;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            overflow: hidden;
+        }
+
+        .class-event:hover {
+            transform: scale(1.02);
+            z-index: 10;
+        }
+
+        .class-event.yoga {
+            background: rgba(212, 168, 85, 0.2);
+            border-left: 3px solid var(--gold);
+        }
+
+        .class-event.hiit {
+            background: rgba(239, 68, 68, 0.2);
+            border-left: 3px solid var(--danger);
+        }
+
+        .class-event.pilates {
+            background: rgba(34, 197, 94, 0.2);
+            border-left: 3px solid var(--success);
+        }
+
+        .class-event.spin {
+            background: rgba(59, 130, 246, 0.2);
+            border-left: 3px solid #3b82f6;
+        }
+
+        .event-title {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .event-meta {
+            color: var(--text-muted);
+            font-size: 11px;
+        }
+
+        /* Screen Label */
+        .screen-label {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: var(--gold);
+            color: var(--black);
+            padding: 6px 12px;
+            border-radius: 100px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div class="screen-label">Calendar - Desktop</div>
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <span class="logo-icon">🏋️</span>
+                <span class="logo-text">Studio<span>Loop</span></span>
+            </div>
+        </div>
+        <nav class="nav-menu">
+            <div class="nav-section">
+                <div class="nav-section-title">Main</div>
+                <a href="02-dashboard.html" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="03-calendar.html" class="nav-item active">
+                    <span class="nav-icon">📅</span>
+                    <span>Class Calendar</span>
+                </a>
+                <a href="04-members.html" class="nav-item">
+                    <span class="nav-icon">👥</span>
+                    <span>Members</span>
+                </a>
+                <a href="05-checkins.html" class="nav-item">
+                    <span class="nav-icon">✓</span>
+                    <span>Check-ins</span>
+                </a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-title">Management</div>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">🎓</span>
+                    <span>Staff</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">💳</span>
+                    <span>Memberships</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">📈</span>
+                    <span>Reports</span>
+                </a>
+            </div>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="gym-info">
+                <div class="gym-avatar">🧘</div>
+                <div>
+                    <div class="gym-name">Soul Studio</div>
+                    <div class="gym-plan">Pro Plan</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main">
+        <header class="main-header">
+            <h1 class="page-title">Class Calendar</h1>
+            <div class="header-actions">
+                <button class="btn btn-secondary">Import Schedule</button>
+                <button class="btn btn-primary">+ Add Class</button>
+            </div>
+        </header>
+
+        <div class="calendar-controls">
+            <div class="date-nav">
+                <button class="date-nav-btn">←</button>
+                <span class="current-period">January 2025</span>
+                <button class="date-nav-btn">→</button>
+            </div>
+            <div class="view-toggle">
+                <button class="view-btn">Day</button>
+                <button class="view-btn active">Week</button>
+                <button class="view-btn">Month</button>
+            </div>
+        </div>
+
+        <div class="calendar-container">
+            <div class="calendar-header">
+                <div class="calendar-header-cell"></div>
+                <div class="calendar-header-cell">Mon 20</div>
+                <div class="calendar-header-cell">Tue 21</div>
+                <div class="calendar-header-cell today">Wed 22</div>
+                <div class="calendar-header-cell">Thu 23</div>
+                <div class="calendar-header-cell">Fri 24</div>
+                <div class="calendar-header-cell">Sat 25</div>
+                <div class="calendar-header-cell">Sun 26</div>
+            </div>
+            <div class="calendar-body">
+                <div class="time-column">
+                    <div class="time-slot">06:00</div>
+                    <div class="time-slot">07:00</div>
+                    <div class="time-slot">08:00</div>
+                    <div class="time-slot">09:00</div>
+                    <div class="time-slot">10:00</div>
+                    <div class="time-slot">11:00</div>
+                    <div class="time-slot">12:00</div>
+                </div>
+
+                <!-- Monday -->
+                <div class="day-column">
+                    <div class="hour-block">
+                        <div class="class-event yoga" style="top: 30px; height: 60px;">
+                            <div class="event-title">Sunrise Yoga</div>
+                            <div class="event-meta">Sarah M.</div>
+                        </div>
+                    </div>
+                    <div class="hour-block"></div>
+                    <div class="hour-block"></div>
+                    <div class="hour-block">
+                        <div class="class-event hiit" style="top: 0; height: 60px;">
+                            <div class="event-title">HIIT Bootcamp</div>
+                            <div class="event-meta">Mike T.</div>
+                        </div>
+                    </div>
+                    <div class="hour-block"></div>
+                    <div class="hour-block"></div>
+                    <div class="hour-block">
+                        <div class="class-event pilates" style="top: 0; height: 60px;">
+                            <div class="event-title">Power Pilates</div>
+                            <div class="event-meta">Lisa K.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tuesday -->
+                <div class="day-column">
+                    <div class="hour-block"></div>
+                    <div class="hour-block">
+                        <div class="class-event spin" style="top: 0; height: 50px;">
+                            <div class="event-title">Spin Class</div>
+                            <div class="event-meta">James B.</div>
+                        </div>
+                    </div>
+                    <div class="hour-block"></div>
+                    <div class="hour-block"></div>
+                    <div class="hour-block">
+                        <div class="class-event yoga" style="top: 0; height: 60px;">
+                            <div class="event-title">Yin Yoga</div>
+                            <div class="event-meta">Sarah M.</div>
+                        </div>
+                    </div>
+                    <div class="hour-block"></div>
+                    <div class="hour-block"></div>
+                </div>
+
+                <!-- Wednesday (Today) -->
+                <div class="day-column" style="background: rgba(212, 168, 85, 0.05);">
+                    <div class="hour-block">
+                        <div class="class-event yoga" style="top: 30px; height: 60px;">
+                            <div class="event-title">Sunrise Yoga</div>
+                            <div class="event-meta">Sarah M.</div>
+                        </div>
+                    </div>
+                    <div class="hour-block"></div>
+                    <div class="hour-block"></div>
+                    <div class="hour-block">
+                        <div class="class-event hiit" style="top: 0; height: 60px;">
+                            <div class="event-title">HIIT Bootcamp</div>
+                            <div class="event-meta">Mike T.</div>
+                        </div>
+                    </div>
+                    <div class="hour-block"></div>
+                    <div class="hour-block"></div>
+                    <div class="hour-block">
+                        <div class="class-event pilates" style="top: 0; height: 55px;">
+                            <div class="event-title">Power Pilates</div>
+                            <div class="event-meta">Lisa K.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Thursday -->
+                <div class="day-column">
+                    <div class="hour-block">
+                        <div class="class-event yoga" style="top: 30px; height: 60px;">
+                            <div class="event-title">Morning Flow</div>
+                            <div class="event-meta">Sarah M.</div>
+                        </div>
+                    </div>
+                    <div class="hour-block"></div>
+                    <div class="hour-block">
+                        <div class="class-event spin" style="top: 0; height: 50px;">
+                            <div class="event-title">Cycle & Core</div>
+                            <div class="event-meta">James B.</div>
+                        </div>
+                    </div>
+                    <div class="hour-block"></div>
+                    <div class="hour-block"></div>
+                    <div class="hour-block"></div>
+                    <div class="hour-block"></div>
+                </div>
+
+                <!-- Friday -->
+                <div class="day-column">
+                    <div class="hour-block"></div>
+                    <div class="hour-block">
+                        <div class="class-event hiit" style="top: 0; height: 60px;">
+                            <div class="event-title">Friday Burn</div>
+                            <div class="event-meta">Mike T.</div>
+                        </div>
+                    </div>
+                    <div class="hour-block"></div>
+                    <div class="hour-block"></div>
+                    <div class="hour-block">
+                        <div class="class-event yoga" style="top: 0; height: 70px;">
+                            <div class="event-title">Deep Stretch</div>
+                            <div class="event-meta">Sarah M.</div>
+                        </div>
+                    </div>
+                    <div class="hour-block"></div>
+                    <div class="hour-block">
+                        <div class="class-event pilates" style="top: 0; height: 55px;">
+                            <div class="event-title">Reformer</div>
+                            <div class="event-meta">Lisa K.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Saturday -->
+                <div class="day-column">
+                    <div class="hour-block"></div>
+                    <div class="hour-block"></div>
+                    <div class="hour-block">
+                        <div class="class-event yoga" style="top: 0; height: 70px;">
+                            <div class="event-title">Weekend Yoga</div>
+                            <div class="event-meta">Sarah M.</div>
+                        </div>
+                    </div>
+                    <div class="hour-block"></div>
+                    <div class="hour-block">
+                        <div class="class-event hiit" style="top: 0; height: 60px;">
+                            <div class="event-title">Saturday HIIT</div>
+                            <div class="event-meta">Mike T.</div>
+                        </div>
+                    </div>
+                    <div class="hour-block"></div>
+                    <div class="hour-block"></div>
+                </div>
+
+                <!-- Sunday -->
+                <div class="day-column">
+                    <div class="hour-block"></div>
+                    <div class="hour-block"></div>
+                    <div class="hour-block">
+                        <div class="class-event yoga" style="top: 30px; height: 70px;">
+                            <div class="event-title">Restorative</div>
+                            <div class="event-meta">Sarah M.</div>
+                        </div>
+                    </div>
+                    <div class="hour-block"></div>
+                    <div class="hour-block"></div>
+                    <div class="hour-block"></div>
+                    <div class="hour-block"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

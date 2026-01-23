@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudioLoop - Design Mockups</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #f1f5f9;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #6366f1, #22d3ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: #94a3b8;
+            margin-bottom: 48px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.3s;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            border-color: #6366f1;
+            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.2);
+        }
+
+        .card-preview {
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 64px;
+            position: relative;
+        }
+
+        .card-preview.minimal { background: linear-gradient(135deg, #f8fafc, #e2e8f0); }
+        .card-preview.vibrant { background: linear-gradient(135deg, #ff4757, #ff6b81); }
+        .card-preview.dark { background: linear-gradient(135deg, #1e293b, #334155); }
+        .card-preview.earthy { background: linear-gradient(135deg, #fed7aa, #fef3c7); }
+        .card-preview.luxe { background: linear-gradient(135deg, #1a1a1a, #2a2a2a); }
+
+        .card-content {
+            padding: 24px;
+        }
+
+        .card-number {
+            font-size: 12px;
+            color: #6366f1;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .card-description {
+            font-size: 14px;
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+
+        .tags {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            padding: 6px 12px;
+            background: #334155;
+            border-radius: 100px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .instructions {
+            margin-top: 48px;
+            padding: 24px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+        }
+
+        .instructions h2 {
+            font-size: 18px;
+            margin-bottom: 12px;
+        }
+
+        .instructions p {
+            color: #94a3b8;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .instructions code {
+            background: #334155;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>StudioLoop</h1>
+        <p class="subtitle">Consumer App Design Mockups — Choose a direction</p>
+
+        <div class="grid">
+            <a href="01-modern-minimal.html" class="card">
+                <div class="card-preview minimal">📱</div>
+                <div class="card-content">
+                    <div class="card-number">Option 01</div>
+                    <h3 class="card-title">Modern Minimal</h3>
+                    <p class="card-description">Clean, professional look with lots of whitespace. Subtle blue accents. Best for building trust and appearing reliable.</p>
+                    <div class="tags">
+                        <span class="tag">Clean</span>
+                        <span class="tag">Professional</span>
+                        <span class="tag">Light Mode</span>
+                    </div>
+                </div>
+            </a>
+
+            <a href="02-bold-vibrant.html" class="card">
+                <div class="card-preview vibrant">🔥</div>
+                <div class="card-content">
+                    <div class="card-number">Option 02</div>
+                    <h3 class="card-title">Bold Vibrant</h3>
+                    <p class="card-description">Energetic, high-impact design with bright colors and bold typography. Appeals to younger, active demographics.</p>
+                    <div class="tags">
+                        <span class="tag">Energetic</span>
+                        <span class="tag">Youthful</span>
+                        <span class="tag">Colorful</span>
+                    </div>
+                </div>
+            </a>
+
+            <a href="03-dark-mode.html" class="card">
+                <div class="card-preview dark">🌙</div>
+                <div class="card-content">
+                    <div class="card-number">Option 03</div>
+                    <h3 class="card-title">Dark Mode</h3>
+                    <p class="card-description">Sleek dark interface with purple/cyan accents. Modern tech feel. Easy on the eyes, especially for evening use.</p>
+                    <div class="tags">
+                        <span class="tag">Modern</span>
+                        <span class="tag">Techy</span>
+                        <span class="tag">Dark Theme</span>
+                    </div>
+                </div>
+            </a>
+
+            <a href="04-warm-earthy.html" class="card">
+                <div class="card-preview earthy">🌿</div>
+                <div class="card-content">
+                    <div class="card-number">Option 04</div>
+                    <h3 class="card-title">Warm Earthy</h3>
+                    <p class="card-description">Natural, organic feel with terracotta and green tones. Welcoming and grounded. Great for wellness-focused positioning.</p>
+                    <div class="tags">
+                        <span class="tag">Organic</span>
+                        <span class="tag">Wellness</span>
+                        <span class="tag">Warm</span>
+                    </div>
+                </div>
+            </a>
+
+            <a href="05-premium-luxe.html" class="card">
+                <div class="card-preview luxe">✨</div>
+                <div class="card-content">
+                    <div class="card-number">Option 05</div>
+                    <h3 class="card-title">Premium Luxe</h3>
+                    <p class="card-description">High-end, sophisticated design with black and gold. Elevates the brand for premium boutique studios.</p>
+                    <div class="tags">
+                        <span class="tag">Premium</span>
+                        <span class="tag">Sophisticated</span>
+                        <span class="tag">Dark</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="instructions">
+            <h2>How to view these mockups</h2>
+            <p>
+                Open any HTML file directly in your browser, or run a local server:<br><br>
+                <code>cd design-mockups/consumer-app && python -m http.server 8000</code><br><br>
+                Then visit <code>http://localhost:8000</code> to browse all options.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
