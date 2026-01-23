@@ -128,7 +128,7 @@
     <action>Identify first incomplete task (unchecked [ ]) in Tasks/Subtasks</action>
 
     <action if="no incomplete tasks">
-      <goto step="6">Completion sequence</goto>
+      <goto step="7">Completion sequence</goto>
     </action>
     <action if="story file inaccessible">HALT: "Cannot develop story without access to story file"</action>
     <action if="incomplete task or subtask requirements ambiguous">ASK user to clarify or HALT</action>
@@ -187,7 +187,88 @@
     </check>
   </step>
 
-  <step n="4" goal="Mark story in-progress" tag="sprint-status">
+  <step n="4" goal="Setup git branch for story development">
+    <critical>Always start story development on a fresh branch from main/master</critical>
+
+    <action>Check if current directory is a git repository</action>
+
+    <check if="directory is a git repository">
+      <action>Run `git status` to check for uncommitted changes</action>
+
+      <check if="uncommitted changes exist">
+        <output>⚠️ **Uncommitted Changes Detected**
+
+          There are uncommitted changes in the working directory.
+          Please commit or stash these changes before starting a new story.
+        </output>
+        <ask>How would you like to proceed?
+          1. Stash changes and continue
+          2. I'll commit/stash manually - please wait
+          3. Continue anyway on current branch (not recommended)
+        </ask>
+
+        <check if="user chooses '1'">
+          <action>Run `git stash push -m "WIP before story {{story_key}}"`</action>
+          <output>✅ Changes stashed. You can restore them later with `git stash pop`</output>
+        </check>
+
+        <check if="user chooses '2'">
+          <action>HALT - Wait for user to handle changes manually</action>
+        </check>
+
+        <check if="user chooses '3'">
+          <output>⚠️ Continuing on current branch with uncommitted changes...</output>
+          <goto step="5" />
+        </check>
+      </check>
+
+      <action>Determine default branch name (main or master) by checking `git remote show origin` or `git branch -r`</action>
+      <action>Store default branch as {{default_branch}} (typically "main" or "master")</action>
+
+      <action>Run `git checkout {{default_branch}}`</action>
+      <action>Run `git pull origin {{default_branch}}`</action>
+
+      <action>Generate branch name from story_key: story/{{story_key}} (e.g., story/1-1-consumer-email-registration)</action>
+      <action>Store branch name as {{story_branch}}</action>
+
+      <check if="branch {{story_branch}} already exists">
+        <output>ℹ️ Branch {{story_branch}} already exists</output>
+        <ask>Branch already exists. What would you like to do?
+          1. Switch to existing branch and continue
+          2. Delete and recreate branch from {{default_branch}}
+          3. Create branch with suffix (e.g., story/{{story_key}}-v2)
+        </ask>
+
+        <check if="user chooses '1'">
+          <action>Run `git checkout {{story_branch}}`</action>
+          <output>✅ Switched to existing branch: {{story_branch}}</output>
+        </check>
+
+        <check if="user chooses '2'">
+          <action>Run `git branch -D {{story_branch}}`</action>
+          <action>Run `git checkout -b {{story_branch}}`</action>
+          <output>✅ Recreated branch: {{story_branch}}</output>
+        </check>
+
+        <check if="user chooses '3'">
+          <action>Generate new branch name with suffix: story/{{story_key}}-v2 (or -v3 if v2 exists, etc.)</action>
+          <action>Run `git checkout -b {{new_branch_name}}`</action>
+          <output>✅ Created new branch: {{new_branch_name}}</output>
+        </check>
+      </check>
+
+      <check if="branch {{story_branch}} does NOT exist">
+        <action>Run `git checkout -b {{story_branch}}`</action>
+        <output>✅ Created and switched to new branch: {{story_branch}}</output>
+      </check>
+    </check>
+
+    <check if="directory is NOT a git repository">
+      <output>ℹ️ Not a git repository - skipping branch management</output>
+    </check>
+  </step>
+
+  <step n="5" goal="Mark story in-progress" tag="sprint-status">
     <check if="{{sprint_status}} file exists">
       <action>Load the FULL file: {{sprint_status}}</action>
       <action>Read all development_status entries to find {{story_key}}</action>
@@ -221,7 +302,7 @@
     </check>
   </step>
 
-  <step n="5" goal="Implement task following red-green-refactor cycle">
+  <step n="6" goal="Implement task following red-green-refactor cycle">
     <critical>FOLLOW THE STORY FILE TASKS/SUBTASKS SEQUENCE EXACTLY AS WRITTEN - NO DEVIATION</critical>
 
     <action>Review the current task/subtask from the story file - this is your authoritative implementation guide</action>
@@ -249,17 +330,17 @@
     <critical>NEVER implement anything not mapped to a specific task/subtask in the story file</critical>
     <critical>NEVER proceed to next task until current task/subtask is complete AND tests pass</critical>
     <critical>Execute continuously without pausing until all tasks/subtasks are complete or explicit HALT condition</critical>
-    <critical>Do NOT propose to pause for review until Step 9 completion gates are satisfied</critical>
+    <critical>Do NOT propose to pause for review until Step 10 completion gates are satisfied</critical>
   </step>
 
-  <step n="6" goal="Author comprehensive tests">
+  <step n="7" goal="Author comprehensive tests">
     <action>Create unit tests for business logic and core functionality introduced/changed by the task</action>
     <action>Add integration tests for component interactions specified in story requirements</action>
     <action>Include end-to-end tests for critical user flows when story requirements demand them</action>
     <action>Cover edge cases and error handling scenarios identified in story Dev Notes</action>
   </step>
 
-  <step n="7" goal="Run validations and tests">
+  <step n="8" goal="Run validations and tests">
     <action>Determine how to run tests for this repo (infer test framework from project structure)</action>
     <action>Run all existing tests to ensure no regressions</action>
     <action>Run the new tests to verify implementation correctness</action>
@@ -269,7 +350,7 @@
     <action if="new tests fail">STOP and fix before continuing - ensure implementation correctness</action>
   </step>
 
-  <step n="8" goal="Validate and mark task complete ONLY when fully done">
+  <step n="9" goal="Validate and mark task complete ONLY when fully done">
     <critical>NEVER mark a task complete unless ALL conditions are met - NO LYING OR CHEATING</critical>
 
     <!-- VALIDATION GATES -->
@@ -313,14 +394,14 @@
     <action>Save the story file</action>
     <action>Determine if more incomplete tasks remain</action>
     <action if="more tasks remain">
-      <goto step="5">Next task</goto>
+      <goto step="6">Next task</goto>
     </action>
     <action if="no tasks remain">
-      <goto step="9">Completion</goto>
+      <goto step="10">Completion</goto>
     </action>
   </step>
 
-  <step n="9" goal="Story completion and mark for review" tag="sprint-status">
+  <step n="10" goal="Story completion and mark for review" tag="sprint-status">
     <action>Verify ALL tasks and subtasks are marked [x] (re-scan the story document now)</action>
     <action>Run the full regression suite (do not skip)</action>
     <action>Confirm File List includes every changed file</action>
@@ -370,7 +451,7 @@
     <action if="definition-of-done validation fails">HALT - Address DoD failures before completing</action>
   </step>
 
-  <step n="10" goal="Completion communication and user support">
+  <step n="11" goal="Completion communication and user support">
     <action>Execute the enhanced definition-of-done checklist using the validation framework</action>
     <action>Prepare a concise summary in Dev Agent Record → Completion Notes</action>
 

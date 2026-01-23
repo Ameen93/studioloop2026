@@ -16,6 +16,7 @@
     "@sl/api-client": "workspace:*",
     "@sl/ui": "workspace:*",
     "@sl/utils": "workspace:*",
+    "@tanstack/react-query": "^5.90.19",
     "expo": "~54.0.31",
     "expo-constants": "~18.0.5",
     "expo-linking": "~8.0.4",
