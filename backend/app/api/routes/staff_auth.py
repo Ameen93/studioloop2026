@@ -23,7 +23,13 @@ from app.core.security import (
     needs_rehash,
     verify_password,
 )
-from app.models import ForgotPasswordRequest, Message, NewPassword, RefreshTokenRequest, TokenPayload
+from app.models import (
+    ForgotPasswordRequest,
+    Message,
+    NewPassword,
+    RefreshTokenRequest,
+    TokenPayload,
+)
 from app.models.staff import Staff, StaffLoginRequest, StaffToken
 from app.utils import (
     generate_password_reset_token,
