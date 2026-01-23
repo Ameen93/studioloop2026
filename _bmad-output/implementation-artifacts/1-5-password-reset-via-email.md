@@ -1,6 +1,6 @@
 # Story 1.5: Password Reset via Email
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -24,61 +24,61 @@ So that I can recover my account if I forget my password.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create consumer password reset request endpoint (AC: #1, #5)
-  - [ ] 1.1 Create `POST /auth/consumer/forgot-password` endpoint in `consumers.py`
-  - [ ] 1.2 Accept email in request body (use existing EmailStr validation)
-  - [ ] 1.3 Look up consumer by email
-  - [ ] 1.4 If found AND email verified, generate password reset token using `generate_password_reset_token()`
-  - [ ] 1.5 Send reset email using `generate_reset_password_email()` and `send_email()`
-  - [ ] 1.6 ALWAYS return success message (no enumeration - same response for found/not found)
-  - [ ] 1.7 Do NOT send email if consumer doesn't exist or email not verified (but still return success)
+- [x] Task 1: Create consumer password reset request endpoint (AC: #1, #5)
+  - [x] 1.1 Create `POST /auth/consumer/forgot-password` endpoint in `consumers.py`
+  - [x] 1.2 Accept email in request body (use existing EmailStr validation)
+  - [x] 1.3 Look up consumer by email
+  - [x] 1.4 If found AND email verified, generate password reset token using `generate_password_reset_token()`
+  - [x] 1.5 Send reset email using `generate_reset_password_email()` and `send_email()`
+  - [x] 1.6 ALWAYS return success message (no enumeration - same response for found/not found)
+  - [x] 1.7 Do NOT send email if consumer doesn't exist or email not verified (but still return success)
 
-- [ ] Task 2: Create consumer password reset confirmation endpoint (AC: #2, #3, #4)
-  - [ ] 2.1 Create `POST /auth/consumer/reset-password` endpoint in `consumers.py`
-  - [ ] 2.2 Accept token and new_password in request body (NewPassword schema or similar)
-  - [ ] 2.3 Verify token using `verify_password_reset_token()`
-  - [ ] 2.4 If invalid/expired token, return 400 INVALID_TOKEN
-  - [ ] 2.5 Look up consumer by email from token
-  - [ ] 2.6 Hash new password using `get_password_hash()` (Argon2)
-  - [ ] 2.7 Update consumer.hashed_password
-  - [ ] 2.8 **CRITICAL**: Increment `consumer.token_version` to invalidate all existing sessions
-  - [ ] 2.9 Commit changes and return success message
+- [x] Task 2: Create consumer password reset confirmation endpoint (AC: #2, #3, #4)
+  - [x] 2.1 Create `POST /auth/consumer/reset-password` endpoint in `consumers.py`
+  - [x] 2.2 Accept token and new_password in request body (NewPassword schema or similar)
+  - [x] 2.3 Verify token using `verify_password_reset_token()`
+  - [x] 2.4 If invalid/expired token, return 400 INVALID_TOKEN
+  - [x] 2.5 Look up consumer by email from token
+  - [x] 2.6 Hash new password using `get_password_hash()` (Argon2)
+  - [x] 2.7 Update consumer.hashed_password
+  - [x] 2.8 **CRITICAL**: Increment `consumer.token_version` to invalidate all existing sessions
+  - [x] 2.9 Commit changes and return success message
 
-- [ ] Task 3: Create staff password reset request endpoint (AC: #1, #5)
-  - [ ] 3.1 Create `POST /auth/staff/forgot-password` endpoint in `staff_auth.py`
-  - [ ] 3.2 Accept email in request body
-  - [ ] 3.3 Look up staff by email
-  - [ ] 3.4 If found AND is_active, generate password reset token
-  - [ ] 3.5 Send reset email
-  - [ ] 3.6 ALWAYS return success message (no enumeration)
+- [x] Task 3: Create staff password reset request endpoint (AC: #1, #5)
+  - [x] 3.1 Create `POST /auth/staff/forgot-password` endpoint in `staff_auth.py`
+  - [x] 3.2 Accept email in request body
+  - [x] 3.3 Look up staff by email
+  - [x] 3.4 If found AND is_active, generate password reset token
+  - [x] 3.5 Send reset email
+  - [x] 3.6 ALWAYS return success message (no enumeration)
 
-- [ ] Task 4: Create staff password reset confirmation endpoint (AC: #2, #3, #4)
-  - [ ] 4.1 Create `POST /auth/staff/reset-password` endpoint in `staff_auth.py`
-  - [ ] 4.2 Accept token and new_password in request body
-  - [ ] 4.3 Verify token
-  - [ ] 4.4 Look up staff by email from token
-  - [ ] 4.5 Hash new password and update
-  - [ ] 4.6 **CRITICAL**: Increment `staff.token_version` to invalidate all existing sessions
-  - [ ] 4.7 Commit and return success
+- [x] Task 4: Create staff password reset confirmation endpoint (AC: #2, #3, #4)
+  - [x] 4.1 Create `POST /auth/staff/reset-password` endpoint in `staff_auth.py`
+  - [x] 4.2 Accept token and new_password in request body
+  - [x] 4.3 Verify token
+  - [x] 4.4 Look up staff by email from token
+  - [x] 4.5 Hash new password and update
+  - [x] 4.6 **CRITICAL**: Increment `staff.token_version` to invalidate all existing sessions
+  - [x] 4.7 Commit and return success
 
-- [ ] Task 5: Create request/response schemas
-  - [ ] 5.1 Create `ForgotPasswordRequest` schema (email: EmailStr)
-  - [ ] 5.2 Create `ResetPasswordRequest` schema (token: str, new_password: str min 8 chars)
-  - [ ] 5.3 Add to `models/__init__.py` exports
+- [x] Task 5: Create request/response schemas
+  - [x] 5.1 Create `ForgotPasswordRequest` schema (email: EmailStr)
+  - [x] 5.2 Use existing `NewPassword` schema (token: str, new_password: str min 8 chars)
+  - [x] 5.3 Add to `models/__init__.py` exports
 
-- [ ] Task 6: Add backend tests for password reset
-  - [ ] 6.1 Test consumer forgot-password returns success for valid email
-  - [ ] 6.2 Test consumer forgot-password returns success for invalid email (no enumeration)
-  - [ ] 6.3 Test consumer forgot-password doesn't send email for unverified account
-  - [ ] 6.4 Test consumer reset-password success updates password
-  - [ ] 6.5 Test consumer reset-password invalidates existing sessions (token_version incremented)
-  - [ ] 6.6 Test consumer reset-password with expired token returns 400
-  - [ ] 6.7 Test consumer reset-password with invalid token returns 400
-  - [ ] 6.8 Test consumer can login with new password after reset
-  - [ ] 6.9 Test consumer old refresh tokens fail after password reset
-  - [ ] 6.10 Test staff forgot-password returns success for valid/invalid email
-  - [ ] 6.11 Test staff reset-password success updates password and invalidates sessions
-  - [ ] 6.12 Test staff reset-password preserves role after re-login
+- [x] Task 6: Add backend tests for password reset
+  - [x] 6.1 Test consumer forgot-password returns success for valid email
+  - [x] 6.2 Test consumer forgot-password returns success for invalid email (no enumeration)
+  - [x] 6.3 Test consumer forgot-password doesn't send email for unverified account
+  - [x] 6.4 Test consumer reset-password success updates password
+  - [x] 6.5 Test consumer reset-password invalidates existing sessions (token_version incremented)
+  - [x] 6.6 Test consumer reset-password with expired token returns 400
+  - [x] 6.7 Test consumer reset-password with invalid token returns 400
+  - [x] 6.8 Test consumer can login with new password after reset
+  - [x] 6.9 Test consumer old refresh tokens fail after password reset
+  - [x] 6.10 Test staff forgot-password returns success for valid/invalid email
+  - [x] 6.11 Test staff reset-password success updates password and invalidates sessions
+  - [x] 6.12 Test staff reset-password preserves role after re-login
 
 ## Dev Notes
 
@@ -339,10 +339,29 @@ Uses link format: `{FRONTEND_HOST}/reset-password?token={token}`
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Debug Log References
 
+- Initial test run had fixture name mismatch (`session` vs `db`)
+- UniqueViolation errors on email constraint due to fixed test emails conflicting with seeded data
+- Resolved by using `random_email()` utility and class-based test structure
+
 ### Completion Notes List
 
+- Implemented consumer forgot-password and reset-password endpoints in `consumers.py`
+- Implemented staff forgot-password and reset-password endpoints in `staff_auth.py`
+- Added `ForgotPasswordRequest` schema to `models_legacy.py`
+- Used existing `NewPassword` schema for reset-password request body
+- All endpoints follow no-enumeration pattern (same response for valid/invalid emails)
+- Password reset increments `token_version` to invalidate all existing sessions (ARCH-12)
+- Comprehensive test coverage: 22 tests covering all AC requirements
+- All 170 tests pass (22 new + 148 existing), no regressions
+
 ### File List
+
+- `backend/app/api/routes/consumers.py` - Added forgot-password and reset-password endpoints
+- `backend/app/api/routes/staff_auth.py` - Added forgot-password and reset-password endpoints
+- `backend/app/models_legacy.py` - Added ForgotPasswordRequest schema
+- `backend/app/models/__init__.py` - Exported ForgotPasswordRequest
+- `backend/tests/api/routes/test_password_reset.py` - 22 comprehensive tests (NEW)
