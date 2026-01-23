@@ -177,7 +177,7 @@ def generate_email_verification_email(email_to: str, token: str) -> EmailData:
     """
     project_name = settings.PROJECT_NAME
     subject = f"{project_name} - Verify your email"
-    link = f"{settings.FRONTEND_HOST}/verify-email?token={token}"
+    link = f"{settings.FRONTEND_HOST}/auth/verify-email?token={token}"
     html_content = render_email_template(
         template_name="verify_email.html",
         context={
