@@ -47,7 +47,7 @@ development_status:
   0-4-setup-local-development-environment: done
   0-5-configure-local-ci-lint-and-tests: review
   0-6-configure-hey-api-for-client-generation: review
-  0-7-establish-multi-tenancy-patterns-and-base-models: backlog
+  0-7-establish-multi-tenancy-patterns-and-base-models: done
   0-8-create-seed-data-scripts: backlog
   0-9-configure-local-e2e-testing-setup: backlog
   epic-0-retrospective: optional
