@@ -1,6 +1,9 @@
 # StudioLoop CI Pipeline
 # Runs lint, type-check, and tests on every PR
 # NOTE: Deployment workflows deferred to Epic 16 (local-first development strategy)
+# NOTE: E2E tests are NOT included here - they require running backend/database
+#       Run E2E tests manually: cd frontend && pnpm test:e2e
+#       Or use the separate e2e.yml workflow with manual dispatch
 
 name: CI
 

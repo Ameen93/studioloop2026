@@ -22,6 +22,10 @@
     "generate": {
       "cache": false,
       "outputs": ["src/generated/**"]
+    },
+    "test:e2e": {
+      "cache": false,
+      "dependsOn": []
     }
   }
 }
