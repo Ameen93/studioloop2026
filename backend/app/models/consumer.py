@@ -149,3 +149,18 @@ class ConsumerPublic(SQLModel):
     avatar_url: str | None = None
     is_email_verified: bool
     is_active: bool
+
+
+class ConsumerLoginRequest(SQLModel):
+    """Schema for consumer login request."""
+
+    email: EmailStr
+    password: str = Field(min_length=8)
+
+
+class ConsumerToken(SQLModel):
+    """Token response for consumer authentication (ARCH-12)."""
+
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"

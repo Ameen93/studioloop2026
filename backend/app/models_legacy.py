@@ -106,6 +106,7 @@ class Token(SQLModel):
 # Contents of JWT token
 class TokenPayload(SQLModel):
     sub: str | None = None
+    type: str | None = None  # "access" or "refresh" - used to validate token type
 
 
 class NewPassword(SQLModel):
