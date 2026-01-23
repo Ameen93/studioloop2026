@@ -89,7 +89,10 @@ class DeleteResponse(SuccessResponse):
 
 # Common response schema configurations for OpenAPI docs
 ERROR_RESPONSES = {
-    400: {"model": ErrorResponse, "description": "Bad Request - Business rule violation"},
+    400: {
+        "model": ErrorResponse,
+        "description": "Bad Request - Business rule violation",
+    },
     403: {"model": ErrorResponse, "description": "Forbidden - Permission denied"},
     404: {"model": ErrorResponse, "description": "Not Found - Resource doesn't exist"},
     409: {"model": ErrorResponse, "description": "Conflict - Resource already exists"},
