@@ -10,6 +10,8 @@ Usage:
     register_exception_handlers(app)
 """
 
+from typing import Any
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
@@ -28,7 +30,7 @@ def _create_error_response(
     status_code: int,
     code: str,
     message: str,
-    details: dict | None = None,
+    details: dict[str, Any] | None = None,
 ) -> JSONResponse:
     """Create a standard error response.
 
@@ -159,12 +161,14 @@ def register_exception_handlers(app: FastAPI) -> None:
         register_exception_handlers(app)
     """
     # Register specific handlers first (more specific exceptions)
-    app.add_exception_handler(TenantAccessError, tenant_access_error_handler)
-    app.add_exception_handler(PermissionDeniedError, permission_denied_error_handler)
-    app.add_exception_handler(NotFoundError, not_found_error_handler)
-    app.add_exception_handler(ValidationError, validation_error_handler)
-    app.add_exception_handler(ConflictError, conflict_error_handler)
-    app.add_exception_handler(BusinessRuleError, business_rule_error_handler)
+    # Note: type: ignore needed because FastAPI expects Callable[[Request, Exception], ...]
+    # but we use typed exception handlers for better type safety within handlers
+    app.add_exception_handler(TenantAccessError, tenant_access_error_handler)  # type: ignore[arg-type]
+    app.add_exception_handler(PermissionDeniedError, permission_denied_error_handler)  # type: ignore[arg-type]
+    app.add_exception_handler(NotFoundError, not_found_error_handler)  # type: ignore[arg-type]
+    app.add_exception_handler(ValidationError, validation_error_handler)  # type: ignore[arg-type]
+    app.add_exception_handler(ConflictError, conflict_error_handler)  # type: ignore[arg-type]
+    app.add_exception_handler(BusinessRuleError, business_rule_error_handler)  # type: ignore[arg-type]
 
     # Register base handler last (catch-all for any unhandled StudioLoopError)
-    app.add_exception_handler(StudioLoopError, studioloop_error_handler)
+    app.add_exception_handler(StudioLoopError, studioloop_error_handler)  # type: ignore[arg-type]

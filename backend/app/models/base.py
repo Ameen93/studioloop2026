@@ -118,7 +118,7 @@ class BaseModel(TimestampMixin, SQLModel):
         if kwargs.get("table", False) and not hasattr(cls, "__tablename__"):
             # Convert CamelCase to snake_case and pluralize
             snake_name = _snake_case(cls.__name__)
-            cls.__tablename__ = _pluralize(snake_name)  # type: ignore
+            cls.__tablename__ = _pluralize(snake_name)
 
 
 class GymScopedModel(BaseModel):

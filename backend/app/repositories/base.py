@@ -132,7 +132,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
         # Update timestamp if model supports it
         if hasattr(db_obj, "updated_at"):
-            db_obj.updated_at = datetime.now(timezone.utc)  # type: ignore
+            db_obj.updated_at = datetime.now(timezone.utc)
 
         self.session.add(db_obj)
         self.session.commit()
@@ -236,8 +236,8 @@ class GymScopedRepository(
             Model instance or None if not found (or belongs to different gym)
         """
         statement = select(self.model).where(
-            self.model.id == id,
-            self.model.gym_id == self.gym_id,  # type: ignore
+            self.model.id == id,  # type: ignore[attr-defined]
+            self.model.gym_id == self.gym_id,  # type: ignore[attr-defined]
         )
 
         # Apply soft-delete filter if model supports it

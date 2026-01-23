@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudioLoop - Home (Warm Earth)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Warm Earth Palette */
+            --cream: #FDF6E3;
+            --cream-dark: #F5ECD7;
+            --terracotta: #C45D35;
+            --terracotta-light: #E07B52;
+            --sage: #7A9E7E;
+            --sage-light: #9BB89E;
+            --brown: #3D2B1F;
+            --brown-light: #5C4033;
+            --taupe: #8B7355;
+            --sand: #D4C4A8;
+
+            /* Glassmorphism */
+            --glass-bg: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --glass-shadow: 0 8px 32px rgba(61, 43, 31, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, var(--cream) 0%, var(--cream-dark) 50%, var(--sand) 100%);
+            color: var(--brown);
+            max-width: 430px;
+            margin: 0 auto;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Decorative background shapes */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -100px;
+            right: -100px;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(196, 93, 53, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: 100px;
+            left: -150px;
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(122, 158, 126, 0.12) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: 0;
+        }
+
+        /* Header */
+        .header {
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .greeting {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .greeting-text {
+            font-size: 14px;
+            color: var(--taupe);
+        }
+
+        .greeting-name {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--brown);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .header-btn {
+            width: 48px;
+            height: 48px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: var(--glass-shadow);
+            position: relative;
+        }
+
+        .notification-dot {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 10px;
+            height: 10px;
+            background: var(--terracotta);
+            border-radius: 50%;
+            border: 2px solid var(--cream);
+        }
+
+        /* Main Content */
+        .main {
+            padding: 0 24px 120px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Next Class Card - Hero Glassmorphism */
+        .next-class-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 28px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--glass-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .next-class-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--terracotta), var(--sage));
+            border-radius: 28px 28px 0 0;
+        }
+
+        .next-class-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--terracotta);
+            color: white;
+            padding: 8px 14px;
+            border-radius: 100px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+
+        .badge-dot {
+            width: 6px;
+            height: 6px;
+            background: white;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .next-class-title {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: var(--brown);
+        }
+
+        .next-class-gym {
+            font-size: 14px;
+            color: var(--taupe);
+            margin-bottom: 20px;
+        }
+
+        .next-class-info {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--brown-light);
+        }
+
+        .info-icon {
+            width: 36px;
+            height: 36px;
+            background: rgba(196, 93, 53, 0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--terracotta), var(--terracotta-light));
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(196, 93, 53, 0.3);
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(196, 93, 53, 0.4);
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 16px 12px;
+            text-align: center;
+            box-shadow: var(--glass-shadow);
+        }
+
+        .stat-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--terracotta);
+            margin-bottom: 2px;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: var(--taupe);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Section */
+        .section {
+            margin-bottom: 28px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--brown);
+        }
+
+        .section-link {
+            color: var(--terracotta);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        /* Class Cards */
+        .class-scroll {
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            margin: 0 -24px;
+            padding: 0 24px 8px;
+            scrollbar-width: none;
+        }
+
+        .class-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .class-card {
+            min-width: 200px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: var(--glass-shadow);
+            flex-shrink: 0;
+        }
+
+        .class-image {
+            height: 120px;
+            background: linear-gradient(135deg, var(--sage-light), var(--sage));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+        }
+
+        .class-content {
+            padding: 16px;
+        }
+
+        .class-type {
+            display: inline-block;
+            padding: 4px 10px;
+            background: rgba(122, 158, 126, 0.2);
+            color: var(--sage);
+            border-radius: 100px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .class-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--brown);
+            margin-bottom: 4px;
+        }
+
+        .class-meta {
+            font-size: 12px;
+            color: var(--taupe);
+            margin-bottom: 12px;
+        }
+
+        .class-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .class-time {
+            font-size: 12px;
+            color: var(--brown-light);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .class-price {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--terracotta);
+        }
+
+        /* Bottom Nav - Glassmorphism */
+        .bottom-nav {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 48px);
+            max-width: 382px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-around;
+            box-shadow: var(--glass-shadow);
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: var(--taupe);
+            text-decoration: none;
+            font-size: 10px;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 16px;
+            transition: all 0.2s;
+        }
+
+        .nav-item.active {
+            color: var(--terracotta);
+            background: rgba(196, 93, 53, 0.1);
+        }
+
+        .nav-icon {
+            font-size: 22px;
+        }
+
+        /* Screen Label */
+        .screen-label {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: var(--terracotta);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 100px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div class="screen-label">Home - Warm Earth</div>
+
+    <header class="header">
+        <div class="greeting">
+            <span class="greeting-text">Good morning</span>
+            <span class="greeting-name">Sarah 👋</span>
+        </div>
+        <div class="header-actions">
+            <div class="header-btn">🔍</div>
+            <div class="header-btn">
+                🔔
+                <span class="notification-dot"></span>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="next-class-card">
+            <div class="next-class-badge">
+                <span class="badge-dot"></span>
+                <span>Next Class</span>
+            </div>
+            <h2 class="next-class-title">Vinyasa Flow</h2>
+            <p class="next-class-gym">Soul Studio • Sea Point</p>
+            <div class="next-class-info">
+                <div class="info-item">
+                    <div class="info-icon">📅</div>
+                    <span>Today</span>
+                </div>
+                <div class="info-item">
+                    <div class="info-icon">🕐</div>
+                    <span>18:00</span>
+                </div>
+                <div class="info-item">
+                    <div class="info-icon">⏱</div>
+                    <span>60 min</span>
+                </div>
+            </div>
+            <button class="btn-primary">Check In</button>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-icon">🔥</div>
+                <div class="stat-value">47</div>
+                <div class="stat-label">Classes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📅</div>
+                <div class="stat-value">12</div>
+                <div class="stat-label">Month</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⭐</div>
+                <div class="stat-value">8</div>
+                <div class="stat-label">Favorites</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🏆</div>
+                <div class="stat-value">3</div>
+                <div class="stat-label">Streak</div>
+            </div>
+        </div>
+
+        <section class="section">
+            <div class="section-header">
+                <h3 class="section-title">Recommended For You</h3>
+                <a href="#" class="section-link">See All →</a>
+            </div>
+            <div class="class-scroll">
+                <div class="class-card">
+                    <div class="class-image" style="background: linear-gradient(135deg, #E07B52, #C45D35);">🚴</div>
+                    <div class="class-content">
+                        <span class="class-type">Cycling</span>
+                        <h4 class="class-name">HIIT Cycling</h4>
+                        <p class="class-meta">Spinzone • Green Point</p>
+                        <div class="class-footer">
+                            <span class="class-time">🕐 18:00</span>
+                            <span class="class-price">R85</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="class-card">
+                    <div class="class-image" style="background: linear-gradient(135deg, #9BB89E, #7A9E7E);">🧘</div>
+                    <div class="class-content">
+                        <span class="class-type">Yoga</span>
+                        <h4 class="class-name">Yin Yoga</h4>
+                        <p class="class-meta">Zen Den • Camps Bay</p>
+                        <div class="class-footer">
+                            <span class="class-time">🕐 19:30</span>
+                            <span class="class-price">R75</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="class-card">
+                    <div class="class-image" style="background: linear-gradient(135deg, #8B7355, #5C4033);">🥊</div>
+                    <div class="class-content">
+                        <span class="class-type">Boxing</span>
+                        <h4 class="class-name">Box Fit</h4>
+                        <p class="class-meta">Fight Club • Observatory</p>
+                        <div class="class-footer">
+                            <span class="class-time">🕐 19:00</span>
+                            <span class="class-price">R95</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <h3 class="section-title">Popular Studios</h3>
+                <a href="#" class="section-link">See All →</a>
+            </div>
+            <div class="class-scroll">
+                <div class="class-card">
+                    <div class="class-image" style="background: linear-gradient(135deg, #D4C4A8, #8B7355);">🧘</div>
+                    <div class="class-content">
+                        <span class="class-type">Yoga Studio</span>
+                        <h4 class="class-name">Soul Studio</h4>
+                        <p class="class-meta">Sea Point • 4.9 ⭐</p>
+                        <div class="class-footer">
+                            <span class="class-time">12 classes/week</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="class-card">
+                    <div class="class-image" style="background: linear-gradient(135deg, #C45D35, #8B7355);">🚴</div>
+                    <div class="class-content">
+                        <span class="class-type">Spin Studio</span>
+                        <h4 class="class-name">Spinzone</h4>
+                        <p class="class-meta">Green Point • 4.8 ⭐</p>
+                        <div class="class-footer">
+                            <span class="class-time">20 classes/week</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <nav class="bottom-nav">
+        <a href="01-home.html" class="nav-item active">
+            <span class="nav-icon">🏠</span>
+            <span>Home</span>
+        </a>
+        <a href="02-discover.html" class="nav-item">
+            <span class="nav-icon">🔍</span>
+            <span>Discover</span>
+        </a>
+        <a href="04-my-classes.html" class="nav-item">
+            <span class="nav-icon">📅</span>
+            <span>Schedule</span>
+        </a>
+        <a href="06-profile.html" class="nav-item">
+            <span class="nav-icon">👤</span>
+            <span>Profile</span>
+        </a>
+    </nav>
+</body>
+</html>

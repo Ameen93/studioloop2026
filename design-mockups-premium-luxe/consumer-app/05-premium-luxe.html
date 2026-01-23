@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudioLoop - Premium Luxe</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --gold: #d4a855;
+            --gold-light: #f5e6c8;
+            --black: #0a0a0a;
+            --charcoal: #1a1a1a;
+            --gray: #2a2a2a;
+            --gray-light: #3a3a3a;
+            --text: #ffffff;
+            --text-muted: #8a8a8a;
+        }
+
+        body {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--black);
+            color: var(--text);
+            max-width: 430px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 300;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        .logo span {
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        .avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 2px solid var(--gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        /* Main Content */
+        .main {
+            padding: 0 24px 100px;
+        }
+
+        /* Hero Section */
+        .hero {
+            margin-bottom: 32px;
+        }
+
+        .hero-greeting {
+            font-size: 14px;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .hero-name {
+            font-size: 36px;
+            font-weight: 300;
+            margin-bottom: 24px;
+        }
+
+        .hero-name strong {
+            font-weight: 600;
+        }
+
+        /* Membership Card */
+        .membership-card {
+            background: linear-gradient(135deg, var(--charcoal) 0%, var(--gray) 100%);
+            border: 1px solid var(--gray-light);
+            border-radius: 20px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .membership-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, var(--gold) 0%, transparent 70%);
+            opacity: 0.08;
+        }
+
+        .membership-tier {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--gold);
+            color: var(--black);
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+
+        .membership-credits {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .membership-number {
+            font-size: 48px;
+            font-weight: 200;
+            color: var(--gold);
+        }
+
+        .membership-label {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .membership-progress {
+            height: 4px;
+            background: var(--gray-light);
+            border-radius: 100px;
+            overflow: hidden;
+            margin-top: 16px;
+        }
+
+        .membership-progress-bar {
+            height: 100%;
+            width: 37.5%;
+            background: linear-gradient(90deg, var(--gold), #e6c17a);
+            border-radius: 100px;
+        }
+
+        /* Section */
+        .section {
+            margin-top: 36px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+        }
+
+        .section-link {
+            color: var(--gold);
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Upcoming Session */
+        .session-card {
+            background: var(--charcoal);
+            border: 1px solid var(--gray-light);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .session-image {
+            height: 140px;
+            background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+            position: relative;
+        }
+
+        .session-image::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(to top, var(--charcoal), transparent);
+        }
+
+        .session-badge {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: var(--gold);
+            color: var(--black);
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .session-content {
+            padding: 20px 24px 24px;
+        }
+
+        .session-time {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .session-title {
+            font-size: 24px;
+            font-weight: 400;
+            margin-bottom: 4px;
+        }
+
+        .session-location {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .session-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .instructor {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .instructor-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--gray);
+            border: 2px solid var(--gold);
+        }
+
+        .instructor-info {
+            font-size: 13px;
+        }
+
+        .instructor-label {
+            color: var(--text-muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .instructor-name {
+            font-weight: 500;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-gold {
+            background: var(--gold);
+            color: var(--black);
+        }
+
+        .btn-gold:hover {
+            background: #e6bc6a;
+            transform: translateY(-2px);
+        }
+
+        /* Class List */
+        .class-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .class-item {
+            background: var(--charcoal);
+            border: 1px solid var(--gray-light);
+            border-radius: 16px;
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .class-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: var(--gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            border: 1px solid var(--gray-light);
+        }
+
+        .class-content {
+            flex: 1;
+        }
+
+        .class-name {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .class-meta {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .class-price {
+            text-align: right;
+        }
+
+        .class-amount {
+            font-size: 18px;
+            font-weight: 300;
+            color: var(--gold);
+        }
+
+        .class-spots {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 430px;
+            background: var(--charcoal);
+            border-top: 1px solid var(--gray-light);
+            padding: 16px 32px 28px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: color 0.2s;
+        }
+
+        .nav-item.active {
+            color: var(--gold);
+        }
+
+        .nav-icon {
+            font-size: 22px;
+        }
+
+        /* Style Label */
+        .style-label {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: var(--gold);
+            color: var(--black);
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div class="style-label">Premium Luxe</div>
+
+    <header class="header">
+        <div class="logo">Studio<span>Loop</span></div>
+        <div class="avatar">L</div>
+    </header>
+
+    <main class="main">
+        <div class="hero">
+            <div class="hero-greeting">Welcome back</div>
+            <h1 class="hero-name">Hello, <strong>Lerato</strong></h1>
+
+            <div class="membership-card">
+                <div class="membership-tier">✦ Unlimited Member</div>
+                <div class="membership-credits">
+                    <span class="membership-number">∞</span>
+                    <span class="membership-label">classes remaining</span>
+                </div>
+                <div class="membership-progress">
+                    <div class="membership-progress-bar"></div>
+                </div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">
+                    12 classes completed this month
+                </div>
+            </div>
+        </div>
+
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">Next Session</h2>
+            </div>
+
+            <div class="session-card">
+                <div class="session-image">
+                    🧘
+                    <span class="session-badge">Today</span>
+                </div>
+                <div class="session-content">
+                    <div class="session-time">18:00 — 19:00</div>
+                    <div class="session-title">Vinyasa Flow</div>
+                    <div class="session-location">Soul Studio • Sea Point</div>
+                    <div class="session-footer">
+                        <div class="instructor">
+                            <div class="instructor-avatar"></div>
+                            <div class="instructor-info">
+                                <div class="instructor-label">Instructor</div>
+                                <div class="instructor-name">Sarah Mitchell</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-gold">Check In</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">Recommended</h2>
+                <a href="#" class="section-link">View All</a>
+            </div>
+
+            <div class="class-list">
+                <div class="class-item">
+                    <div class="class-icon">🚴</div>
+                    <div class="class-content">
+                        <div class="class-name">HIIT Cycling</div>
+                        <div class="class-meta">Spinzone • Tomorrow 07:00</div>
+                    </div>
+                    <div class="class-price">
+                        <div class="class-amount">R85</div>
+                        <div class="class-spots">3 spots</div>
+                    </div>
+                </div>
+                <div class="class-item">
+                    <div class="class-icon">🥊</div>
+                    <div class="class-content">
+                        <div class="class-name">Box Fit</div>
+                        <div class="class-meta">Fight Club • Tomorrow 12:00</div>
+                    </div>
+                    <div class="class-price">
+                        <div class="class-amount">R95</div>
+                        <div class="class-spots">8 spots</div>
+                    </div>
+                </div>
+                <div class="class-item">
+                    <div class="class-icon">🤸</div>
+                    <div class="class-content">
+                        <div class="class-name">Reformer Pilates</div>
+                        <div class="class-meta">Core Lab • Wednesday 09:00</div>
+                    </div>
+                    <div class="class-price">
+                        <div class="class-amount">R120</div>
+                        <div class="class-spots">2 spots</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item active">
+            <span class="nav-icon">🏠</span>
+            <span>Home</span>
+        </a>
+        <a href="#" class="nav-item">
+            <span class="nav-icon">🔍</span>
+            <span>Discover</span>
+        </a>
+        <a href="#" class="nav-item">
+            <span class="nav-icon">📅</span>
+            <span>Schedule</span>
+        </a>
+        <a href="#" class="nav-item">
+            <span class="nav-icon">👤</span>
+            <span>Profile</span>
+        </a>
+    </nav>
+</body>
+</html>
