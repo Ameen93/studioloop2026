@@ -7,9 +7,10 @@ Implements ARCH-11 (Argon2 password hashing), ARCH-12 (JWT tokens), and ARCH-28 
 from datetime import datetime, timedelta, timezone
 
 import jwt
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import ValidationError
-from sqlmodel import select
+from sqlmodel import Field, SQLModel, or_, select
+from starlette.responses import Response
 
 from app.api.deps import CurrentConsumer, SessionDep
 from app.core import security
@@ -30,6 +31,7 @@ from app.models import (
 )
 from app.models.consumer import (
     AccountDeletionRequest,
+    AuthProvider,
     Consumer,
     ConsumerCreate,
     ConsumerLoginRequest,
@@ -655,3 +657,224 @@ def delete_consumer_account(
     return Message(
         message="Account deletion scheduled. Your data will be removed within 30 days."
     )
+
+
+# =============================================================================
+# Google OAuth Endpoints (Story 1.9, ARCH-14)
+# =============================================================================
+
+
+class SetPasswordRequest(SQLModel):
+    """Request to set password for social-login-only user."""
+
+    new_password: str = Field(min_length=8, max_length=128)
+
+
+@router.get("/google")
+async def google_login(request: Request) -> Response:
+    """Initiate Google OAuth flow (Story 1.9, AC #1).
+
+    Redirects to Google's authorization endpoint with proper scopes.
+    Uses session middleware for OAuth state management.
+
+    Args:
+        request: FastAPI request object (needed for Authlib)
+
+    Returns:
+        RedirectResponse to Google's authorization endpoint
+
+    Raises:
+        HTTPException: 503 if Google OAuth is not configured
+    """
+    if not settings.GOOGLE_CLIENT_ID or not settings.GOOGLE_CLIENT_SECRET:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "code": "OAUTH_NOT_CONFIGURED",
+                "message": "Google OAuth is not configured",
+                "details": {},
+            },
+        )
+
+    from app.core.oauth import oauth
+
+    redirect_uri = settings.GOOGLE_REDIRECT_URI
+    return await oauth.google.authorize_redirect(request, redirect_uri)  # type: ignore[no-any-return]
+
+
+@router.get("/google/callback", response_model=ConsumerToken)
+async def google_callback(
+    request: Request,
+    session: SessionDep,
+) -> ConsumerToken:
+    """Handle Google OAuth callback (Story 1.9, AC #1, #2, #3, #5).
+
+    Validates OAuth response, creates/links user account, and returns JWT tokens.
+    - If google_id exists: Login existing user
+    - If email exists but no google_id: Link Google to existing account
+    - If neither: Create new consumer
+
+    Args:
+        request: FastAPI request object (contains OAuth callback params)
+        session: Database session
+
+    Returns:
+        ConsumerToken with access_token and refresh_token
+
+    Raises:
+        HTTPException: 400 if OAuth validation fails
+        HTTPException: 503 if Google OAuth is not configured
+    """
+    if not settings.GOOGLE_CLIENT_ID or not settings.GOOGLE_CLIENT_SECRET:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "code": "OAUTH_NOT_CONFIGURED",
+                "message": "Google OAuth is not configured",
+                "details": {},
+            },
+        )
+
+    from app.core.oauth import oauth
+
+    try:
+        # Exchange code for tokens and get user info
+        token = await oauth.google.authorize_access_token(request)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "INVALID_OAUTH_STATE",
+                "message": "Invalid or expired OAuth state",
+                "details": {},
+            },
+        )
+
+    # Get user info from ID token (Google returns it with the token)
+    user_info = token.get("userinfo")
+    if not user_info:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "OAUTH_USER_INFO_FAILED",
+                "message": "Failed to get user info from Google",
+                "details": {},
+            },
+        )
+
+    google_id = user_info.get("sub")
+    email = user_info.get("email")
+    name = user_info.get("name", "")
+    picture = user_info.get("picture")
+
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "OAUTH_NO_EMAIL",
+                "message": "Google account does not have an email address",
+                "details": {},
+            },
+        )
+
+    # Parse name into first/last
+    name_parts = name.split(" ", 1)
+    first_name = name_parts[0] if name_parts else "User"
+    last_name = name_parts[1] if len(name_parts) > 1 else ""
+
+    # Find existing consumer by google_id OR email (AC #5: link existing accounts)
+    consumer = session.exec(
+        select(Consumer).where(
+            or_(Consumer.google_id == google_id, Consumer.email == email)
+        )
+    ).first()
+
+    if consumer:
+        # Existing user - link Google if not already linked
+        if not consumer.google_id:
+            consumer.google_id = google_id
+
+        # Update avatar if user doesn't have one and Google provides picture (AC #2)
+        if not consumer.avatar_url and picture:
+            consumer.avatar_url = picture
+
+        # Mark as email verified if not already (Google verified it)
+        if not consumer.is_email_verified:
+            consumer.is_email_verified = True
+
+        session.add(consumer)
+        session.commit()
+        session.refresh(consumer)
+    else:
+        # New user - create account (AC #1)
+        consumer = Consumer(
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            google_id=google_id,
+            avatar_url=picture,
+            auth_provider=AuthProvider.GOOGLE,
+            is_email_verified=True,  # Google verified it
+            is_active=True,
+            hashed_password=None,  # No password for social login
+            role=UserRole.CONSUMER,
+        )
+        session.add(consumer)
+        session.commit()
+        session.refresh(consumer)
+
+    # Generate JWT tokens (AC #3)
+    access_token = create_access_token(
+        subject=str(consumer.id),
+        expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
+    )
+    refresh_token = create_refresh_token(
+        subject=str(consumer.id),
+        expires_delta=timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+        token_version=consumer.token_version,
+    )
+
+    return ConsumerToken(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+    )
+
+
+@router.post("/set-password", response_model=Message)
+def set_password(
+    session: SessionDep,
+    current_consumer: CurrentConsumer,
+    request_data: SetPasswordRequest,
+) -> Message:
+    """Set password for a social-login-only user (Story 1.9, AC #4).
+
+    Allows users who signed up via Google/Apple to add a password
+    so they can also login via email.
+
+    Args:
+        session: Database session
+        current_consumer: Authenticated consumer from JWT token
+        request_data: Contains new_password
+
+    Returns:
+        Message confirming password was set
+
+    Raises:
+        HTTPException: 400 PASSWORD_ALREADY_SET if user already has a password
+    """
+    if current_consumer.hashed_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "PASSWORD_ALREADY_SET",
+                "message": "Password is already set. Use change password instead.",
+                "details": {},
+            },
+        )
+
+    current_consumer.hashed_password = get_password_hash(request_data.new_password)
+    session.add(current_consumer)
+    session.commit()
+
+    return Message(message="Password has been set successfully")
