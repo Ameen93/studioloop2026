@@ -397,6 +397,36 @@ class TestAppleOAuthCallback:
 
     @patch("app.core.oauth.oauth")
     @patch("app.core.oauth.generate_apple_client_secret")
+    @patch("jwt.decode")
+    def test_callback_no_sub_claim_returns_400(
+        self, mock_jwt_decode, mock_gen_secret, mock_oauth, client
+    ):
+        """Test callback returns 400 when Apple ID token is missing 'sub' claim."""
+        mock_gen_secret.return_value = "mock_client_secret"
+
+        # Mock OAuth response
+        mock_oauth.apple.authorize_access_token = AsyncMock(
+            return_value={"id_token": "mock_id_token"}
+        )
+
+        # Mock decode without sub claim (malformed token)
+        mock_jwt_decode.return_value = {
+            "email": "test@example.com",
+            # No sub field - this could cause incorrect account matching
+        }
+
+        with patch.object(settings, "APPLE_CLIENT_ID", "test_client_id"):
+            with patch.object(settings, "APPLE_PRIVATE_KEY", "test_key"):
+                response = client.post(
+                    f"{settings.API_V1_STR}/auth/consumer/apple/callback",
+                    data={"code": "test_code", "state": "valid_state"},
+                )
+
+                assert response.status_code == 400
+                assert response.json()["detail"]["code"] == "OAUTH_USER_INFO_FAILED"
+
+    @patch("app.core.oauth.oauth")
+    @patch("app.core.oauth.generate_apple_client_secret")
     def test_callback_no_id_token_returns_400(
         self, mock_gen_secret, mock_oauth, client
     ):

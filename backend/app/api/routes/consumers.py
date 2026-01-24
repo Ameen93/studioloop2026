@@ -1025,6 +1025,17 @@ async def apple_callback(
     apple_id = decoded.get("sub")
     email = decoded.get("email")
 
+    # Validate required claims before account lookup
+    if not apple_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "OAUTH_USER_INFO_FAILED",
+                "message": "Apple ID token missing required 'sub' claim",
+                "details": {},
+            },
+        )
+
     if not email:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
