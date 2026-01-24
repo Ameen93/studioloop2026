@@ -106,6 +106,15 @@ class Settings(BaseSettings):
         "http://localhost:8000/api/v1/auth/consumer/google/callback"
     )
 
+    # Apple Sign In (ARCH-14)
+    APPLE_CLIENT_ID: str = ""  # Service ID (e.g., com.studioloop.app)
+    APPLE_TEAM_ID: str = ""  # Team ID from Apple Developer account
+    APPLE_KEY_ID: str = ""  # Key ID for the private key
+    APPLE_PRIVATE_KEY: str = ""  # Contents of .p8 private key file
+    APPLE_REDIRECT_URI: str = (
+        "http://localhost:8000/api/v1/auth/consumer/apple/callback"
+    )
+
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":
             message = (

@@ -394,10 +394,11 @@
 
       **Next Steps:**
       1. Review the comprehensive story in {{story_file}}
-      2. Run dev agents `dev-story` for optimized implementation
-      3. Use QA checklist to manually verify implementation
-      4. Run `code-review` when complete (auto-marks done)
-      5. Optional: Run TEA `*automate` after `dev-story` to generate guardrail tests
+      2. ⚠️ **Before running dev-story:** Ensure any uncommitted changes from previous stories are committed or stashed
+      3. Run dev agents `dev-story` for optimized implementation (will create branch from master)
+      4. Use QA checklist to manually verify implementation
+      5. Run `code-review` when complete (auto-marks done)
+      6. Optional: Run TEA `*automate` after `dev-story` to generate guardrail tests
 
       **The developer now has everything needed for flawless implementation!**
     </output>

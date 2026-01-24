@@ -199,12 +199,11 @@
         <output>⚠️ **Uncommitted Changes Detected**
 
           There are uncommitted changes in the working directory.
-          Please commit or stash these changes before starting a new story.
+          You must commit or stash these changes before starting a new story to ensure a clean branch from {{default_branch}}.
         </output>
         <ask>How would you like to proceed?
-          1. Stash changes and continue
+          1. Stash changes and continue (recommended)
           2. I'll commit/stash manually - please wait
-          3. Continue anyway on current branch (not recommended)
         </ask>
 
         <check if="user chooses '1'">
@@ -213,12 +212,7 @@
         </check>
 
         <check if="user chooses '2'">
-          <action>HALT - Wait for user to handle changes manually</action>
-        </check>
-
-        <check if="user chooses '3'">
-          <output>⚠️ Continuing on current branch with uncommitted changes...</output>
-          <goto step="5" />
+          <action>HALT - Wait for user to handle changes manually, then re-run dev-story</action>
         </check>
       </check>
 

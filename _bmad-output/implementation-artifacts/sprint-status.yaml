@@ -63,7 +63,7 @@ development_status:
   1-7-popia-account-deletion: review
   1-8-role-based-access-control: review
   1-9-google-social-login: review
-  1-10-apple-social-login: backlog
+  1-10-apple-social-login: review
   epic-1-retrospective: optional
 
   # Epic 2: Gym Onboarding & Configuration (11 stories)
