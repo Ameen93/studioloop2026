@@ -10,6 +10,8 @@ from enum import Enum
 from uuid import UUID
 
 from pydantic import EmailStr
+from sqlalchemy import Column
+from sqlalchemy import Enum as SAEnum
 from sqlmodel import Field, SQLModel
 
 from app.models.base import BaseModel, SoftDeleteMixin
@@ -154,6 +156,17 @@ class Consumer(SoftDeleteMixin, BaseModel, ConsumerBase, table=True):
     auth_provider: AuthProvider = Field(
         default=AuthProvider.EMAIL,
         description="Primary authentication provider used to create account",
+        sa_column=Column(
+            SAEnum(
+                AuthProvider,
+                values_callable=lambda x: [e.value for e in x],
+                name="authprovider",
+                create_constraint=False,
+                native_enum=False,
+            ),
+            default=AuthProvider.EMAIL.value,
+            nullable=False,
+        ),
     )
 
     # Relationships (to be populated as domain models are created)
