@@ -205,7 +205,7 @@ class TestGoogleOAuthCallback:
         email = f"googleuser-{uuid4().hex[:8]}@gmail.com"
 
         # Create existing Google user
-        existing = _create_consumer(
+        _create_consumer(
             db,
             email=email,
             google_id=google_id,
