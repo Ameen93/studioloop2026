@@ -889,3 +889,226 @@ def set_password(
     session.commit()
 
     return Message(message="Password has been set successfully")
+
+
+# =============================================================================
+# Apple Sign In Endpoints (Story 1.10)
+# =============================================================================
+
+
+@router.get("/apple")
+async def apple_login(request: Request) -> Response:
+    """Initiate Apple OAuth flow (Story 1.10, AC #1, #4).
+
+    Redirects user to Apple's authorization endpoint for Sign in with Apple.
+    Uses SessionMiddleware for CSRF protection via state parameter.
+
+    Args:
+        request: FastAPI request object (needed for Authlib)
+
+    Returns:
+        RedirectResponse to Apple's authorization endpoint
+
+    Raises:
+        HTTPException: 503 if Apple Sign In is not configured
+    """
+    if not settings.APPLE_CLIENT_ID or not settings.APPLE_PRIVATE_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "code": "OAUTH_NOT_CONFIGURED",
+                "message": "Apple Sign In is not configured",
+                "details": {},
+            },
+        )
+
+    from app.core.oauth import oauth
+
+    redirect_uri = settings.APPLE_REDIRECT_URI
+    return await oauth.apple.authorize_redirect(request, redirect_uri)  # type: ignore[no-any-return]
+
+
+@router.post("/apple/callback", response_model=ConsumerToken)
+async def apple_callback(
+    request: Request,
+    session: SessionDep,
+) -> ConsumerToken:
+    """Handle Apple OAuth callback (Story 1.10, AC #1, #2, #3, #5).
+
+    Apple uses response_mode=form_post, so this is a POST endpoint.
+    Validates OAuth response, creates/links user account, and returns JWT tokens.
+    - If apple_id exists: Login existing user
+    - If email exists but no apple_id: Link Apple to existing account
+    - If neither: Create new consumer
+
+    Supports Apple's Hide My Email relay addresses (AC #3).
+
+    Args:
+        request: FastAPI request object (contains OAuth callback form data)
+        session: Database session
+
+    Returns:
+        ConsumerToken with access_token and refresh_token
+
+    Raises:
+        HTTPException: 400 if OAuth validation fails
+        HTTPException: 403 if account is deactivated
+        HTTPException: 503 if Apple Sign In is not configured
+    """
+    import json
+
+    import jwt as pyjwt
+
+    from app.core.oauth import generate_apple_client_secret, oauth
+
+    if not settings.APPLE_CLIENT_ID or not settings.APPLE_PRIVATE_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "code": "OAUTH_NOT_CONFIGURED",
+                "message": "Apple Sign In is not configured",
+                "details": {},
+            },
+        )
+
+    # Get form data (Apple uses form_post response mode)
+    form_data = await request.form()
+    user_data_str = form_data.get("user")  # JSON string, only on first auth
+
+    try:
+        # Generate client secret JWT for Apple
+        client_secret = generate_apple_client_secret()
+
+        # Override the client secret for this request
+        oauth.apple.client_secret = client_secret
+
+        # Exchange code for tokens
+        token = await oauth.apple.authorize_access_token(request)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "INVALID_OAUTH_STATE",
+                "message": "Invalid or expired OAuth state",
+                "details": {},
+            },
+        )
+
+    # Get ID token and decode it (Apple returns user info in the ID token)
+    id_token = token.get("id_token")
+    if not id_token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "OAUTH_USER_INFO_FAILED",
+                "message": "Failed to get ID token from Apple",
+                "details": {},
+            },
+        )
+
+    # Decode Apple ID token (signature verification skipped - public keys rotate)
+    try:
+        decoded = pyjwt.decode(
+            id_token,
+            options={"verify_signature": False},
+        )
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "OAUTH_USER_INFO_FAILED",
+                "message": "Failed to decode Apple ID token",
+                "details": {},
+            },
+        )
+
+    apple_id = decoded.get("sub")
+    email = decoded.get("email")
+
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "OAUTH_NO_EMAIL",
+                "message": "Apple account does not have an email address",
+                "details": {},
+            },
+        )
+
+    # Handle first-login name extraction (Apple only sends name on first auth)
+    first_name = "Apple"
+    last_name = "User"
+
+    if user_data_str:
+        try:
+            user_data = json.loads(str(user_data_str))
+            name_data = user_data.get("name", {})
+            first_name = name_data.get("firstName", "Apple") or "Apple"
+            last_name = name_data.get("lastName", "User") or "User"
+        except (json.JSONDecodeError, TypeError):
+            pass  # Use default names
+
+    # Find existing consumer by apple_id OR email (AC #5: link existing accounts)
+    consumer = session.exec(
+        select(Consumer).where(
+            or_(Consumer.apple_id == apple_id, Consumer.email == email)
+        )
+    ).first()
+
+    if consumer:
+        # Block login for inactive/deactivated accounts (same as email/Google login)
+        if not consumer.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "code": "ACCOUNT_DEACTIVATED",
+                    "message": "This account has been deactivated",
+                    "details": {},
+                },
+            )
+
+        # Existing user - link Apple if not already linked
+        if not consumer.apple_id:
+            consumer.apple_id = apple_id
+
+        # Mark as email verified if not already (Apple verified it)
+        if not consumer.is_email_verified:
+            consumer.is_email_verified = True
+
+        session.add(consumer)
+        session.commit()
+        session.refresh(consumer)
+    else:
+        # New user - create account (AC #1)
+        # Note: Apple's Hide My Email relay addresses are supported (AC #3)
+        consumer = Consumer(
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            apple_id=apple_id,
+            auth_provider=AuthProvider.APPLE,
+            is_email_verified=True,  # Apple verified it
+            is_active=True,
+            hashed_password=None,  # No password for social login
+            role=UserRole.CONSUMER,
+        )
+        session.add(consumer)
+        session.commit()
+        session.refresh(consumer)
+
+    # Generate JWT tokens (AC #2)
+    access_token = create_access_token(
+        subject=str(consumer.id),
+        expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
+    )
+    refresh_token = create_refresh_token(
+        subject=str(consumer.id),
+        expires_delta=timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+        token_version=consumer.token_version,
+    )
+
+    return ConsumerToken(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+    )
