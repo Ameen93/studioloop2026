@@ -59,13 +59,13 @@ class Gym(SoftDeleteMixin, BaseModel, GymBase, table=True):
     # Relationships
     staff: list["Staff"] = Relationship(back_populates="gym")
 
-    # Contact information
-    email: str | None = Field(
+    # Contact information (AC #5: contact_email, contact_phone)
+    contact_email: str | None = Field(
         default=None,
         max_length=255,
-        description="Primary contact email",
+        description="Primary contact email for the gym",
     )
-    phone: str | None = Field(
+    contact_phone: str | None = Field(
         default=None,
         max_length=50,
         description="Primary contact phone (SA format: +27...)",
@@ -98,8 +98,8 @@ class GymUpdate(SQLModel):
     slug: str | None = Field(default=None, max_length=100)
     description: str | None = Field(default=None, max_length=2000)
     is_marketplace_enabled: bool | None = None
-    email: str | None = Field(default=None, max_length=255)
-    phone: str | None = Field(default=None, max_length=50)
+    contact_email: str | None = Field(default=None, max_length=255)
+    contact_phone: str | None = Field(default=None, max_length=50)
     address_line1: str | None = Field(default=None, max_length=255)
     address_line2: str | None = Field(default=None, max_length=255)
     city: str | None = Field(default=None, max_length=100)
@@ -114,8 +114,54 @@ class GymPublic(GymBase):
     """Schema for gym in API responses."""
 
     id: UUID
-    email: str | None = None
-    phone: str | None = None
+    contact_email: str | None = None
+    contact_phone: str | None = None
     city: str | None = None
     province: str | None = None
     is_active: bool
+
+
+# =============================================================================
+# Gym Registration Schemas (Story 2.1)
+# =============================================================================
+
+
+class GymRegistrationCreate(SQLModel):
+    """Schema for gym owner registration.
+
+    Creates a Consumer (role: owner), Gym, and Staff record in one operation.
+    """
+
+    # Owner details
+    email: str = Field(max_length=255, description="Owner's email address")
+    password: str = Field(min_length=8, max_length=128, description="Password (min 8 chars)")
+    first_name: str = Field(min_length=1, max_length=100)
+    last_name: str = Field(min_length=1, max_length=100)
+
+    # Gym details
+    gym_name: str = Field(min_length=1, max_length=255, description="Gym display name")
+    gym_contact_email: str | None = Field(
+        default=None,
+        max_length=255,
+        description="Gym contact email (defaults to owner email if not provided)",
+    )
+    gym_contact_phone: str | None = Field(
+        default=None,
+        max_length=50,
+        description="Gym contact phone (SA format: +27...)",
+    )
+
+
+class GymRegistrationResponse(SQLModel):
+    """Response after successful gym registration.
+
+    Includes IDs for all three created records.
+    """
+
+    owner_id: UUID
+    gym_id: UUID
+    staff_id: UUID
+    email: str
+    gym_name: str
+    gym_slug: str
+    message: str = "Registration successful. Please verify your email."
