@@ -69,16 +69,16 @@ development_status:
   # Epic 2: Gym Onboarding & Configuration (11 stories)
   epic-2: in-progress
   2-1-gym-registration-and-owner-account: done
-  2-2-gym-profile-configuration: backlog
-  2-3-operating-hours-configuration: backlog
-  2-4-holiday-closures-management: backlog
-  2-5-cancellation-policy-configuration: backlog
-  2-6-marketplace-participation-toggle: backlog
-  2-7-saas-subscription-tier-view: backlog
-  2-8-space-creation-and-management: backlog
-  2-9-space-amenities-and-equipment: backlog
-  2-10-space-double-booking-prevention: backlog
-  2-11-member-data-spreadsheet-import: backlog
+  2-2-gym-profile-configuration: ready-for-dev
+  2-3-operating-hours-configuration: ready-for-dev
+  2-4-holiday-closures-management: ready-for-dev
+  2-5-cancellation-policy-configuration: ready-for-dev
+  2-6-marketplace-participation-toggle: ready-for-dev
+  2-7-saas-subscription-tier-view: ready-for-dev
+  2-8-space-creation-and-management: ready-for-dev
+  2-9-space-amenities-and-equipment: ready-for-dev
+  2-10-space-double-booking-prevention: ready-for-dev
+  2-11-member-data-spreadsheet-import: ready-for-dev
   epic-2-retrospective: optional
 
   # Epic 3: Staff Management & Permissions (8 stories)
