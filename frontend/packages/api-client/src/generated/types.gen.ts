@@ -20,6 +20,14 @@ export type AccountDeletionRequest = {
  */
 export type AuthProvider = 'email' | 'google' | 'apple';
 
+export type BodyGymsUploadGymLogo = {
+    file: Blob | File;
+};
+
+export type BodyGymsUploadGymPhoto = {
+    file: Blob | File;
+};
+
 export type BodyLoginLoginAccessToken = {
     grant_type?: string | null;
     username: string;
@@ -91,6 +99,87 @@ export type ConsumerUpdate = {
  */
 export type ForgotPasswordRequest = {
     email: string;
+};
+
+/**
+ * Schema for updating gym address and location.
+ */
+export type GymAddressUpdate = {
+    address_line1?: string | null;
+    address_line2?: string | null;
+    city?: string | null;
+    province?: string | null;
+    postal_code?: string | null;
+    country?: string | null;
+    /**
+     * GPS latitude (-90 to 90)
+     */
+    latitude?: number | null;
+    /**
+     * GPS longitude (-180 to 180)
+     */
+    longitude?: number | null;
+};
+
+/**
+ * Request to delete a gym photo.
+ */
+export type GymPhotoDeleteRequest = {
+    /**
+     * URL of the photo to delete
+     */
+    photo_url: string;
+};
+
+/**
+ * Schema for updating gym profile information.
+ */
+export type GymProfileUpdate = {
+    name?: string | null;
+    description?: string | null;
+    tagline?: string | null;
+    contact_email?: string | null;
+    contact_phone?: string | null;
+};
+
+/**
+ * Schema for gym in API responses.
+ */
+export type GymPublic = {
+    /**
+     * Gym display name
+     */
+    name: string;
+    /**
+     * URL-friendly identifier (unique across platform)
+     */
+    slug: string;
+    /**
+     * Gym description for marketplace listing
+     */
+    description?: string | null;
+    /**
+     * Short tagline for the gym (max 200 chars)
+     */
+    tagline?: string | null;
+    /**
+     * Whether gym participates in StudioLoop marketplace
+     */
+    is_marketplace_enabled?: boolean;
+    id: string;
+    contact_email?: string | null;
+    contact_phone?: string | null;
+    address_line1?: string | null;
+    address_line2?: string | null;
+    city?: string | null;
+    province?: string | null;
+    postal_code?: string | null;
+    country?: string;
+    latitude?: number | null;
+    longitude?: number | null;
+    logo_url?: string | null;
+    photo_urls?: Array<string>;
+    is_active: boolean;
 };
 
 /**
@@ -171,6 +260,14 @@ export type Message = {
 export type NewPassword = {
     token: string;
     new_password: string;
+};
+
+/**
+ * Response after successful photo upload.
+ */
+export type PhotoUploadResponse = {
+    url: string;
+    message?: string;
 };
 
 export type PrivateUserCreate = {
@@ -784,6 +881,210 @@ export type GymAuthRegisterGymResponses = {
 };
 
 export type GymAuthRegisterGymResponse = GymAuthRegisterGymResponses[keyof GymAuthRegisterGymResponses];
+
+export type GymsGetGymBySlugData = {
+    body?: never;
+    path: {
+        slug: string;
+    };
+    query?: never;
+    url: '/api/v1/gyms/by-slug/{slug}';
+};
+
+export type GymsGetGymBySlugErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GymsGetGymBySlugError = GymsGetGymBySlugErrors[keyof GymsGetGymBySlugErrors];
+
+export type GymsGetGymBySlugResponses = {
+    /**
+     * Successful Response
+     */
+    200: GymPublic;
+};
+
+export type GymsGetGymBySlugResponse = GymsGetGymBySlugResponses[keyof GymsGetGymBySlugResponses];
+
+export type GymsUpdateGymProfileData = {
+    body: GymProfileUpdate;
+    path: {
+        /**
+         * Gym ID (tenant identifier)
+         */
+        gym_id: string;
+    };
+    query?: never;
+    url: '/api/v1/gyms/{gym_id}/profile';
+};
+
+export type GymsUpdateGymProfileErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GymsUpdateGymProfileError = GymsUpdateGymProfileErrors[keyof GymsUpdateGymProfileErrors];
+
+export type GymsUpdateGymProfileResponses = {
+    /**
+     * Successful Response
+     */
+    200: GymPublic;
+};
+
+export type GymsUpdateGymProfileResponse = GymsUpdateGymProfileResponses[keyof GymsUpdateGymProfileResponses];
+
+export type GymsUpdateGymAddressData = {
+    body: GymAddressUpdate;
+    path: {
+        /**
+         * Gym ID (tenant identifier)
+         */
+        gym_id: string;
+    };
+    query?: never;
+    url: '/api/v1/gyms/{gym_id}/address';
+};
+
+export type GymsUpdateGymAddressErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GymsUpdateGymAddressError = GymsUpdateGymAddressErrors[keyof GymsUpdateGymAddressErrors];
+
+export type GymsUpdateGymAddressResponses = {
+    /**
+     * Successful Response
+     */
+    200: GymPublic;
+};
+
+export type GymsUpdateGymAddressResponse = GymsUpdateGymAddressResponses[keyof GymsUpdateGymAddressResponses];
+
+export type GymsUploadGymLogoData = {
+    body: BodyGymsUploadGymLogo;
+    path: {
+        /**
+         * Gym ID (tenant identifier)
+         */
+        gym_id: string;
+    };
+    query?: never;
+    url: '/api/v1/gyms/{gym_id}/logo';
+};
+
+export type GymsUploadGymLogoErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GymsUploadGymLogoError = GymsUploadGymLogoErrors[keyof GymsUploadGymLogoErrors];
+
+export type GymsUploadGymLogoResponses = {
+    /**
+     * Successful Response
+     */
+    200: PhotoUploadResponse;
+};
+
+export type GymsUploadGymLogoResponse = GymsUploadGymLogoResponses[keyof GymsUploadGymLogoResponses];
+
+export type GymsDeleteGymPhotoData = {
+    body: GymPhotoDeleteRequest;
+    path: {
+        /**
+         * Gym ID (tenant identifier)
+         */
+        gym_id: string;
+    };
+    query?: never;
+    url: '/api/v1/gyms/{gym_id}/photos';
+};
+
+export type GymsDeleteGymPhotoErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GymsDeleteGymPhotoError = GymsDeleteGymPhotoErrors[keyof GymsDeleteGymPhotoErrors];
+
+export type GymsDeleteGymPhotoResponses = {
+    /**
+     * Successful Response
+     */
+    200: GymPublic;
+};
+
+export type GymsDeleteGymPhotoResponse = GymsDeleteGymPhotoResponses[keyof GymsDeleteGymPhotoResponses];
+
+export type GymsUploadGymPhotoData = {
+    body: BodyGymsUploadGymPhoto;
+    path: {
+        /**
+         * Gym ID (tenant identifier)
+         */
+        gym_id: string;
+    };
+    query?: never;
+    url: '/api/v1/gyms/{gym_id}/photos';
+};
+
+export type GymsUploadGymPhotoErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GymsUploadGymPhotoError = GymsUploadGymPhotoErrors[keyof GymsUploadGymPhotoErrors];
+
+export type GymsUploadGymPhotoResponses = {
+    /**
+     * Successful Response
+     */
+    200: PhotoUploadResponse;
+};
+
+export type GymsUploadGymPhotoResponse = GymsUploadGymPhotoResponses[keyof GymsUploadGymPhotoResponses];
+
+export type GymsGetGymData = {
+    body?: never;
+    path: {
+        gym_id: string;
+    };
+    query?: never;
+    url: '/api/v1/gyms/{gym_id}';
+};
+
+export type GymsGetGymErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GymsGetGymError = GymsGetGymErrors[keyof GymsGetGymErrors];
+
+export type GymsGetGymResponses = {
+    /**
+     * Successful Response
+     */
+    200: GymPublic;
+};
+
+export type GymsGetGymResponse = GymsGetGymResponses[keyof GymsGetGymResponses];
 
 export type StaffAuthLoginStaffData = {
     body: StaffLoginRequest;

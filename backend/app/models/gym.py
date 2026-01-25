@@ -8,6 +8,7 @@ by gym_id.
 from typing import TYPE_CHECKING
 from uuid import UUID
 
+from sqlalchemy import JSON
 from sqlmodel import Field, Relationship, SQLModel
 
 from app.models.base import BaseModel, SoftDeleteMixin
@@ -35,6 +36,11 @@ class GymBase(SQLModel):
         default=None,
         max_length=2000,
         description="Gym description for marketplace listing",
+    )
+    tagline: str | None = Field(
+        default=None,
+        max_length=200,
+        description="Short tagline for the gym (max 200 chars)",
     )
     is_marketplace_enabled: bool = Field(
         default=False,
@@ -83,6 +89,18 @@ class Gym(SoftDeleteMixin, BaseModel, GymBase, table=True):
     latitude: float | None = Field(default=None, description="GPS latitude")
     longitude: float | None = Field(default=None, description="GPS longitude")
 
+    # Photos (Story 2.2)
+    logo_url: str | None = Field(
+        default=None,
+        max_length=500,
+        description="URL to gym logo image",
+    )
+    photo_urls: list[str] = Field(
+        default=[],
+        sa_type=JSON,
+        description="List of URLs to gym gallery photos",
+    )
+
 
 # Schema classes for API request/response
 class GymCreate(GymBase):
@@ -97,6 +115,7 @@ class GymUpdate(SQLModel):
     name: str | None = Field(default=None, max_length=255)
     slug: str | None = Field(default=None, max_length=100)
     description: str | None = Field(default=None, max_length=2000)
+    tagline: str | None = Field(default=None, max_length=200)
     is_marketplace_enabled: bool | None = None
     contact_email: str | None = Field(default=None, max_length=255)
     contact_phone: str | None = Field(default=None, max_length=50)
@@ -116,9 +135,68 @@ class GymPublic(GymBase):
     id: UUID
     contact_email: str | None = None
     contact_phone: str | None = None
+    address_line1: str | None = None
+    address_line2: str | None = None
     city: str | None = None
     province: str | None = None
+    postal_code: str | None = None
+    country: str = "ZA"
+    latitude: float | None = None
+    longitude: float | None = None
+    logo_url: str | None = None
+    photo_urls: list[str] = []
     is_active: bool
+
+
+# =============================================================================
+# Gym Profile Schemas (Story 2.2)
+# =============================================================================
+
+
+class GymProfileUpdate(SQLModel):
+    """Schema for updating gym profile information."""
+
+    name: str | None = Field(default=None, max_length=255)
+    description: str | None = Field(default=None, max_length=2000)
+    tagline: str | None = Field(default=None, max_length=200)
+    contact_email: str | None = Field(default=None, max_length=255)
+    contact_phone: str | None = Field(default=None, max_length=50)
+
+
+class GymAddressUpdate(SQLModel):
+    """Schema for updating gym address and location."""
+
+    address_line1: str | None = Field(default=None, max_length=255)
+    address_line2: str | None = Field(default=None, max_length=255)
+    city: str | None = Field(default=None, max_length=100)
+    province: str | None = Field(default=None, max_length=100)
+    postal_code: str | None = Field(default=None, max_length=20)
+    country: str | None = Field(default=None, max_length=2)
+    latitude: float | None = Field(
+        default=None,
+        ge=-90,
+        le=90,
+        description="GPS latitude (-90 to 90)",
+    )
+    longitude: float | None = Field(
+        default=None,
+        ge=-180,
+        le=180,
+        description="GPS longitude (-180 to 180)",
+    )
+
+
+class PhotoUploadResponse(SQLModel):
+    """Response after successful photo upload."""
+
+    url: str
+    message: str = "Photo uploaded successfully"
+
+
+class GymPhotoDeleteRequest(SQLModel):
+    """Request to delete a gym photo."""
+
+    photo_url: str = Field(description="URL of the photo to delete")
 
 
 # =============================================================================
@@ -134,7 +212,9 @@ class GymRegistrationCreate(SQLModel):
 
     # Owner details
     email: str = Field(max_length=255, description="Owner's email address")
-    password: str = Field(min_length=8, max_length=128, description="Password (min 8 chars)")
+    password: str = Field(
+        min_length=8, max_length=128, description="Password (min 8 chars)"
+    )
     first_name: str = Field(min_length=1, max_length=100)
     last_name: str = Field(min_length=1, max_length=100)
 

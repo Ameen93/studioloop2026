@@ -34,11 +34,15 @@ from app.models.consumer import (
 # Domain models
 from app.models.gym import (
     Gym,
+    GymAddressUpdate,
     GymCreate,
+    GymPhotoDeleteRequest,
+    GymProfileUpdate,
     GymPublic,
     GymRegistrationCreate,
     GymRegistrationResponse,
     GymUpdate,
+    PhotoUploadResponse,
 )
 from app.models.space import Space, SpaceCreate, SpacePublic, SpaceUpdate
 from app.models.staff import Staff, StaffLoginRequest, StaffRole, StaffToken
@@ -78,11 +82,15 @@ __all__ = [
     "TimestampMixin",
     # Domain models
     "Gym",
+    "GymAddressUpdate",
     "GymCreate",
-    "GymUpdate",
+    "GymPhotoDeleteRequest",
+    "GymProfileUpdate",
     "GymPublic",
     "GymRegistrationCreate",
     "GymRegistrationResponse",
+    "GymUpdate",
+    "PhotoUploadResponse",
     "AccountDeletionRequest",
     "AuthProvider",
     "Consumer",
