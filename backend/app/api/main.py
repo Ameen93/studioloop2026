@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.routes import (
     consumers,
+    gyms,
     items,
     login,
     private,
@@ -15,6 +16,7 @@ from app.core.config import settings
 api_router = APIRouter()
 api_router.include_router(login.router)
 api_router.include_router(consumers.router)
+api_router.include_router(gyms.router)
 api_router.include_router(staff_auth.router)
 api_router.include_router(users.router)
 api_router.include_router(utils.router)

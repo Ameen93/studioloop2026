@@ -67,8 +67,8 @@ development_status:
   epic-1-retrospective: optional
 
   # Epic 2: Gym Onboarding & Configuration (11 stories)
-  epic-2: backlog
-  2-1-gym-registration-and-owner-account: backlog
+  epic-2: in-progress
+  2-1-gym-registration-and-owner-account: done
   2-2-gym-profile-configuration: backlog
   2-3-operating-hours-configuration: backlog
   2-4-holiday-closures-management: backlog
