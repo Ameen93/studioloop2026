@@ -1,6 +1,6 @@
 # Story 1.2: Consumer Email Login
 
-Status: review
+Status: done
 
 ## Story
 

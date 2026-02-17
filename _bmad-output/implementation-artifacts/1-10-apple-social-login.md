@@ -1,6 +1,6 @@
 # Story 1.10: Apple Social Login
 
-Status: review
+Status: done
 
 ## Story
 

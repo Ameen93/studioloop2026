@@ -1,6 +1,6 @@
 # Story 1.6: User Profile Management
 
-Status: review
+Status: done
 
 ## Story
 
