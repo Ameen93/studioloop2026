@@ -1,9 +1,26 @@
+# IDEs
 .vscode
+.idea
+
+# Dependencies
 node_modules/
+
+# Build / test artifacts
 /test-results/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+.turbo/
+
+# Environment / secrets
 .env
 .env.*
-.turbo/
+
+# Local tooling (AgentVibes, BMAD framework, MCP config)
+.claude/
+.mcp.json
+_bmad/
+
+# OS files
+.DS_Store
+Thumbs.db
