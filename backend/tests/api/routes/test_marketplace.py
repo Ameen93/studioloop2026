@@ -14,6 +14,8 @@ def _create_marketplace_session(
     *,
     title: str = "Marketplace HIIT",
     days_ahead: int = 1,
+    start_hour: int = 9,
+    duration_hours: int = 1,
     capacity: int = 20,
     spots_booked: int = 0,
     price_cents: int = 15000,
@@ -23,12 +25,16 @@ def _create_marketplace_session(
     db.commit()
     db.refresh(space)
 
+    now = datetime.now(timezone.utc)
+    start_time = (now + timedelta(days=days_ahead)).replace(hour=start_hour, minute=0, second=0, microsecond=0)
+    end_time = start_time + timedelta(hours=duration_hours)
+
     cs = ClassSession(
         gym_id=gym.id,
         space_id=space.id,
         title=title,
-        start_time=datetime.now(timezone.utc) + timedelta(days=days_ahead),
-        end_time=datetime.now(timezone.utc) + timedelta(days=days_ahead, hours=1),
+        start_time=start_time,
+        end_time=end_time,
         capacity=capacity,
         spots_booked=spots_booked,
         waitlist_enabled=True,
@@ -137,3 +143,41 @@ def test_filter_marketplace_classes_by_location(client: TestClient, db: Session)
     titles = [item["title"] for item in res.json()]
     assert "CPT Pilates" in titles
     assert "JHB Pilates" not in titles
+
+
+def test_filter_marketplace_classes_by_date_and_time(client: TestClient, db: Session) -> None:
+    headers, _ = _consumer_headers(client, db)
+
+    gym = Gym(
+        name=f"Date Gym {uuid4().hex[:6]}",
+        slug=f"date-gym-{uuid4().hex[:6]}",
+        is_marketplace_enabled=True,
+    )
+    db.add(gym)
+    db.commit()
+    db.refresh(gym)
+
+    _create_marketplace_session(db, gym, title="Morning Run", days_ahead=2, start_hour=6)
+    target = _create_marketplace_session(db, gym, title="Noon Strength", days_ahead=2, start_hour=12)
+    _create_marketplace_session(db, gym, title="Late Pilates", days_ahead=3, start_hour=18)
+
+    res = client.get(
+        "/api/v1/marketplace/classes",
+        params={
+            "start_date": target.start_time.date().isoformat(),
+            "end_date": target.start_time.date().isoformat(),
+            "start_time_from": "11:00:00",
+            "start_time_to": "13:00:00",
+        },
+        headers=headers,
+    )
+    assert res.status_code == 200
+    titles = [item["title"] for item in res.json()]
+    assert titles == ["Noon Strength"]
+
+    invalid = client.get(
+        "/api/v1/marketplace/classes",
+        params={"start_date": "2026-12-01", "end_date": "2026-01-01"},
+        headers=headers,
+    )
+    assert invalid.status_code == 400
