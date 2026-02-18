@@ -40,10 +40,18 @@ from app.models.consumer import (
 )
 from app.models.gym import Gym, GymCreate, GymPublic, GymSubscriptionTier, GymUpdate
 from app.models.gym_closure import GymClosure, GymClosureCreate, GymClosurePublic
+from app.models.digital_waiver import DigitalWaiverAcceptance
 from app.models.gym_membership import (
     GymMembership,
     GymMembershipStatus,
     GymMembershipTier,
+)
+from app.models.membership_plan import (
+    MembershipBillingCycle,
+    MembershipPlan,
+    MembershipPlanCreate,
+    MembershipPlanPublic,
+    MembershipPlanUpdate,
 )
 from app.models.space import Space, SpaceCreate, SpacePublic, SpaceUpdate
 from app.models.staff import Staff, StaffLoginRequest, StaffRole, StaffToken
@@ -108,6 +116,12 @@ __all__ = [
     "GymMembership",
     "GymMembershipStatus",
     "GymMembershipTier",
+    "DigitalWaiverAcceptance",
+    "MembershipPlan",
+    "MembershipPlanCreate",
+    "MembershipPlanUpdate",
+    "MembershipPlanPublic",
+    "MembershipBillingCycle",
     "Staff",
     "StaffRole",
     "StaffLoginRequest",

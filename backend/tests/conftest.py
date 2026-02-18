@@ -1,3 +1,4 @@
+import subprocess
 from collections.abc import Generator
 
 import pytest
@@ -17,6 +18,8 @@ from app.models import (
     Staff,
     User,
 )
+from app.models.digital_waiver import DigitalWaiverAcceptance
+from app.models.membership_plan import MembershipPlan
 from app.seed import seed_all
 from tests.utils.user import authentication_token_from_email
 from tests.utils.utils import get_superuser_token_headers
@@ -24,16 +27,19 @@ from tests.utils.utils import get_superuser_token_headers
 
 @pytest.fixture(scope="session", autouse=True)
 def db() -> Generator[Session, None, None]:
+    subprocess.run(["uv", "run", "alembic", "upgrade", "head"], check=True)
     with Session(engine) as session:
         init_db(session)
         # Seed test data so gyms are available for all tests
         seed_all(session)
         yield session
         # Clean up in reverse dependency order (children before parents)
-        session.execute(delete(Staff))
+        session.execute(delete(DigitalWaiverAcceptance))
         session.execute(delete(ClassSession))
         session.execute(delete(Space))
         session.execute(delete(GymMembership))
+        session.execute(delete(MembershipPlan))
+        session.execute(delete(Staff))
         session.execute(delete(Consumer))
         session.execute(delete(Gym))
         session.execute(delete(Item))

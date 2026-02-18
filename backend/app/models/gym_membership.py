@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from enum import StrEnum
 from uuid import UUID
 
@@ -10,6 +11,7 @@ from app.models.base import BaseModel, SoftDeleteMixin
 class GymMembershipStatus(StrEnum):
     ACTIVE = "active"
     INACTIVE = "inactive"
+    CANCELLED = "cancelled"
 
 
 class GymMembershipTier(StrEnum):
@@ -24,5 +26,9 @@ class GymMembership(SoftDeleteMixin, BaseModel, table=True):
 
     gym_id: UUID = Field(foreign_key="gyms.id", nullable=False, index=True)
     consumer_id: UUID = Field(foreign_key="consumers.id", nullable=False, index=True)
+    membership_plan_id: UUID | None = Field(default=None, foreign_key="membership_plans.id", index=True)
     membership_tier: GymMembershipTier = Field(default=GymMembershipTier.BASIC, max_length=20)
     status: GymMembershipStatus = Field(default=GymMembershipStatus.ACTIVE, max_length=20)
+    payment_method_last4: str | None = Field(default=None, max_length=4)
+    started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    ended_at: datetime | None = Field(default=None)

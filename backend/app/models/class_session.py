@@ -14,6 +14,7 @@ class ClassSessionStatus(StrEnum):
 
 class ClassSessionBase(SQLModel):
     space_id: UUID = Field(foreign_key="spaces.id", nullable=False, index=True)
+    instructor_staff_id: UUID | None = Field(default=None, foreign_key="staff.id", index=True)
     title: str = Field(min_length=1, max_length=255)
     start_time: datetime
     end_time: datetime

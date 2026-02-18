@@ -8,6 +8,7 @@ from app.api.routes import (
     private,
     rbac_examples,
     staff_auth,
+    staff_memberships,
     users,
     utils,
 )
@@ -18,6 +19,7 @@ api_router.include_router(login.router)
 api_router.include_router(consumers.router)
 api_router.include_router(gyms.router)
 api_router.include_router(staff_auth.router)
+api_router.include_router(staff_memberships.router)
 api_router.include_router(users.router)
 api_router.include_router(utils.router)
 api_router.include_router(items.router)

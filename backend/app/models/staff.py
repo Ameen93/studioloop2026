@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 from pydantic import EmailStr
+from sqlalchemy import JSON, Column
 from sqlmodel import Field, Relationship, SQLModel
 
 from app.models.base import GymScopedModel, SoftDeleteMixin
@@ -51,6 +52,12 @@ class Staff(SoftDeleteMixin, GymScopedModel, table=True):
     role: StaffRole = Field(default=StaffRole.FRONT_DESK)
     phone: str | None = Field(default=None, max_length=20)
     is_email_verified: bool = Field(default=False)
+    invitation_status: str = Field(default="accepted", max_length=20)
+    working_hours: dict[str, dict[str, str | bool | None]] = Field(
+        default_factory=dict,
+        sa_column=Column(JSON, nullable=False),
+    )
+    hourly_rate_cents: int | None = Field(default=None, ge=0)
 
     # Token rotation (ARCH-12)
     token_version: int = Field(

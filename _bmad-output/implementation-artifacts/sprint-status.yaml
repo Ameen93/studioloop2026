@@ -82,30 +82,30 @@ development_status:
   epic-2-retrospective: optional
 
   # Epic 3: Staff Management & Permissions (8 stories)
-  epic-3: backlog
-  3-1-add-staff-member: backlog
-  3-2-staff-role-assignment: backlog
-  3-3-staff-permission-matrix: backlog
-  3-4-staff-working-hours-configuration: backlog
-  3-5-instructor-pay-rate-configuration: backlog
-  3-6-instructor-schedule-view: backlog
-  3-7-instructor-earnings-view: backlog
-  3-8-deactivate-staff-member: backlog
+  epic-3: done
+  3-1-add-staff-member: done
+  3-2-staff-role-assignment: done
+  3-3-staff-permission-matrix: done
+  3-4-staff-working-hours-configuration: done
+  3-5-instructor-pay-rate-configuration: done
+  3-6-instructor-schedule-view: done
+  3-7-instructor-earnings-view: done
+  3-8-deactivate-staff-member: done
   epic-3-retrospective: optional
 
   # Epic 4: Membership Plans & Consumer Enrollment (11 stories)
-  epic-4: backlog
-  4-1-create-membership-plan: backlog
-  4-2-configure-membership-benefits: backlog
-  4-3-configure-membership-rules: backlog
-  4-4-consumer-views-gym-membership-plans: backlog
-  4-5-consumer-enrolls-in-membership: backlog
-  4-6-consumer-views-all-memberships: backlog
-  4-7-consumer-views-membership-benefits: backlog
-  4-8-consumer-upgrades-downgrades-membership: backlog
-  4-9-consumer-accepts-digital-waiver: backlog
-  4-10-gym-views-member-list: backlog
-  4-11-gym-views-member-details: backlog
+  epic-4: done
+  4-1-create-membership-plan: done
+  4-2-configure-membership-benefits: done
+  4-3-configure-membership-rules: done
+  4-4-consumer-views-gym-membership-plans: done
+  4-5-consumer-enrolls-in-membership: done
+  4-6-consumer-views-all-memberships: done
+  4-7-consumer-views-membership-benefits: done
+  4-8-consumer-upgrades-downgrades-membership: done
+  4-9-consumer-accepts-digital-waiver: done
+  4-10-gym-views-member-list: done
+  4-11-gym-views-member-details: done
   epic-4-retrospective: optional
 
   # Epic 5: Class Scheduling System (11 stories)
