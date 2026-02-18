@@ -38,6 +38,9 @@ def browse_marketplace_classes(
     end_date: date | None = Query(default=None),
     start_time_from: time | None = Query(default=None),
     start_time_to: time | None = Query(default=None),
+    min_price_cents: int | None = Query(default=None, ge=0),
+    max_price_cents: int | None = Query(default=None, ge=0),
+    only_available: bool = Query(default=False),
     limit: int = Query(default=50, ge=1, le=200),
 ) -> list[MarketplaceClassItem]:
     now = datetime.now(timezone.utc)
@@ -59,6 +62,8 @@ def browse_marketplace_classes(
         raise HTTPException(status_code=400, detail="start_date must be on or before end_date")
     if start_time_from and start_time_to and start_time_from > start_time_to:
         raise HTTPException(status_code=400, detail="start_time_from must be on or before start_time_to")
+    if min_price_cents is not None and max_price_cents is not None and min_price_cents > max_price_cents:
+        raise HTTPException(status_code=400, detail="min_price_cents must be <= max_price_cents")
 
     if class_type:
         class_type_value = class_type.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
@@ -73,18 +78,24 @@ def browse_marketplace_classes(
         query = query.where(ClassSession.start_time >= datetime.combine(start_date, time.min, tzinfo=timezone.utc))
     if end_date:
         query = query.where(ClassSession.start_time <= datetime.combine(end_date, time.max, tzinfo=timezone.utc))
+    if min_price_cents is not None:
+        query = query.where(ClassSession.price_cents >= min_price_cents)
+    if max_price_cents is not None:
+        query = query.where(ClassSession.price_cents <= max_price_cents)
+
     rows = session.exec(query.order_by(ClassSession.start_time)).all()
 
-    if start_time_from or start_time_to:
-        filtered_rows: list[tuple[ClassSession, Gym, Space]] = []
-        for class_session, gym, space in rows:
-            session_time = class_session.start_time.time()
-            if start_time_from and session_time < start_time_from:
-                continue
-            if start_time_to and session_time > start_time_to:
-                continue
-            filtered_rows.append((class_session, gym, space))
-        rows = filtered_rows
+    filtered_rows: list[tuple[ClassSession, Gym, Space]] = []
+    for class_session, gym, space in rows:
+        session_time = class_session.start_time.time()
+        if start_time_from and session_time < start_time_from:
+            continue
+        if start_time_to and session_time > start_time_to:
+            continue
+        if only_available and class_session.capacity and class_session.spots_booked >= class_session.capacity:
+            continue
+        filtered_rows.append((class_session, gym, space))
+    rows = filtered_rows
 
     rows = rows[:limit]
 

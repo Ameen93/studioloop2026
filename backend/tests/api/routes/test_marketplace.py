@@ -181,3 +181,38 @@ def test_filter_marketplace_classes_by_date_and_time(client: TestClient, db: Ses
         headers=headers,
     )
     assert invalid.status_code == 400
+
+
+def test_filter_marketplace_classes_by_price_and_availability(client: TestClient, db: Session) -> None:
+    headers, _ = _consumer_headers(client, db)
+
+    gym = Gym(
+        name=f"Price Gym {uuid4().hex[:6]}",
+        slug=f"price-gym-{uuid4().hex[:6]}",
+        is_marketplace_enabled=True,
+    )
+    db.add(gym)
+    db.commit()
+    db.refresh(gym)
+
+    _create_marketplace_session(db, gym, title="Budget", price_cents=10000, capacity=10, spots_booked=10)
+    _create_marketplace_session(db, gym, title="Standard", price_cents=18000, capacity=20, spots_booked=2)
+    _create_marketplace_session(db, gym, title="Premium", price_cents=30000, capacity=20, spots_booked=1)
+
+    res = client.get(
+        "/api/v1/marketplace/classes",
+        params={"min_price_cents": 15000, "max_price_cents": 25000, "only_available": True},
+        headers=headers,
+    )
+    assert res.status_code == 200
+    titles = [item["title"] for item in res.json()]
+    assert "Standard" in titles
+    assert "Budget" not in titles
+    assert "Premium" not in titles
+
+    invalid = client.get(
+        "/api/v1/marketplace/classes",
+        params={"min_price_cents": 30000, "max_price_cents": 20000},
+        headers=headers,
+    )
+    assert invalid.status_code == 400
