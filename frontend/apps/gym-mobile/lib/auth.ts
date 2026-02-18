@@ -103,14 +103,14 @@ export function getGymId(): string | undefined {
  * Clear all auth data from MMKV (logout).
  */
 export function clearAuth(): void {
-  storage.delete(KEYS.ACCESS_TOKEN);
-  storage.delete(KEYS.REFRESH_TOKEN);
-  storage.delete(KEYS.STAFF_ID);
-  storage.delete(KEYS.STAFF_EMAIL);
-  storage.delete(KEYS.STAFF_NAME);
-  storage.delete(KEYS.STAFF_ROLE);
-  storage.delete(KEYS.GYM_ID);
-  storage.delete(KEYS.GYM_NAME);
+  storage.remove(KEYS.ACCESS_TOKEN);
+  storage.remove(KEYS.REFRESH_TOKEN);
+  storage.remove(KEYS.STAFF_ID);
+  storage.remove(KEYS.STAFF_EMAIL);
+  storage.remove(KEYS.STAFF_NAME);
+  storage.remove(KEYS.STAFF_ROLE);
+  storage.remove(KEYS.GYM_ID);
+  storage.remove(KEYS.GYM_NAME);
 }
 
 /**

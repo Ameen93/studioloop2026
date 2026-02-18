@@ -43,6 +43,8 @@ export function cacheQrData(data: QrCodeData): void {
   storage.set(KEYS.QR_UPDATED_AT, data.updatedAt);
   if (data.membershipId) {
     storage.set(KEYS.QR_MEMBERSHIP_ID, data.membershipId);
+  } else {
+    storage.remove(KEYS.QR_MEMBERSHIP_ID);
   }
 }
 
@@ -74,8 +76,8 @@ export function getCachedQrMeta(): QrCodeData | null {
  * Clear cached QR data (e.g., on logout).
  */
 export function clearQrCache(): void {
-  storage.delete(KEYS.QR_DATA);
-  storage.delete(KEYS.QR_CONSUMER_ID);
-  storage.delete(KEYS.QR_UPDATED_AT);
-  storage.delete(KEYS.QR_MEMBERSHIP_ID);
+  storage.remove(KEYS.QR_DATA);
+  storage.remove(KEYS.QR_CONSUMER_ID);
+  storage.remove(KEYS.QR_UPDATED_AT);
+  storage.remove(KEYS.QR_MEMBERSHIP_ID);
 }

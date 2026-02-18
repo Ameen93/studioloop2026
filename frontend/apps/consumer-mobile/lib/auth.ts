@@ -85,11 +85,11 @@ export function getConsumerProfile(): ConsumerProfile | null {
  * Clear all auth data from MMKV (logout).
  */
 export function clearAuth(): void {
-  storage.delete(KEYS.ACCESS_TOKEN);
-  storage.delete(KEYS.REFRESH_TOKEN);
-  storage.delete(KEYS.CONSUMER_ID);
-  storage.delete(KEYS.CONSUMER_EMAIL);
-  storage.delete(KEYS.CONSUMER_NAME);
+  storage.remove(KEYS.ACCESS_TOKEN);
+  storage.remove(KEYS.REFRESH_TOKEN);
+  storage.remove(KEYS.CONSUMER_ID);
+  storage.remove(KEYS.CONSUMER_EMAIL);
+  storage.remove(KEYS.CONSUMER_NAME);
 }
 
 /**
