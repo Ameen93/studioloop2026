@@ -8,6 +8,7 @@ by gym_id.
 from typing import TYPE_CHECKING
 from uuid import UUID
 
+from sqlalchemy import JSON, Column
 from sqlmodel import Field, Relationship, SQLModel
 
 from app.models.base import BaseModel, SoftDeleteMixin
@@ -35,6 +36,21 @@ class GymBase(SQLModel):
         default=None,
         max_length=2000,
         description="Gym description for marketplace listing",
+    )
+    tagline: str | None = Field(
+        default=None,
+        max_length=180,
+        description="Short public tagline shown in gym profile",
+    )
+    logo_url: str | None = Field(
+        default=None,
+        max_length=2048,
+        description="CDN URL for gym logo image",
+    )
+    cover_photo_urls: list[str] = Field(
+        default_factory=list,
+        sa_column=Column(JSON, nullable=False),
+        description="Gallery of gym cover photos hosted on CDN",
     )
     is_marketplace_enabled: bool = Field(
         default=False,
@@ -97,6 +113,9 @@ class GymUpdate(SQLModel):
     name: str | None = Field(default=None, max_length=255)
     slug: str | None = Field(default=None, max_length=100)
     description: str | None = Field(default=None, max_length=2000)
+    tagline: str | None = Field(default=None, max_length=180)
+    logo_url: str | None = Field(default=None, max_length=2048)
+    cover_photo_urls: list[str] | None = None
     is_marketplace_enabled: bool | None = None
     email: str | None = Field(default=None, max_length=255)
     phone: str | None = Field(default=None, max_length=50)
