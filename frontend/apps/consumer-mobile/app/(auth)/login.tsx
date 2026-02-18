@@ -2,7 +2,7 @@
  * Consumer login screen for mobile.
  *
  * Allows consumers to login with email and password.
- * Stores tokens in MMKV (NOT AsyncStorage per architecture).
+ * Stores tokens in MMKV via centralized auth library.
  */
 
 import { useState } from 'react';
@@ -18,12 +18,9 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useMutation } from '@tanstack/react-query';
-import { createMMKV } from 'react-native-mmkv';
 import { consumerAuthLoginConsumer } from '@sl/api-client';
 import type { ConsumerLoginRequest } from '@sl/api-client';
-
-// MMKV storage instance for auth tokens (AC #2 - MMKV, NOT AsyncStorage)
-const storage = createMMKV({ id: 'auth-storage' });
+import { setTokens } from '../../lib/auth';
 
 interface FormData {
   email: string;
@@ -49,13 +46,15 @@ export default function LoginScreen() {
         body: data,
       }),
     onSuccess: (response) => {
-      // Store tokens in MMKV (AC #2 - NOT AsyncStorage!)
+      // Store tokens via centralized auth library (MMKV)
       if (response.data) {
-        storage.set('access_token', response.data.access_token);
-        storage.set('refresh_token', response.data.refresh_token);
+        setTokens({
+          access_token: response.data.access_token,
+          refresh_token: response.data.refresh_token,
+        });
       }
-      // Navigate to home screen (AC #3)
-      router.replace('/');
+      // Navigate to main app tabs
+      router.replace('/(tabs)');
     },
     onError: (error: unknown) => {
       const err = error as { body?: { detail?: { code?: string; message?: string } } };
