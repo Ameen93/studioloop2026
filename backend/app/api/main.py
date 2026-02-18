@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.routes import (
+    admin,
     analytics,
     bookings,
     consumers,
@@ -12,10 +13,12 @@ from app.api.routes import (
     payments,
     private,
     rbac_examples,
+    realtime,
     staff_auth,
     staff_memberships,
     users,
     utils,
+    webhooks,
 )
 from app.core.config import settings
 
@@ -34,6 +37,9 @@ api_router.include_router(users.router)
 api_router.include_router(utils.router)
 api_router.include_router(items.router)
 api_router.include_router(rbac_examples.router)
+api_router.include_router(admin.router)
+api_router.include_router(webhooks.router)
+api_router.include_router(realtime.router)
 
 
 if settings.ENVIRONMENT == "local":

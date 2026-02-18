@@ -14,6 +14,27 @@ All models follow:
 """
 
 # Base classes and mixins
+from app.models.admin import (
+    AuditLog,
+    AuditLogCreate,
+    AuditLogPublic,
+    Complaint,
+    ComplaintCreate,
+    ComplaintPublic,
+    ComplaintStatus,
+    ComplaintUpdate,
+    CreditLog,
+    CreditLogCreate,
+    CreditLogPublic,
+    WebhookDelivery,
+    WebhookDeliveryCreate,
+    WebhookDeliveryPublic,
+    WebhookDeliveryStatus,
+    WebhookEndpoint,
+    WebhookEndpointCreate,
+    WebhookEndpointPublic,
+    WebhookEndpointUpdate,
+)
 from app.models.base import (
     BaseModel,
     GymScopedModel,
@@ -21,6 +42,8 @@ from app.models.base import (
     SoftDeleteMixin,
     TimestampMixin,
 )
+from app.models.booking import Booking, BookingSource, BookingStatus, BookingType
+from app.models.check_in_record import CheckInRecord, CheckInSource
 
 # Domain models
 from app.models.class_session import (
@@ -29,9 +52,6 @@ from app.models.class_session import (
     ClassSessionPublic,
     ClassSessionStatus,
 )
-from app.models.booking import Booking, BookingSource, BookingStatus, BookingType
-from app.models.waitlist_entry import WaitlistEntry, WaitlistStatus
-from app.models.check_in_record import CheckInRecord, CheckInSource
 from app.models.consumer import (
     AccountDeletionRequest,
     AuthProvider,
@@ -41,13 +61,19 @@ from app.models.consumer import (
     ConsumerUpdate,
     UserRole,
 )
+from app.models.digital_waiver import DigitalWaiverAcceptance
 from app.models.gym import Gym, GymCreate, GymPublic, GymSubscriptionTier, GymUpdate
 from app.models.gym_closure import GymClosure, GymClosureCreate, GymClosurePublic
-from app.models.digital_waiver import DigitalWaiverAcceptance
 from app.models.gym_membership import (
     GymMembership,
     GymMembershipStatus,
     GymMembershipTier,
+)
+from app.models.marketplace_subscription import (
+    MarketplacePlanTier,
+    MarketplaceSubscription,
+    MarketplaceSubscriptionStatus,
+    ReferralInvite,
 )
 from app.models.membership_plan import (
     MembershipBillingCycle,
@@ -56,14 +82,6 @@ from app.models.membership_plan import (
     MembershipPlanPublic,
     MembershipPlanUpdate,
 )
-from app.models.marketplace_subscription import (
-    MarketplacePlanTier,
-    MarketplaceSubscription,
-    MarketplaceSubscriptionStatus,
-    ReferralInvite,
-)
-from app.models.space import Space, SpaceCreate, SpacePublic, SpaceUpdate
-from app.models.staff import Staff, StaffLoginRequest, StaffRole, StaffToken
 from app.models.notification import (
     GymMessage,
     Notification,
@@ -81,6 +99,9 @@ from app.models.payment import (
     PaymentType,
     PaymentWebhookEvent,
 )
+from app.models.space import Space, SpaceCreate, SpacePublic, SpaceUpdate
+from app.models.staff import Staff, StaffLoginRequest, StaffRole, StaffToken
+from app.models.waitlist_entry import WaitlistEntry, WaitlistStatus
 
 # Re-export existing models from old location for backward compatibility
 # TODO: Migrate these to app.models.auth in future story
@@ -199,4 +220,24 @@ __all__ = [
     "RefreshTokenRequest",
     "NewPassword",
     "ForgotPasswordRequest",
+    # Admin & platform models (Epic 11)
+    "Complaint",
+    "ComplaintCreate",
+    "ComplaintUpdate",
+    "ComplaintPublic",
+    "ComplaintStatus",
+    "CreditLog",
+    "CreditLogCreate",
+    "CreditLogPublic",
+    "AuditLog",
+    "AuditLogCreate",
+    "AuditLogPublic",
+    "WebhookEndpoint",
+    "WebhookEndpointCreate",
+    "WebhookEndpointUpdate",
+    "WebhookEndpointPublic",
+    "WebhookDelivery",
+    "WebhookDeliveryCreate",
+    "WebhookDeliveryPublic",
+    "WebhookDeliveryStatus",
 ]

@@ -198,18 +198,73 @@ development_status:
   epic-10-retrospective: optional
 
   # Epic 11: Platform Administration & Real-time (10 stories)
-  epic-11: backlog
-  11-1-gym-application-review: backlog
-  11-2-platform-gym-management: backlog
-  11-3-consumer-complaint-handling: backlog
-  11-4-account-credit-issuance: backlog
-  11-5-platform-health-monitoring: backlog
-  11-6-gym-level-data-access-for-support: backlog
-  11-7-real-time-class-availability: backlog
-  11-8-real-time-waitlist-updates: backlog
-  11-9-webhook-event-system: backlog
-  11-10-webhook-management: backlog
+  epic-11: done
+  11-1-gym-application-review: done
+  11-2-platform-gym-management: done
+  11-3-consumer-complaint-handling: done
+  11-4-account-credit-issuance: done
+  11-5-platform-health-monitoring: done
+  11-6-gym-level-data-access-for-support: done
+  11-7-real-time-class-availability: done
+  11-8-real-time-waitlist-updates: done
+  11-9-webhook-event-system: done
+  11-10-webhook-management: done
   epic-11-retrospective: optional
+
+  # Epic 12: Gym Web Application (11 stories)
+  epic-12: done
+  12-1-gym-web-app-shell-and-routing: done
+  12-2-gym-web-authentication: done
+  12-3-gym-web-dashboard: done
+  12-4-gym-web-member-management: done
+  12-5-gym-web-class-scheduling: done
+  12-6-gym-web-manual-check-in: done
+  12-7-gym-web-reports: done
+  12-8-gym-web-staff-management: done
+  12-9-gym-web-settings-and-configuration: done
+  12-10-gym-web-messaging: done
+  12-11-gym-web-payment-dashboard: done
+  epic-12-retrospective: optional
+
+  # Epic 13: Consumer Web Application (9 stories)
+  epic-13: done
+  13-1-consumer-web-app-shell-and-routing: done
+  13-2-consumer-web-authentication: done
+  13-3-consumer-web-home-my-bookings: done
+  13-4-consumer-web-qr-code-display: done
+  13-5-consumer-web-discover-classes: done
+  13-6-consumer-web-class-booking: done
+  13-7-consumer-web-memberships: done
+  13-8-consumer-web-profile-and-settings: done
+  13-9-consumer-web-share-and-invite: done
+  epic-13-retrospective: optional
+
+  # Epic 14: Consumer Mobile Application (9 stories)
+  epic-14: done
+  14-1-consumer-mobile-app-setup: done
+  14-2-consumer-mobile-authentication: done
+  14-3-consumer-mobile-home-and-bookings: done
+  14-4-consumer-mobile-qr-code-display-offline: done
+  14-5-consumer-mobile-discover-and-booking: done
+  14-6-consumer-mobile-memberships: done
+  14-7-consumer-mobile-profile-and-settings: done
+  14-8-consumer-mobile-push-notifications: done
+  14-9-consumer-mobile-app-store-submission: done  # SKIPPED - requires Apple/Google credentials
+  epic-14-retrospective: optional
+
+  # Epic 15: Gym Mobile Application (10 stories)
+  epic-15: done
+  15-1-gym-mobile-app-setup: done
+  15-2-gym-mobile-authentication: done
+  15-3-gym-mobile-dashboard: done
+  15-4-gym-mobile-qr-scanner-check-in: done
+  15-5-gym-mobile-manual-check-in-fallback: done
+  15-6-gym-mobile-offline-check-in: done
+  15-7-gym-mobile-schedule-view: done
+  15-8-gym-mobile-member-lookup: done
+  15-9-gym-mobile-reports: done
+  15-10-gym-mobile-push-notifications: done
+  epic-15-retrospective: optional
 
   # Epic 16: Production Deployment (deferred until local development complete)
   # NOTE: This epic was created to hold infrastructure stories deferred from Epic 0
