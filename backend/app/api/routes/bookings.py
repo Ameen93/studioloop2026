@@ -145,6 +145,15 @@ def _process_waitlist_offer(session: SessionDep, gym_id: UUID, session_id: UUID)
     session.add(entry)
 
 
+def _gym_cancellation_window_hours(gym: Gym) -> int:
+    raw_value = (gym.settings or {}).get("cancellation_window_hours", 24)
+    try:
+        parsed = int(raw_value)
+    except (TypeError, ValueError):
+        parsed = 24
+    return max(0, min(168, parsed))
+
+
 @router.post("/consumer/bookings/membership", response_model=Booking)
 def book_with_membership(
     payload: MembershipBookingRequest,
@@ -226,8 +235,11 @@ def cancel_booking(booking_id: UUID, current_consumer: CurrentConsumer, session:
         return CancelBookingResponse(booking_id=booking.id, status=booking.status, refunded=booking.cancellation_refunded)
 
     now = datetime.now(timezone.utc)
-    window_hours = gym.cancellation_window_hours
-    refundable = now <= (class_session.start_time - timedelta(hours=window_hours))
+    window_hours = _gym_cancellation_window_hours(gym)
+    start_time = class_session.start_time
+    if start_time.tzinfo is None:
+        start_time = start_time.replace(tzinfo=timezone.utc)
+    refundable = now <= (start_time - timedelta(hours=window_hours))
 
     booking.mark_cancelled()
     booking.cancellation_refunded = refundable

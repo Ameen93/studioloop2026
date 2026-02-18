@@ -4,7 +4,7 @@ from uuid import uuid4
 from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
-from app.models import ClassSession, Consumer, Gym, Space, StaffRole
+from app.models import ClassSession, Gym, Space, StaffRole
 from app.models.digital_waiver import DigitalWaiverAcceptance
 from tests.api.routes.test_staff_memberships import _consumer_headers, _staff_headers
 

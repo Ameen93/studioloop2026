@@ -1,7 +1,7 @@
 # 6-10-manual-check-in-fallback
 
 ## Status
-in-progress
+done
 
 ## Implementation Notes
 Implemented manual check-in search + action endpoints.
@@ -11,7 +11,7 @@ Implemented manual check-in search + action endpoints.
 
 ## Validation
 - Python compile check passed
-- Automated pytest blocked by pre-existing Alembic revision mismatch in environment (`b5e1c4f9a222` missing)
+- Automated pytest now unblocked; backend Epic 6 suites pass after migration-chain/env fixes
 
 ## Claude Review
 - Skipped: Claude Code tool not available in this execution environment
