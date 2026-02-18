@@ -344,8 +344,9 @@ def trigger_payment_reminders(
 
     stmt = select(GymMembership).where(
         GymMembership.status == GymMembershipStatus.ACTIVE,
-        col(GymMembership.end_date) >= now,
-        col(GymMembership.end_date) <= window_end,
+        col(GymMembership.ended_at).is_not(None),
+        col(GymMembership.ended_at) >= now,
+        col(GymMembership.ended_at) <= window_end,
     )
     memberships = session.exec(stmt).all()
 
@@ -359,7 +360,9 @@ def trigger_payment_reminders(
         title = "Payment Due Soon"
         body = (
             f"Your membership at {gym.name} renews on "
-            f"{membership.end_date.strftime('%d %b %Y')}."
+            f"{membership.ended_at.strftime('%d %b %Y')}"
+            if membership.ended_at
+            else f"Your membership at {gym.name} renews soon."
         )
         send_multi_channel(
             session,

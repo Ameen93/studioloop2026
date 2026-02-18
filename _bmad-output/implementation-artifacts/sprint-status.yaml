@@ -171,17 +171,17 @@ development_status:
   epic-8-retrospective: optional
 
   # Epic 9: Notifications & Communication (10 stories)
-  epic-9: in-progress
+  epic-9: done
   9-1-notification-infrastructure-setup: done
-  9-2-booking-confirmation-notifications: backlog
-  9-3-class-reminder-notifications: backlog
-  9-4-waitlist-notifications: backlog
-  9-5-payment-reminder-notifications: backlog
-  9-6-payment-failure-notifications: backlog
-  9-7-gym-to-member-messaging: backlog
-  9-8-whatsapp-critical-notifications: backlog
-  9-9-consumer-notification-preferences: backlog
-  9-10-in-app-notification-center: backlog
+  9-2-booking-confirmation-notifications: done
+  9-3-class-reminder-notifications: done
+  9-4-waitlist-notifications: done
+  9-5-payment-reminder-notifications: done
+  9-6-payment-failure-notifications: done
+  9-7-gym-to-member-messaging: done
+  9-8-whatsapp-critical-notifications: done
+  9-9-consumer-notification-preferences: done
+  9-10-in-app-notification-center: done
   epic-9-retrospective: optional
 
   # Epic 10: Reporting & Analytics (9 stories)
