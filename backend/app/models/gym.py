@@ -5,6 +5,7 @@ architecture. All gym-scoped data (spaces, staff, classes, etc.) is isolated
 by gym_id.
 """
 
+from enum import StrEnum
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -16,6 +17,12 @@ from app.models.base import BaseModel, SoftDeleteMixin
 if TYPE_CHECKING:
     from app.models.gym_closure import GymClosure
     from app.models.staff import Staff
+
+
+class GymSubscriptionTier(StrEnum):
+    STARTER = "starter"
+    GROWTH = "growth"
+    PRO = "pro"
 
 
 class GymBase(SQLModel):
@@ -61,6 +68,11 @@ class GymBase(SQLModel):
     is_marketplace_enabled: bool = Field(
         default=False,
         description="Whether gym participates in StudioLoop marketplace",
+    )
+    subscription_tier: GymSubscriptionTier = Field(
+        default=GymSubscriptionTier.STARTER,
+        max_length=20,
+        description="Current SaaS plan tier",
     )
 
 

@@ -7,7 +7,16 @@ from sqlmodel import Session, delete
 from app.core.config import settings
 from app.core.db import engine, init_db
 from app.main import app
-from app.models import Consumer, Gym, Item, Space, Staff, User
+from app.models import (
+    ClassSession,
+    Consumer,
+    Gym,
+    GymMembership,
+    Item,
+    Space,
+    Staff,
+    User,
+)
 from app.seed import seed_all
 from tests.utils.user import authentication_token_from_email
 from tests.utils.utils import get_superuser_token_headers
@@ -22,7 +31,9 @@ def db() -> Generator[Session, None, None]:
         yield session
         # Clean up in reverse dependency order (children before parents)
         session.execute(delete(Staff))
+        session.execute(delete(ClassSession))
         session.execute(delete(Space))
+        session.execute(delete(GymMembership))
         session.execute(delete(Consumer))
         session.execute(delete(Gym))
         session.execute(delete(Item))

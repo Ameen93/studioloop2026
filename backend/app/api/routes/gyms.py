@@ -3,18 +3,36 @@
 Implements Story 2.1: Gym registration and owner account creation.
 """
 
-from datetime import date
+import csv
+import io
+from collections import Counter
+from datetime import date, datetime
+from enum import StrEnum
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, File, HTTPException, UploadFile, status
 from pydantic import EmailStr, HttpUrl, field_validator, model_validator
+from sqlalchemy import func, text
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Field, SQLModel, select
 
 from app.api.deps import CurrentStaff, RequireOwnerOrManager, SessionDep
 from app.core.config import settings
 from app.core.security import get_password_hash
-from app.models import Gym, GymClosure, Staff, StaffRole
+from app.models import (
+    ClassSession,
+    ClassSessionStatus,
+    Consumer,
+    Gym,
+    GymClosure,
+    GymMembership,
+    GymMembershipStatus,
+    GymMembershipTier,
+    GymSubscriptionTier,
+    Space,
+    Staff,
+    StaffRole,
+)
 from app.utils import (
     generate_email_verification_email,
     generate_email_verification_token,
@@ -23,6 +41,9 @@ from app.utils import (
 )
 
 router = APIRouter(prefix="/gyms", tags=["gyms"])
+
+MAX_CSV_SIZE_BYTES = 5 * 1024 * 1024
+MAX_IMPORT_ROWS = 10000
 
 
 class GymRegistrationRequest(SQLModel):
@@ -193,6 +214,122 @@ class GymCancellationPolicyResponse(SQLModel):
     no_show_penalty: str
 
 
+class MarketplaceToggleUpdateRequest(SQLModel):
+    marketplace_enabled: bool
+
+
+class MarketplaceToggleResponse(SQLModel):
+    gym_id: UUID
+    marketplace_enabled: bool
+
+
+class GymSubscriptionResponse(SQLModel):
+    gym_id: UUID
+    subscription_tier: GymSubscriptionTier
+    member_limit: int
+    current_member_count: int
+    staff_limit: int
+    current_staff_count: int
+    renewal_date: date | None
+    upgrade_url: str
+
+
+class SpaceCreateRequest(SQLModel):
+    name: str = Field(min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=1000)
+    capacity: int = Field(ge=0)
+
+
+class SpaceUpdateRequest(SQLModel):
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=1000)
+    capacity: int | None = Field(default=None, ge=0)
+    is_bookable: bool | None = None
+
+    @model_validator(mode="after")
+    def validate_non_empty_update(self) -> "SpaceUpdateRequest":
+        if not self.model_fields_set:
+            raise ValueError("At least one field must be provided")
+        return self
+
+
+class SpaceAmenitiesUpdateRequest(SQLModel):
+    amenities: list[str] = Field(default_factory=list)
+    equipment: list[str] = Field(default_factory=list)
+    custom_amenities: list[str] = Field(default_factory=list)
+    custom_equipment: list[str] = Field(default_factory=list)
+
+
+class SpaceResponse(SQLModel):
+    id: UUID
+    gym_id: UUID
+    name: str
+    description: str | None
+    capacity: int
+    is_bookable: bool
+    amenities: list[str]
+    equipment: list[str]
+    custom_amenities: list[str]
+    custom_equipment: list[str]
+
+
+class ClassSessionCreateRequest(SQLModel):
+    space_id: UUID
+    title: str = Field(min_length=1, max_length=255)
+    start_time: datetime
+    end_time: datetime
+
+    @model_validator(mode="after")
+    def validate_time_window(self) -> "ClassSessionCreateRequest":
+        if self.end_time <= self.start_time:
+            raise ValueError("end_time must be after start_time")
+        return self
+
+
+class AlternativeSpaceOption(SQLModel):
+    space_id: UUID
+    space_name: str
+
+
+class ClassSessionResponse(SQLModel):
+    id: UUID
+    gym_id: UUID
+    space_id: UUID
+    title: str
+    start_time: datetime
+    end_time: datetime
+    status: str
+
+
+class ClassSessionConflictResponse(SQLModel):
+    code: str
+    message: str
+    alternative_spaces: list[AlternativeSpaceOption]
+
+
+class ImportField(StrEnum):
+    NAME = "name"
+    EMAIL = "email"
+    PHONE = "phone"
+    MEMBERSHIP_TIER = "membership_tier"
+
+
+class MemberImportPreviewRequest(SQLModel):
+    column_mapping: dict[ImportField, str]
+    rows: list[dict[str, str | None]]
+
+
+class MemberImportPreviewResponse(SQLModel):
+    detected_members: list[dict[str, str | None]]
+    duplicate_emails: list[str]
+
+
+class MemberImportConfirmResponse(SQLModel):
+    success_count: int
+    error_count: int
+    errors: list[str]
+
+
 class GymClosureCreateRequest(SQLModel):
     closure_date: date
     reason: str | None = Field(default=None, max_length=255)
@@ -203,6 +340,58 @@ class GymClosureResponse(SQLModel):
     gym_id: UUID
     closure_date: date
     reason: str | None = None
+
+
+def _serialize_space(space: Space) -> SpaceResponse:
+    return SpaceResponse(
+        id=space.id,
+        gym_id=space.gym_id,
+        name=space.name,
+        description=space.description,
+        capacity=space.capacity,
+        is_bookable=space.is_bookable,
+        amenities=space.amenities,
+        equipment=space.equipment,
+        custom_amenities=space.custom_amenities,
+        custom_equipment=space.custom_equipment,
+    )
+
+
+def _subscription_limits_for_tier(tier: GymSubscriptionTier) -> tuple[int, int]:
+    limits: dict[GymSubscriptionTier, tuple[int, int]] = {
+        GymSubscriptionTier.STARTER: (100, 5),
+        GymSubscriptionTier.GROWTH: (300, 20),
+        GymSubscriptionTier.PRO: (1000, 100),
+    }
+    return limits[tier]
+
+
+def _extract_csv_rows(file_content: bytes) -> list[dict[str, str | None]]:
+    try:
+        text_data = file_content.decode("utf-8-sig")
+        reader = csv.DictReader(io.StringIO(text_data))
+        rows = [dict(row) for row in reader]
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "INVALID_CSV",
+                "message": "Could not parse CSV file",
+                "details": {},
+            },
+        ) from e
+
+    if len(rows) > MAX_IMPORT_ROWS:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "TOO_MANY_ROWS",
+                "message": f"CSV contains too many rows. Max allowed is {MAX_IMPORT_ROWS}.",
+                "details": {},
+            },
+        )
+
+    return rows
 
 
 def _get_gym_closures(
@@ -689,6 +878,462 @@ def delete_my_gym_closure(
 
     session.delete(closure)
     session.commit()
+
+
+@router.get(
+    "/me/marketplace",
+    response_model=MarketplaceToggleResponse,
+    dependencies=[RequireOwnerOrManager],
+)
+def get_my_marketplace_toggle(
+    session: SessionDep,
+    current_staff: CurrentStaff,
+) -> MarketplaceToggleResponse:
+    gym = session.get(Gym, current_staff.gym_id)
+    if not gym or not gym.is_active:
+        raise HTTPException(status_code=404, detail={"code": "GYM_NOT_FOUND", "message": "Gym not found", "details": {}})
+
+    settings_data = dict(gym.settings or {})
+    marketplace_enabled = bool(settings_data.get("marketplace_enabled", False))
+    return MarketplaceToggleResponse(gym_id=gym.id, marketplace_enabled=marketplace_enabled)
+
+
+@router.patch(
+    "/me/marketplace",
+    response_model=MarketplaceToggleResponse,
+    dependencies=[RequireOwnerOrManager],
+)
+def update_my_marketplace_toggle(
+    session: SessionDep,
+    current_staff: CurrentStaff,
+    payload: MarketplaceToggleUpdateRequest,
+) -> MarketplaceToggleResponse:
+    gym = session.get(Gym, current_staff.gym_id)
+    if not gym or not gym.is_active:
+        raise HTTPException(status_code=404, detail={"code": "GYM_NOT_FOUND", "message": "Gym not found", "details": {}})
+
+    settings_data = dict(gym.settings or {})
+    settings_data["marketplace_enabled"] = payload.marketplace_enabled
+    gym.settings = settings_data
+    session.add(gym)
+    session.commit()
+    session.refresh(gym)
+
+    return MarketplaceToggleResponse(gym_id=gym.id, marketplace_enabled=payload.marketplace_enabled)
+
+
+@router.get(
+    "/me/subscription",
+    response_model=GymSubscriptionResponse,
+    dependencies=[RequireOwnerOrManager],
+)
+def get_my_subscription_details(
+    session: SessionDep,
+    current_staff: CurrentStaff,
+) -> GymSubscriptionResponse:
+    gym = session.get(Gym, current_staff.gym_id)
+    if not gym or not gym.is_active:
+        raise HTTPException(status_code=404, detail={"code": "GYM_NOT_FOUND", "message": "Gym not found", "details": {}})
+
+    member_limit, staff_limit = _subscription_limits_for_tier(gym.subscription_tier)
+    member_count = session.exec(
+        select(func.count()).select_from(GymMembership).where(
+            GymMembership.gym_id == gym.id,
+            GymMembership.is_active.is_(True),
+            GymMembership.status == GymMembershipStatus.ACTIVE,
+        )
+    ).one()
+    staff_count = session.exec(
+        select(func.count()).select_from(Staff).where(
+            Staff.gym_id == gym.id,
+            Staff.is_active.is_(True),
+        )
+    ).one()
+
+    renewal_raw = (gym.settings or {}).get("subscription_renewal_date")
+    renewal_date = None
+    if isinstance(renewal_raw, str):
+        try:
+            renewal_date = date.fromisoformat(renewal_raw)
+        except ValueError:
+            renewal_date = None
+
+    return GymSubscriptionResponse(
+        gym_id=gym.id,
+        subscription_tier=gym.subscription_tier,
+        member_limit=member_limit,
+        current_member_count=int(member_count or 0),
+        staff_limit=staff_limit,
+        current_staff_count=int(staff_count or 0),
+        renewal_date=renewal_date,
+        upgrade_url="/billing/upgrade",
+    )
+
+
+@router.get(
+    "/me/spaces",
+    response_model=list[SpaceResponse],
+    dependencies=[RequireOwnerOrManager],
+)
+def list_my_spaces(session: SessionDep, current_staff: CurrentStaff) -> list[SpaceResponse]:
+    spaces = session.exec(
+        select(Space).where(
+            Space.gym_id == current_staff.gym_id,
+            Space.is_active.is_(True),
+        ).order_by(Space.created_at.asc())
+    ).all()
+    return [_serialize_space(space) for space in spaces]
+
+
+@router.post(
+    "/me/spaces",
+    response_model=SpaceResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[RequireOwnerOrManager],
+)
+def create_my_space(
+    session: SessionDep,
+    current_staff: CurrentStaff,
+    payload: SpaceCreateRequest,
+) -> SpaceResponse:
+    space = Space(
+        gym_id=current_staff.gym_id,
+        name=payload.name,
+        description=payload.description,
+        capacity=payload.capacity,
+    )
+    session.add(space)
+    session.commit()
+    session.refresh(space)
+    return _serialize_space(space)
+
+
+@router.patch(
+    "/me/spaces/{space_id}",
+    response_model=SpaceResponse,
+    dependencies=[RequireOwnerOrManager],
+)
+def update_my_space(
+    session: SessionDep,
+    current_staff: CurrentStaff,
+    space_id: UUID,
+    payload: SpaceUpdateRequest,
+) -> SpaceResponse:
+    space = session.exec(
+        select(Space).where(
+            Space.id == space_id,
+            Space.gym_id == current_staff.gym_id,
+            Space.is_active.is_(True),
+        )
+    ).first()
+    if not space:
+        raise HTTPException(status_code=404, detail={"code": "SPACE_NOT_FOUND", "message": "Space not found", "details": {}})
+
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(space, key, value)
+
+    session.add(space)
+    session.commit()
+    session.refresh(space)
+    return _serialize_space(space)
+
+
+@router.delete(
+    "/me/spaces/{space_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[RequireOwnerOrManager],
+)
+def deactivate_my_space(
+    session: SessionDep,
+    current_staff: CurrentStaff,
+    space_id: UUID,
+) -> None:
+    space = session.exec(
+        select(Space).where(
+            Space.id == space_id,
+            Space.gym_id == current_staff.gym_id,
+            Space.is_active.is_(True),
+        )
+    ).first()
+    if not space:
+        raise HTTPException(status_code=404, detail={"code": "SPACE_NOT_FOUND", "message": "Space not found", "details": {}})
+
+    space.soft_delete()
+    session.add(space)
+    session.commit()
+
+
+@router.patch(
+    "/me/spaces/{space_id}/amenities",
+    response_model=SpaceResponse,
+    dependencies=[RequireOwnerOrManager],
+)
+def update_my_space_amenities(
+    session: SessionDep,
+    current_staff: CurrentStaff,
+    space_id: UUID,
+    payload: SpaceAmenitiesUpdateRequest,
+) -> SpaceResponse:
+    space = session.exec(
+        select(Space).where(
+            Space.id == space_id,
+            Space.gym_id == current_staff.gym_id,
+            Space.is_active.is_(True),
+        )
+    ).first()
+    if not space:
+        raise HTTPException(status_code=404, detail={"code": "SPACE_NOT_FOUND", "message": "Space not found", "details": {}})
+
+    space.amenities = payload.amenities
+    space.equipment = payload.equipment
+    space.custom_amenities = payload.custom_amenities
+    space.custom_equipment = payload.custom_equipment
+
+    session.add(space)
+    session.commit()
+    session.refresh(space)
+    return _serialize_space(space)
+
+
+@router.post(
+    "/me/class_sessions",
+    response_model=ClassSessionResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[RequireOwnerOrManager],
+)
+def create_my_class_session(
+    session: SessionDep,
+    current_staff: CurrentStaff,
+    payload: ClassSessionCreateRequest,
+) -> ClassSessionResponse:
+    space = session.exec(
+        select(Space).where(
+            Space.id == payload.space_id,
+            Space.gym_id == current_staff.gym_id,
+            Space.is_active.is_(True),
+        )
+    ).first()
+    if not space:
+        raise HTTPException(status_code=404, detail={"code": "SPACE_NOT_FOUND", "message": "Space not found", "details": {}})
+
+    session.exec(
+        text("SELECT pg_advisory_xact_lock(hashtext(:space_key))"),
+        params={"space_key": str(payload.space_id)},
+    )
+
+    overlap = session.exec(
+        select(ClassSession).where(
+            ClassSession.gym_id == current_staff.gym_id,
+            ClassSession.space_id == payload.space_id,
+            ClassSession.is_active.is_(True),
+            ClassSession.status != ClassSessionStatus.CANCELLED,
+            payload.start_time < ClassSession.end_time,
+            payload.end_time > ClassSession.start_time,
+        )
+    ).first()
+    if overlap:
+        alternatives = session.exec(
+            select(Space).where(
+                Space.gym_id == current_staff.gym_id,
+                Space.is_active.is_(True),
+                Space.is_bookable.is_(True),
+                Space.id != payload.space_id,
+                ~Space.id.in_(
+                    select(ClassSession.space_id).where(
+                        ClassSession.gym_id == current_staff.gym_id,
+                        ClassSession.is_active.is_(True),
+                        ClassSession.status != ClassSessionStatus.CANCELLED,
+                        payload.start_time < ClassSession.end_time,
+                        payload.end_time > ClassSession.start_time,
+                    )
+                ),
+            )
+        ).all()
+        raise HTTPException(
+            status_code=409,
+            detail=ClassSessionConflictResponse(
+                code="SPACE_TIME_CONFLICT",
+                message="The selected space is already booked for the requested time.",
+                alternative_spaces=[
+                    AlternativeSpaceOption(space_id=s.id, space_name=s.name) for s in alternatives
+                ],
+            ).model_dump(mode="json"),
+        )
+
+    class_session = ClassSession(
+        gym_id=current_staff.gym_id,
+        space_id=payload.space_id,
+        title=payload.title,
+        start_time=payload.start_time,
+        end_time=payload.end_time,
+    )
+    session.add(class_session)
+    session.commit()
+    session.refresh(class_session)
+
+    return ClassSessionResponse(
+        id=class_session.id,
+        gym_id=class_session.gym_id,
+        space_id=class_session.space_id,
+        title=class_session.title,
+        start_time=class_session.start_time,
+        end_time=class_session.end_time,
+        status=class_session.status.value,
+    )
+
+
+@router.post(
+    "/me/class_sessions/{class_session_id}/cancel",
+    response_model=ClassSessionResponse,
+    dependencies=[RequireOwnerOrManager],
+)
+def cancel_my_class_session(
+    session: SessionDep,
+    current_staff: CurrentStaff,
+    class_session_id: UUID,
+) -> ClassSessionResponse:
+    class_session = session.exec(
+        select(ClassSession).where(
+            ClassSession.id == class_session_id,
+            ClassSession.gym_id == current_staff.gym_id,
+            ClassSession.is_active.is_(True),
+        )
+    ).first()
+    if not class_session:
+        raise HTTPException(status_code=404, detail={"code": "CLASS_SESSION_NOT_FOUND", "message": "Class session not found", "details": {}})
+
+    class_session.status = ClassSessionStatus.CANCELLED
+    session.add(class_session)
+    session.commit()
+    session.refresh(class_session)
+
+    return ClassSessionResponse(
+        id=class_session.id,
+        gym_id=class_session.gym_id,
+        space_id=class_session.space_id,
+        title=class_session.title,
+        start_time=class_session.start_time,
+        end_time=class_session.end_time,
+        status=class_session.status.value,
+    )
+
+
+@router.post(
+    "/me/members/import/preview",
+    response_model=MemberImportPreviewResponse,
+    dependencies=[RequireOwnerOrManager],
+)
+async def preview_member_import_csv(
+    current_staff: CurrentStaff,
+    file: UploadFile = File(...),
+) -> MemberImportPreviewResponse:
+    if not file.filename or not file.filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail={"code": "UNSUPPORTED_FILE_TYPE", "message": "Only CSV imports are currently supported", "details": {}})
+
+    _ = current_staff
+    content = await file.read(MAX_CSV_SIZE_BYTES + 1)
+    if len(content) > MAX_CSV_SIZE_BYTES:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "FILE_TOO_LARGE",
+                "message": "CSV file exceeds maximum size of 5MB",
+                "details": {},
+            },
+        )
+
+    rows = _extract_csv_rows(content)
+
+    emails = [str(row.get("email") or "").strip().lower() for row in rows if row.get("email")]
+    email_counts = Counter(emails)
+    duplicates = sorted(email for email, count in email_counts.items() if count > 1)
+
+    return MemberImportPreviewResponse(detected_members=rows, duplicate_emails=duplicates)
+
+
+@router.post(
+    "/me/members/import/confirm",
+    response_model=MemberImportConfirmResponse,
+    dependencies=[RequireOwnerOrManager],
+)
+def confirm_member_import(
+    session: SessionDep,
+    current_staff: CurrentStaff,
+    payload: MemberImportPreviewRequest,
+) -> MemberImportConfirmResponse:
+    errors: list[str] = []
+    success_count = 0
+
+    for row in payload.rows:
+        email_column = payload.column_mapping.get(ImportField.EMAIL)
+        name_column = payload.column_mapping.get(ImportField.NAME)
+        phone_column = payload.column_mapping.get(ImportField.PHONE)
+        tier_column = payload.column_mapping.get(ImportField.MEMBERSHIP_TIER)
+
+        email_raw = (row.get(email_column) if email_column else None) or ""
+        email = str(email_raw).strip().lower()
+        if not email:
+            errors.append("Missing email for a row")
+            continue
+
+        existing_consumer = session.exec(select(Consumer).where(Consumer.email == email)).first()
+        if existing_consumer:
+            existing_membership = session.exec(
+                select(GymMembership).where(
+                    GymMembership.gym_id == current_staff.gym_id,
+                    GymMembership.consumer_id == existing_consumer.id,
+                    GymMembership.is_active.is_(True),
+                )
+            ).first()
+            if existing_membership:
+                errors.append(f"Consumer {email} already has a membership at this gym")
+                continue
+
+        full_name = str((row.get(name_column) if name_column else None) or "").strip()
+        phone = str((row.get(phone_column) if phone_column else None) or "").strip() or None
+        tier_raw = str((row.get(tier_column) if tier_column else None) or "basic").strip().lower()
+
+        name_parts = [part for part in full_name.split(" ") if part]
+        first_name = name_parts[0] if name_parts else "Member"
+        last_name = " ".join(name_parts[1:]) if len(name_parts) > 1 else "Imported"
+        membership_tier = (
+            GymMembershipTier(tier_raw)
+            if tier_raw in {"basic", "premium", "unlimited"}
+            else GymMembershipTier.BASIC
+        )
+
+        try:
+            with session.begin_nested():
+                consumer = existing_consumer
+                if consumer is None:
+                    consumer = Consumer(
+                        email=email,
+                        first_name=first_name,
+                        last_name=last_name,
+                        full_name=full_name or None,
+                        phone=phone,
+                        is_email_verified=False,
+                    )
+                    session.add(consumer)
+                    session.flush()
+
+                membership = GymMembership(
+                    gym_id=current_staff.gym_id,
+                    consumer_id=consumer.id,
+                    membership_tier=membership_tier,
+                    status=GymMembershipStatus.ACTIVE,
+                )
+                session.add(membership)
+            success_count += 1
+        except Exception:
+            errors.append(f"Failed to import member with email: {email}")
+
+    session.commit()
+    return MemberImportConfirmResponse(
+        success_count=success_count,
+        error_count=len(errors),
+        errors=errors,
+    )
 
 
 @router.get("/{gym_slug}/profile", response_model=GymProfileResponse)

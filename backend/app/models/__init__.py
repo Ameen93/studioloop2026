@@ -21,6 +21,14 @@ from app.models.base import (
     SoftDeleteMixin,
     TimestampMixin,
 )
+
+# Domain models
+from app.models.class_session import (
+    ClassSession,
+    ClassSessionCreate,
+    ClassSessionPublic,
+    ClassSessionStatus,
+)
 from app.models.consumer import (
     AccountDeletionRequest,
     AuthProvider,
@@ -30,10 +38,13 @@ from app.models.consumer import (
     ConsumerUpdate,
     UserRole,
 )
-
-# Domain models
-from app.models.gym import Gym, GymCreate, GymPublic, GymUpdate
+from app.models.gym import Gym, GymCreate, GymPublic, GymSubscriptionTier, GymUpdate
 from app.models.gym_closure import GymClosure, GymClosureCreate, GymClosurePublic
+from app.models.gym_membership import (
+    GymMembership,
+    GymMembershipStatus,
+    GymMembershipTier,
+)
 from app.models.space import Space, SpaceCreate, SpacePublic, SpaceUpdate
 from app.models.staff import Staff, StaffLoginRequest, StaffRole, StaffToken
 
@@ -75,6 +86,7 @@ __all__ = [
     "GymCreate",
     "GymUpdate",
     "GymPublic",
+    "GymSubscriptionTier",
     "GymClosure",
     "GymClosureCreate",
     "GymClosurePublic",
@@ -89,6 +101,13 @@ __all__ = [
     "SpaceCreate",
     "SpaceUpdate",
     "SpacePublic",
+    "ClassSession",
+    "ClassSessionCreate",
+    "ClassSessionPublic",
+    "ClassSessionStatus",
+    "GymMembership",
+    "GymMembershipStatus",
+    "GymMembershipTier",
     "Staff",
     "StaffRole",
     "StaffLoginRequest",

@@ -459,3 +459,202 @@ def test_update_cancellation_policy_rejects_front_desk(
         headers=headers,
     )
     assert response.status_code == 403
+
+
+def test_marketplace_toggle_updates_settings(client: TestClient, db: Session) -> None:
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+    headers = _staff_token_headers(client, db, gym, StaffRole.OWNER)
+
+    response = client.patch(
+        "/api/v1/gyms/me/marketplace",
+        json={"marketplace_enabled": True},
+        headers=headers,
+    )
+    assert response.status_code == 200
+    assert response.json()["marketplace_enabled"] is True
+
+
+def test_subscription_details_view(client: TestClient, db: Session) -> None:
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+    headers = _staff_token_headers(client, db, gym, StaffRole.OWNER)
+
+    response = client.get("/api/v1/gyms/me/subscription", headers=headers)
+    assert response.status_code == 200
+    body = response.json()
+    assert body["subscription_tier"] in {"starter", "growth", "pro"}
+    assert "current_staff_count" in body
+
+
+def test_space_crud_and_soft_delete(client: TestClient, db: Session) -> None:
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+    headers = _staff_token_headers(client, db, gym, StaffRole.MANAGER)
+
+    created = client.post(
+        "/api/v1/gyms/me/spaces",
+        json={"name": "Studio A", "capacity": 20, "description": "Main floor"},
+        headers=headers,
+    )
+    assert created.status_code == 201
+    space_id = created.json()["id"]
+
+    updated = client.patch(
+        f"/api/v1/gyms/me/spaces/{space_id}",
+        json={"capacity": 25},
+        headers=headers,
+    )
+    assert updated.status_code == 200
+    assert updated.json()["capacity"] == 25
+
+    deleted = client.delete(f"/api/v1/gyms/me/spaces/{space_id}", headers=headers)
+    assert deleted.status_code == 204
+
+
+def test_space_amenities_update(client: TestClient, db: Session) -> None:
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+    headers = _staff_token_headers(client, db, gym, StaffRole.OWNER)
+
+    created = client.post(
+        "/api/v1/gyms/me/spaces",
+        json={"name": "Yoga Room", "capacity": 12, "description": "Quiet room"},
+        headers=headers,
+    )
+    assert created.status_code == 201
+    space_id = created.json()["id"]
+
+    response = client.patch(
+        f"/api/v1/gyms/me/spaces/{space_id}/amenities",
+        json={
+            "amenities": ["mirrors", "ac"],
+            "equipment": ["mats", "weights"],
+            "custom_amenities": ["natural_light"],
+            "custom_equipment": ["trx"],
+        },
+        headers=headers,
+    )
+    assert response.status_code == 200
+    assert "mats" in response.json()["equipment"]
+
+
+def test_space_double_booking_prevention(client: TestClient, db: Session) -> None:
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+    headers = _staff_token_headers(client, db, gym, StaffRole.OWNER)
+
+    s1 = client.post(
+        "/api/v1/gyms/me/spaces",
+        json={"name": "Spin Room", "capacity": 18, "description": "Bikes"},
+        headers=headers,
+    ).json()
+    s2 = client.post(
+        "/api/v1/gyms/me/spaces",
+        json={"name": "Pilates Room", "capacity": 14, "description": "Core"},
+        headers=headers,
+    ).json()
+
+    first = client.post(
+        "/api/v1/gyms/me/class_sessions",
+        json={
+            "space_id": s1["id"],
+            "title": "Morning Spin",
+            "start_time": "2026-02-20T08:00:00Z",
+            "end_time": "2026-02-20T09:00:00Z",
+        },
+        headers=headers,
+    )
+    assert first.status_code == 201
+
+    conflict = client.post(
+        "/api/v1/gyms/me/class_sessions",
+        json={
+            "space_id": s1["id"],
+            "title": "Overlap",
+            "start_time": "2026-02-20T08:30:00Z",
+            "end_time": "2026-02-20T09:30:00Z",
+        },
+        headers=headers,
+    )
+    assert conflict.status_code == 409
+    details = conflict.json()["detail"]
+    assert details["code"] == "SPACE_TIME_CONFLICT"
+    assert any(a["space_id"] == s2["id"] for a in details["alternative_spaces"])
+
+
+def test_cancelled_session_does_not_block_new_booking(client: TestClient, db: Session) -> None:
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+    headers = _staff_token_headers(client, db, gym, StaffRole.OWNER)
+
+    space = client.post(
+        "/api/v1/gyms/me/spaces",
+        json={"name": "Box Room", "capacity": 10, "description": "Bag work"},
+        headers=headers,
+    ).json()
+
+    created = client.post(
+        "/api/v1/gyms/me/class_sessions",
+        json={
+            "space_id": space["id"],
+            "title": "Boxing 1",
+            "start_time": "2026-02-21T10:00:00Z",
+            "end_time": "2026-02-21T11:00:00Z",
+        },
+        headers=headers,
+    ).json()
+
+    cancelled = client.post(
+        f"/api/v1/gyms/me/class_sessions/{created['id']}/cancel",
+        headers=headers,
+    )
+    assert cancelled.status_code == 200
+
+    replacement = client.post(
+        "/api/v1/gyms/me/class_sessions",
+        json={
+            "space_id": space["id"],
+            "title": "Boxing 2",
+            "start_time": "2026-02-21T10:00:00Z",
+            "end_time": "2026-02-21T11:00:00Z",
+        },
+        headers=headers,
+    )
+    assert replacement.status_code == 201
+
+
+def test_member_import_preview_and_confirm_csv(client: TestClient, db: Session) -> None:
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+    headers = _staff_token_headers(client, db, gym, StaffRole.OWNER)
+
+    csv_content = (
+        "name,email,phone,membership_tier\n"
+        "Alice,alice-import@example.com,+27820000001,premium\n"
+        "Bob,bob-import@example.com,+27820000002,basic\n"
+    )
+    preview = client.post(
+        "/api/v1/gyms/me/members/import/preview",
+        files={"file": ("members.csv", csv_content, "text/csv")},
+        headers=headers,
+    )
+    assert preview.status_code == 200
+    rows = preview.json()["detected_members"]
+    assert len(rows) == 2
+
+    confirm = client.post(
+        "/api/v1/gyms/me/members/import/confirm",
+        json={
+            "column_mapping": {
+                "name": "name",
+                "email": "email",
+                "phone": "phone",
+                "membership_tier": "membership_tier",
+            },
+            "rows": rows,
+        },
+        headers=headers,
+    )
+    assert confirm.status_code == 200
+    assert confirm.json()["success_count"] == 2
