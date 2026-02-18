@@ -15,7 +15,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.studioloop.gym"
+      "bundleIdentifier": "com.studioloop.gym",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Camera access is needed to scan member QR codes for check-in."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -31,7 +34,21 @@
       "bundler": "metro"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-sqlite",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Camera access is needed to scan member QR codes for check-in."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#059669"
+        }
+      ]
     ]
   }
 }
