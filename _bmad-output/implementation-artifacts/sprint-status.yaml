@@ -141,8 +141,8 @@ development_status:
   epic-6-retrospective: optional
 
   # Epic 7: Marketplace Discovery & Subscriptions (13 stories)
-  epic-7: backlog
-  7-1-browse-marketplace-classes: backlog
+  epic-7: in-progress
+  7-1-browse-marketplace-classes: done
   7-2-filter-classes-by-type: backlog
   7-3-filter-classes-by-location: backlog
   7-4-filter-classes-by-date-and-time: backlog
