@@ -124,20 +124,20 @@ development_status:
   epic-5-retrospective: optional
 
   # Epic 6: Booking & Check-in (13 stories)
-  epic-6: backlog
-  6-1-book-class-with-membership: backlog
-  6-2-book-class-with-pay-per-class: backlog
-  6-3-cancel-booking: backlog
-  6-4-join-waitlist: backlog
-  6-5-waitlist-spot-offer: backlog
-  6-6-accept-waitlist-offer: backlog
-  6-7-waitlist-offer-expiry: backlog
-  6-8-consumer-qr-code-display: backlog
-  6-9-staff-qr-code-scanner: backlog
-  6-10-manual-check-in-fallback: backlog
-  6-11-membership-validation-on-check-in: backlog
-  6-12-booking-source-tracking: backlog
-  6-13-offline-qr-check-in: backlog
+  epic-6: in-progress
+  6-1-book-class-with-membership: in-progress
+  6-2-book-class-with-pay-per-class: in-progress
+  6-3-cancel-booking: in-progress
+  6-4-join-waitlist: in-progress
+  6-5-waitlist-spot-offer: in-progress
+  6-6-accept-waitlist-offer: in-progress
+  6-7-waitlist-offer-expiry: in-progress
+  6-8-consumer-qr-code-display: in-progress
+  6-9-staff-qr-code-scanner: in-progress
+  6-10-manual-check-in-fallback: in-progress
+  6-11-membership-validation-on-check-in: in-progress
+  6-12-booking-source-tracking: in-progress
+  6-13-offline-qr-check-in: in-progress
   epic-6-retrospective: optional
 
   # Epic 7: Marketplace Discovery & Subscriptions (13 stories)

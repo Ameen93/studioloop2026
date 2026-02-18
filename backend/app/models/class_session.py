@@ -19,6 +19,10 @@ class ClassSessionBase(SQLModel):
     start_time: datetime
     end_time: datetime
     status: ClassSessionStatus = Field(default=ClassSessionStatus.SCHEDULED, max_length=20)
+    capacity: int = Field(default=0, ge=0)
+    spots_booked: int = Field(default=0, ge=0)
+    waitlist_enabled: bool = Field(default=True)
+    price_cents: int = Field(default=0, ge=0)
 
 
 class ClassSession(GymScopedSoftDeleteModel, ClassSessionBase, table=True):
@@ -40,3 +44,7 @@ class ClassSessionPublic(SQLModel):
     start_time: datetime
     end_time: datetime
     status: ClassSessionStatus
+    capacity: int
+    spots_booked: int
+    waitlist_enabled: bool
+    price_cents: int

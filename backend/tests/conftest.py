@@ -9,6 +9,8 @@ from app.core.config import settings
 from app.core.db import engine, init_db
 from app.main import app
 from app.models import (
+    Booking,
+    CheckInRecord,
     ClassSession,
     Consumer,
     Gym,
@@ -17,6 +19,7 @@ from app.models import (
     Space,
     Staff,
     User,
+    WaitlistEntry,
 )
 from app.models.digital_waiver import DigitalWaiverAcceptance
 from app.models.membership_plan import MembershipPlan
@@ -34,6 +37,9 @@ def db() -> Generator[Session, None, None]:
         seed_all(session)
         yield session
         # Clean up in reverse dependency order (children before parents)
+        session.execute(delete(CheckInRecord))
+        session.execute(delete(WaitlistEntry))
+        session.execute(delete(Booking))
         session.execute(delete(DigitalWaiverAcceptance))
         session.execute(delete(ClassSession))
         session.execute(delete(Space))

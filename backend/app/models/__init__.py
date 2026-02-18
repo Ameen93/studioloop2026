@@ -29,6 +29,9 @@ from app.models.class_session import (
     ClassSessionPublic,
     ClassSessionStatus,
 )
+from app.models.booking import Booking, BookingSource, BookingStatus, BookingType
+from app.models.waitlist_entry import WaitlistEntry, WaitlistStatus
+from app.models.check_in_record import CheckInRecord, CheckInSource
 from app.models.consumer import (
     AccountDeletionRequest,
     AuthProvider,
@@ -113,6 +116,14 @@ __all__ = [
     "ClassSessionCreate",
     "ClassSessionPublic",
     "ClassSessionStatus",
+    "Booking",
+    "BookingType",
+    "BookingStatus",
+    "BookingSource",
+    "WaitlistEntry",
+    "WaitlistStatus",
+    "CheckInRecord",
+    "CheckInSource",
     "GymMembership",
     "GymMembershipStatus",
     "GymMembershipTier",
