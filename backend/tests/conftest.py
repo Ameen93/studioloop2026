@@ -17,6 +17,9 @@ from app.models import (
     GymMembership,
     Item,
     MarketplaceSubscription,
+    Payment,
+    PaymentReceipt,
+    PaymentWebhookEvent,
     ReferralInvite,
     Space,
     Staff,
@@ -46,6 +49,9 @@ def db() -> Generator[Session, None, None]:
         session.execute(delete(ClassSession))
         session.execute(delete(Space))
         session.execute(delete(GymMembership))
+        session.execute(delete(PaymentReceipt))
+        session.execute(delete(PaymentWebhookEvent))
+        session.execute(delete(Payment))
         session.execute(delete(ReferralInvite))
         session.execute(delete(MarketplaceSubscription))
         session.execute(delete(MembershipPlan))

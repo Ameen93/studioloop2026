@@ -115,6 +115,12 @@ class Settings(BaseSettings):
         "http://localhost:8000/api/v1/auth/consumer/apple/callback"
     )
 
+    # Payments (Epic 8)
+    PAYMENT_PROVIDER: str = "ozow"
+    PAYMENT_RETRY_INTERVAL_DAYS: str = "1,3,7"
+    PAYMENT_PLATFORM_FEE_PERCENT: float = 15.0
+    PAYMENT_RECEIPT_VAT_PERCENT: float = 15.0
+
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":
             message = (

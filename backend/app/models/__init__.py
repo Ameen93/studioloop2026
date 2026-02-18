@@ -64,6 +64,14 @@ from app.models.marketplace_subscription import (
 )
 from app.models.space import Space, SpaceCreate, SpacePublic, SpaceUpdate
 from app.models.staff import Staff, StaffLoginRequest, StaffRole, StaffToken
+from app.models.payment import (
+    Payment,
+    PaymentProviderName,
+    PaymentReceipt,
+    PaymentStatus,
+    PaymentType,
+    PaymentWebhookEvent,
+)
 
 # Re-export existing models from old location for backward compatibility
 # TODO: Migrate these to app.models.auth in future story
@@ -147,6 +155,12 @@ __all__ = [
     "StaffRole",
     "StaffLoginRequest",
     "StaffToken",
+    "Payment",
+    "PaymentType",
+    "PaymentStatus",
+    "PaymentProviderName",
+    "PaymentWebhookEvent",
+    "PaymentReceipt",
     # Legacy models (from models_legacy.py)
     "User",
     "UserBase",

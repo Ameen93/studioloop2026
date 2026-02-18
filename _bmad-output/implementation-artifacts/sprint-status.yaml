@@ -158,16 +158,16 @@ development_status:
   epic-7-retrospective: optional
 
   # Epic 8: Payments & Billing (9 stories)
-  epic-8: backlog
-  8-1-payment-interface-abstraction: backlog
-  8-2-initiate-payment-flow: backlog
-  8-3-payment-webhook-processing: backlog
-  8-4-gym-payment-dashboard: backlog
-  8-5-failed-payment-detection: backlog
-  8-6-automatic-payment-retry: backlog
-  8-7-marketplace-payout-reports: backlog
-  8-8-consumer-payment-history: backlog
-  8-9-payment-receipt-generation: backlog
+  epic-8: done
+  8-1-payment-interface-abstraction: done
+  8-2-initiate-payment-flow: done
+  8-3-payment-webhook-processing: done
+  8-4-gym-payment-dashboard: done
+  8-5-failed-payment-detection: done
+  8-6-automatic-payment-retry: done
+  8-7-marketplace-payout-reports: done
+  8-8-consumer-payment-history: done
+  8-9-payment-receipt-generation: done
   epic-8-retrospective: optional
 
   # Epic 9: Notifications & Communication (10 stories)
