@@ -79,3 +79,24 @@ def test_browse_marketplace_classes_only_enabled_gyms(client: TestClient, db: Se
     assert "Enabled Class" not in titles
     assert "Enabled Replacement" in titles
     assert "Disabled Class" not in titles
+
+
+def test_filter_marketplace_classes_by_type(client: TestClient, db: Session) -> None:
+    headers, _ = _consumer_headers(client, db)
+
+    gym = Gym(
+        name=f"Type Gym {uuid4().hex[:6]}",
+        slug=f"type-gym-{uuid4().hex[:6]}",
+        is_marketplace_enabled=True,
+    )
+    db.add(gym)
+    db.commit()
+    db.refresh(gym)
+
+    _create_marketplace_session(db, gym, title="Morning Yoga Flow")
+    _create_marketplace_session(db, gym, title="Evening Boxing")
+
+    res = client.get("/api/v1/marketplace/classes", params={"class_type": "yoga"}, headers=headers)
+    assert res.status_code == 200
+    titles = [item["title"] for item in res.json()]
+    assert titles == ["Morning Yoga Flow"]

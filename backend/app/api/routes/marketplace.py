@@ -30,11 +30,12 @@ class MarketplaceClassItem(BaseModel):
 def browse_marketplace_classes(
     _current_consumer: CurrentConsumer,
     session: SessionDep,
+    class_type: str | None = Query(default=None, min_length=1, max_length=80),
     limit: int = Query(default=50, ge=1, le=200),
 ) -> list[MarketplaceClassItem]:
     now = datetime.now(timezone.utc)
 
-    rows = session.exec(
+    query = (
         select(ClassSession, Gym, Space)
         .join(Gym, Gym.id == ClassSession.gym_id)
         .join(Space, Space.id == ClassSession.space_id)
@@ -46,9 +47,12 @@ def browse_marketplace_classes(
             ClassSession.status == ClassSessionStatus.SCHEDULED,
             ClassSession.start_time >= now,
         )
-        .order_by(ClassSession.start_time)
-        .limit(limit)
-    ).all()
+    )
+    if class_type:
+        class_type_value = class_type.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        query = query.where(ClassSession.title.ilike(f"%{class_type_value}%", escape="\\"))
+
+    rows = session.exec(query.order_by(ClassSession.start_time).limit(limit)).all()
 
     return [
         MarketplaceClassItem(
