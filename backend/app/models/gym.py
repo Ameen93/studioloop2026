@@ -82,6 +82,12 @@ class Gym(SoftDeleteMixin, BaseModel, GymBase, table=True):
     staff: list["Staff"] = Relationship(back_populates="gym")
     closures: list["GymClosure"] = Relationship(back_populates="gym")
 
+    settings: dict[str, str | int | bool | None] = Field(
+        default_factory=dict,
+        sa_column=Column(JSON, nullable=False),
+        description="Gym-level configuration settings",
+    )
+
     # Contact information
     email: str | None = Field(
         default=None,

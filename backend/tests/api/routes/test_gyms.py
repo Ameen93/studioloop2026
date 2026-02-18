@@ -409,3 +409,53 @@ def test_public_profile_includes_holiday_closures(client: TestClient, db: Sessio
         c["closure_date"] == "2026-04-27" and c["reason"] == "Freedom Day"
         for c in body["holiday_closures"]
     )
+
+
+def test_update_cancellation_policy_success(client: TestClient, db: Session) -> None:
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+    headers = _staff_token_headers(client, db, gym, StaffRole.OWNER)
+
+    response = client.patch(
+        "/api/v1/gyms/me/cancellation_policy",
+        json={"cancellation_window_hours": 12, "no_show_penalty": "credit_lost"},
+        headers=headers,
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["cancellation_window_hours"] == 12
+    assert body["no_show_penalty"] == "credit_lost"
+
+    follow_up = client.get("/api/v1/gyms/me/cancellation_policy", headers=headers)
+    assert follow_up.status_code == 200
+    assert follow_up.json()["cancellation_window_hours"] == 12
+
+
+def test_update_cancellation_policy_rejects_invalid_penalty(
+    client: TestClient, db: Session
+) -> None:
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+    headers = _staff_token_headers(client, db, gym, StaffRole.OWNER)
+
+    response = client.patch(
+        "/api/v1/gyms/me/cancellation_policy",
+        json={"cancellation_window_hours": 12, "no_show_penalty": "invalid"},
+        headers=headers,
+    )
+    assert response.status_code == 422
+
+
+def test_update_cancellation_policy_rejects_front_desk(
+    client: TestClient, db: Session
+) -> None:
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+    headers = _staff_token_headers(client, db, gym, StaffRole.FRONT_DESK)
+
+    response = client.patch(
+        "/api/v1/gyms/me/cancellation_policy",
+        json={"cancellation_window_hours": 6, "no_show_penalty": "none"},
+        headers=headers,
+    )
+    assert response.status_code == 403

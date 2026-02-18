@@ -174,6 +174,25 @@ class GymBusinessHoursResponse(SQLModel):
     business_hours: dict[str, dict[str, str | bool | None]]
 
 
+class GymCancellationPolicyUpdateRequest(SQLModel):
+    cancellation_window_hours: int = Field(ge=0, le=168)
+    no_show_penalty: str
+
+    @field_validator("no_show_penalty")
+    @classmethod
+    def validate_no_show_penalty(cls, value: str) -> str:
+        allowed = {"none", "credit_lost", "fee"}
+        if value not in allowed:
+            raise ValueError("no_show_penalty must be one of: none, credit_lost, fee")
+        return value
+
+
+class GymCancellationPolicyResponse(SQLModel):
+    gym_id: UUID
+    cancellation_window_hours: int
+    no_show_penalty: str
+
+
 class GymClosureCreateRequest(SQLModel):
     closure_date: date
     reason: str | None = Field(default=None, max_length=255)
@@ -195,6 +214,27 @@ def _get_gym_closures(
     if not include_past:
         stmt = stmt.where(GymClosure.closure_date >= date.today())
     return session.exec(stmt.order_by(GymClosure.closure_date.asc())).all()
+
+
+def _get_cancellation_policy(gym: Gym) -> GymCancellationPolicyResponse:
+    settings_data = gym.settings or {}
+
+    raw_window = settings_data.get("cancellation_window_hours", 24)
+    try:
+        cancellation_window_hours = int(raw_window)
+    except (TypeError, ValueError):
+        cancellation_window_hours = 24
+    cancellation_window_hours = max(0, min(168, cancellation_window_hours))
+
+    no_show_penalty = str(settings_data.get("no_show_penalty", "none"))
+    if no_show_penalty not in {"none", "credit_lost", "fee"}:
+        no_show_penalty = "none"
+
+    return GymCancellationPolicyResponse(
+        gym_id=gym.id,
+        cancellation_window_hours=cancellation_window_hours,
+        no_show_penalty=no_show_penalty,
+    )
 
 
 def _serialize_gym_profile(
@@ -481,6 +521,54 @@ def update_my_gym_operating_hours(
     session.refresh(gym)
 
     return GymBusinessHoursResponse(gym_id=gym.id, business_hours=gym.business_hours)
+
+
+@router.get(
+    "/me/cancellation_policy",
+    response_model=GymCancellationPolicyResponse,
+    dependencies=[RequireOwnerOrManager],
+)
+def get_my_gym_cancellation_policy(
+    session: SessionDep,
+    current_staff: CurrentStaff,
+) -> GymCancellationPolicyResponse:
+    gym = session.get(Gym, current_staff.gym_id)
+    if not gym or not gym.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "GYM_NOT_FOUND", "message": "Gym not found", "details": {}},
+        )
+
+    return _get_cancellation_policy(gym)
+
+
+@router.patch(
+    "/me/cancellation_policy",
+    response_model=GymCancellationPolicyResponse,
+    dependencies=[RequireOwnerOrManager],
+)
+def update_my_gym_cancellation_policy(
+    session: SessionDep,
+    current_staff: CurrentStaff,
+    payload: GymCancellationPolicyUpdateRequest,
+) -> GymCancellationPolicyResponse:
+    gym = session.get(Gym, current_staff.gym_id)
+    if not gym or not gym.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "GYM_NOT_FOUND", "message": "Gym not found", "details": {}},
+        )
+
+    settings_data = dict(gym.settings or {})
+    settings_data["cancellation_window_hours"] = payload.cancellation_window_hours
+    settings_data["no_show_penalty"] = payload.no_show_penalty
+    gym.settings = settings_data
+
+    session.add(gym)
+    session.commit()
+    session.refresh(gym)
+
+    return _get_cancellation_policy(gym)
 
 
 @router.get(
