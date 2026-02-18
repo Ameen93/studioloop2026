@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+import csv
 from collections import Counter, defaultdict
 from datetime import UTC, date, datetime, time, timedelta
 from io import StringIO
 from uuid import UUID
-import csv
 
 from fastapi import APIRouter, HTTPException, Query, Response
 from pydantic import BaseModel
@@ -17,7 +17,6 @@ from app.models.check_in_record import CheckInRecord
 from app.models.class_session import ClassSession
 from app.models.consumer import Consumer
 from app.models.gym_membership import GymMembership, GymMembershipStatus
-from app.models.membership_plan import MembershipPlan
 from app.models.payment import Payment, PaymentStatus, PaymentType
 from app.models.staff import Staff, StaffRole
 
@@ -141,7 +140,9 @@ class GymOwnerDashboardResponse(BaseModel):
     quick_metrics: dict[str, float | int]
 
 
-def _period_bounds(period: str, start_date: date | None, end_date: date | None) -> tuple[datetime, datetime]:
+def _period_bounds(
+    period: str, start_date: date | None, end_date: date | None
+) -> tuple[datetime, datetime]:
     today = datetime.now(UTC).date()
     if period == "daily":
         start = datetime.combine(today, time.min, tzinfo=UTC)
@@ -156,7 +157,10 @@ def _period_bounds(period: str, start_date: date | None, end_date: date | None) 
         end = datetime.combine(today, time.max, tzinfo=UTC)
     elif period == "custom":
         if not start_date or not end_date:
-            raise HTTPException(status_code=400, detail="start_date and end_date required for custom period")
+            raise HTTPException(
+                status_code=400,
+                detail="start_date and end_date required for custom period",
+            )
         start = datetime.combine(start_date, time.min, tzinfo=UTC)
         end = datetime.combine(end_date, time.max, tzinfo=UTC)
     else:
@@ -211,9 +215,17 @@ def revenue_report(
         or 0
     )
 
-    memberships = sum(p.amount_cents for p in payments if p.payment_type == PaymentType.MEMBERSHIP)
-    classes = sum(p.amount_cents for p in payments if p.payment_type == PaymentType.CLASS_BOOKING)
-    marketplace = sum(p.amount_cents for p in payments if p.payment_type == PaymentType.MARKETPLACE_SUBSCRIPTION)
+    memberships = sum(
+        p.amount_cents for p in payments if p.payment_type == PaymentType.MEMBERSHIP
+    )
+    classes = sum(
+        p.amount_cents for p in payments if p.payment_type == PaymentType.CLASS_BOOKING
+    )
+    marketplace = sum(
+        p.amount_cents
+        for p in payments
+        if p.payment_type == PaymentType.MARKETPLACE_SUBSCRIPTION
+    )
     total = memberships + classes + marketplace
 
     daily: dict[str, int] = defaultdict(int)
@@ -229,7 +241,11 @@ def revenue_report(
             writer.writerow([d, v])
         return Response(content=sio.getvalue(), media_type="text/csv")
 
-    growth = _percent(total - prev_total, prev_total) if prev_total > 0 else (100.0 if total > 0 else 0.0)
+    growth = (
+        _percent(total - prev_total, prev_total)
+        if prev_total > 0
+        else (100.0 if total > 0 else 0.0)
+    )
     return RevenueReportResponse(
         period=period,
         start_date=start.date(),
@@ -242,7 +258,9 @@ def revenue_report(
         ),
         previous_period_total_cents=prev_total,
         growth_percent=growth,
-        daily_totals=[{"date": d, "revenue_cents": v} for d, v in sorted(daily.items())],
+        daily_totals=[
+            {"date": d, "revenue_cents": v} for d, v in sorted(daily.items())
+        ],
     )
 
 
@@ -288,8 +306,12 @@ def attendance_report(
         start_date=start.date(),
         end_date=end.date(),
         total_check_ins=total,
-        by_day_of_week=[{"day": d, "check_ins": by_day[d]} for d in sorted(by_day.keys())],
-        by_hour_of_day=[{"hour": h, "check_ins": by_hour[h]} for h in sorted(by_hour.keys())],
+        by_day_of_week=[
+            {"day": d, "check_ins": by_day[d]} for d in sorted(by_day.keys())
+        ],
+        by_hour_of_day=[
+            {"hour": h, "check_ins": by_hour[h]} for h in sorted(by_hour.keys())
+        ],
         peak_hour=peak_hour,
         average_daily_attendance=round(total / days, 2),
         average_weekly_attendance=round(total / weeks, 2),
@@ -307,16 +329,28 @@ def membership_health_report(
     end_date: date | None = Query(default=None),
 ) -> MembershipHealthResponse:
     start, end = _period_bounds(period, start_date, end_date)
-    memberships = session.exec(select(GymMembership).where(GymMembership.gym_id == gym_id)).all()
+    memberships = session.exec(
+        select(GymMembership).where(GymMembership.gym_id == gym_id)
+    ).all()
 
     active = [m for m in memberships if m.status == GymMembershipStatus.ACTIVE]
     new_members = [m for m in memberships if start <= m.started_at <= end]
-    cancelled = [m for m in memberships if m.status == GymMembershipStatus.CANCELLED and m.ended_at and start <= m.ended_at <= end]
+    cancelled = [
+        m
+        for m in memberships
+        if m.status == GymMembershipStatus.CANCELLED
+        and m.ended_at
+        and start <= m.ended_at <= end
+    ]
     churn = _percent(len(cancelled), len(active) + len(cancelled))
 
     tier_counts = Counter(m.membership_tier.value for m in active)
     expiring_cutoff = datetime.now(UTC) + timedelta(days=14)
-    expiring_soon = [m for m in memberships if m.ended_at and datetime.now(UTC) <= m.ended_at <= expiring_cutoff]
+    expiring_soon = [
+        m
+        for m in memberships
+        if m.ended_at and datetime.now(UTC) <= m.ended_at <= expiring_cutoff
+    ]
 
     return MembershipHealthResponse(
         period=period,
@@ -327,7 +361,9 @@ def membership_health_report(
         cancelled_this_period=len(cancelled),
         churn_rate_percent=churn,
         retention_rate_percent=round(100 - churn, 2),
-        tier_breakdown=[{"tier": k, "count": v} for k, v in sorted(tier_counts.items())],
+        tier_breakdown=[
+            {"tier": k, "count": v} for k, v in sorted(tier_counts.items())
+        ],
         expiring_soon_member_count=len(expiring_soon),
     )
 
@@ -345,7 +381,11 @@ def class_performance_report(
     class_type: str | None = Query(default=None),
 ) -> ClassPerformanceResponse:
     start, end = _period_bounds(period, start_date, end_date)
-    q = select(ClassSession).where(ClassSession.gym_id == gym_id, col(ClassSession.start_time) >= start, col(ClassSession.start_time) <= end)
+    q = select(ClassSession).where(
+        ClassSession.gym_id == gym_id,
+        col(ClassSession.start_time) >= start,
+        col(ClassSession.start_time) <= end,
+    )
     sessions = session.exec(q).all()
     if instructor_staff_id:
         sessions = [s for s in sessions if s.instructor_staff_id == instructor_staff_id]
@@ -361,7 +401,9 @@ def class_performance_report(
     class_booking_totals: Counter[str] = Counter()
     underperforming: list[UUID] = []
     for s in sessions:
-        bks = [b for b in by_session.get(s.id, []) if b.status != BookingStatus.CANCELLED]
+        bks = [
+            b for b in by_session.get(s.id, []) if b.status != BookingStatus.CANCELLED
+        ]
         booked_count = len(bks)
         checked_in_count = sum(1 for b in bks if b.status == BookingStatus.CHECKED_IN)
         fill = _percent(booked_count, s.capacity)
@@ -394,7 +436,9 @@ def class_performance_report(
     )
 
 
-@router.get("/gyms/{gym_id}/staff-performance", response_model=list[StaffPerformanceItem])
+@router.get(
+    "/gyms/{gym_id}/staff-performance", response_model=list[StaffPerformanceItem]
+)
 def staff_performance_report(
     gym_id: UUID,
     session: SessionDep,
@@ -408,7 +452,9 @@ def staff_performance_report(
 ) -> list[StaffPerformanceItem]:
     start, end = _period_bounds(period, start_date, end_date)
 
-    staff_list = session.exec(select(Staff).where(Staff.gym_id == gym_id, Staff.is_active == True)).all()  # noqa: E712
+    staff_list = session.exec(
+        select(Staff).where(Staff.gym_id == gym_id, Staff.is_active == True)
+    ).all()  # noqa: E712
     if staff_member_id:
         staff_list = [s for s in staff_list if s.id == staff_member_id]
     if role:
@@ -438,10 +484,20 @@ def staff_performance_report(
         total_hours = 0.0
         for cs in taught:
             total_hours += max((cs.end_time - cs.start_time).total_seconds() / 3600, 0)
-            booked = len([b for b in by_session.get(cs.id, []) if b.status != BookingStatus.CANCELLED])
+            booked = len(
+                [
+                    b
+                    for b in by_session.get(cs.id, [])
+                    if b.status != BookingStatus.CANCELLED
+                ]
+            )
             fill_rates.append(_percent(booked, cs.capacity))
         avg_fill = round(sum(fill_rates) / len(fill_rates), 2) if fill_rates else 0.0
-        earnings = int(round(total_hours * s.hourly_rate_cents)) if s.hourly_rate_cents is not None else None
+        earnings = (
+            int(round(total_hours * s.hourly_rate_cents))
+            if s.hourly_rate_cents is not None
+            else None
+        )
         out.append(
             StaffPerformanceItem(
                 staff_id=s.id,
@@ -480,12 +536,20 @@ def consumer_class_history(
         rows = [(b, s) for b, s in rows if class_type.lower() in s.title.lower()]
     if start_date:
         start_dt = datetime.combine(start_date, time.min, tzinfo=UTC)
-        rows = [(b, s) for b, s in rows if b.checked_in_at and b.checked_in_at >= start_dt]
+        rows = [
+            (b, s) for b, s in rows if b.checked_in_at and b.checked_in_at >= start_dt
+        ]
     if end_date:
         end_dt = datetime.combine(end_date, time.max, tzinfo=UTC)
-        rows = [(b, s) for b, s in rows if b.checked_in_at and b.checked_in_at <= end_dt]
+        rows = [
+            (b, s) for b, s in rows if b.checked_in_at and b.checked_in_at <= end_dt
+        ]
 
-    instructors = {s.instructor_staff_id: session.get(Staff, s.instructor_staff_id) for _b, s in rows if s.instructor_staff_id}
+    instructors = {
+        s.instructor_staff_id: session.get(Staff, s.instructor_staff_id)
+        for _b, s in rows
+        if s.instructor_staff_id
+    }
     items: list[ConsumerClassHistoryItem] = []
     for b, s in rows:
         instructor_name: str | None = None
@@ -506,16 +570,29 @@ def consumer_class_history(
     now = datetime.now(UTC)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     year_start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
-    month_count = sum(1 for b, _s in rows if b.checked_in_at and b.checked_in_at >= month_start)
-    year_count = sum(1 for b, _s in rows if b.checked_in_at and b.checked_in_at >= year_start)
+    month_count = sum(
+        1 for b, _s in rows if b.checked_in_at and b.checked_in_at >= month_start
+    )
+    year_count = sum(
+        1 for b, _s in rows if b.checked_in_at and b.checked_in_at >= year_start
+    )
 
-    return ConsumerClassHistoryResponse(items=items, total_attended_this_month=month_count, total_attended_this_year=year_count)
+    return ConsumerClassHistoryResponse(
+        items=items,
+        total_attended_this_month=month_count,
+        total_attended_this_year=year_count,
+    )
 
 
 @router.get("/me/stats", response_model=ConsumerStatsResponse)
-def consumer_stats(session: SessionDep, consumer: CurrentConsumer) -> ConsumerStatsResponse:
+def consumer_stats(
+    session: SessionDep, consumer: CurrentConsumer
+) -> ConsumerStatsResponse:
     bookings = session.exec(
-        select(Booking).where(Booking.consumer_id == consumer.id, Booking.status == BookingStatus.CHECKED_IN)
+        select(Booking).where(
+            Booking.consumer_id == consumer.id,
+            Booking.status == BookingStatus.CHECKED_IN,
+        )
     ).all()
     sessions = {s.id: s for s in session.exec(select(ClassSession)).all()}
     rows = [(b, sessions[b.session_id]) for b in bookings if b.session_id in sessions]
@@ -523,11 +600,19 @@ def consumer_stats(session: SessionDep, consumer: CurrentConsumer) -> ConsumerSt
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
     total = len(rows)
-    month_total = sum(1 for b, _ in rows if b.checked_in_at and b.checked_in_at >= month_start)
+    month_total = sum(
+        1 for b, _ in rows if b.checked_in_at and b.checked_in_at >= month_start
+    )
     by_class = Counter(s.title for _b, s in rows)
     by_gym = Counter(str(s.gym_id) for _b, s in rows)
 
-    week_set = {((b.checked_in_at or s.start_time).isocalendar().year, (b.checked_in_at or s.start_time).isocalendar().week) for b, s in rows}
+    week_set = {
+        (
+            (b.checked_in_at or s.start_time).isocalendar().year,
+            (b.checked_in_at or s.start_time).isocalendar().week,
+        )
+        for b, s in rows
+    }
     current_year, current_week, _ = now.isocalendar()
     streak = 0
     probe_year, probe_week = current_year, current_week
@@ -538,7 +623,9 @@ def consumer_stats(session: SessionDep, consumer: CurrentConsumer) -> ConsumerSt
             probe_year -= 1
             probe_week = 52
 
-    first_attended = min(((b.checked_in_at or s.start_time) for b, s in rows), default=now)
+    first_attended = min(
+        ((b.checked_in_at or s.start_time) for b, s in rows), default=now
+    )
     weeks_since_first = max(((now - first_attended).days // 7) + 1, 1)
 
     return ConsumerStatsResponse(
@@ -551,7 +638,12 @@ def consumer_stats(session: SessionDep, consumer: CurrentConsumer) -> ConsumerSt
     )
 
 
-def _compute_at_risk_members(session: SessionDep, gym_id: UUID, inactivity_days: int = 14, drop_percent: float = 50.0) -> list[AtRiskMemberItem]:
+def _compute_at_risk_members(
+    session: SessionDep,
+    gym_id: UUID,
+    inactivity_days: int = 14,
+    drop_percent: float = 50.0,
+) -> list[AtRiskMemberItem]:
     memberships = session.exec(
         select(GymMembership).where(
             GymMembership.gym_id == gym_id,
@@ -563,14 +655,21 @@ def _compute_at_risk_members(session: SessionDep, gym_id: UUID, inactivity_days:
     flagged: list[AtRiskMemberItem] = []
     for m in memberships:
         check_ins = session.exec(
-            select(CheckInRecord).where(CheckInRecord.gym_id == gym_id, CheckInRecord.consumer_id == m.consumer_id)
+            select(CheckInRecord).where(
+                CheckInRecord.gym_id == gym_id,
+                CheckInRecord.consumer_id == m.consumer_id,
+            )
         ).all()
-        check_ins_sorted = sorted(check_ins, key=lambda c: c.checked_in_at, reverse=True)
+        check_ins_sorted = sorted(
+            check_ins, key=lambda c: c.checked_in_at, reverse=True
+        )
         last = check_ins_sorted[0].checked_in_at if check_ins_sorted else None
         last_4_start = now - timedelta(days=28)
         prev_4_start = now - timedelta(days=56)
         recent = sum(1 for c in check_ins if c.checked_in_at >= last_4_start)
-        previous = sum(1 for c in check_ins if prev_4_start <= c.checked_in_at < last_4_start)
+        previous = sum(
+            1 for c in check_ins if prev_4_start <= c.checked_in_at < last_4_start
+        )
         drop = _percent(max(previous - recent, 0), previous) if previous > 0 else 0.0
         inactive = (last is None) or ((now - last).days >= inactivity_days)
         declining = previous > 0 and drop >= drop_percent
@@ -601,10 +700,17 @@ def run_at_risk_detection(
     drop_percent: float = Query(default=50.0, ge=1.0, le=100.0),
 ) -> AtRiskRunResponse:
     memberships = session.exec(
-        select(GymMembership).where(GymMembership.gym_id == gym_id, GymMembership.status == GymMembershipStatus.ACTIVE)
+        select(GymMembership).where(
+            GymMembership.gym_id == gym_id,
+            GymMembership.status == GymMembershipStatus.ACTIVE,
+        )
     ).all()
-    flagged = _compute_at_risk_members(session, gym_id, inactivity_days=inactivity_days, drop_percent=drop_percent)
-    return AtRiskRunResponse(gym_id=gym_id, evaluated_members=len(memberships), flagged_members=len(flagged))
+    flagged = _compute_at_risk_members(
+        session, gym_id, inactivity_days=inactivity_days, drop_percent=drop_percent
+    )
+    return AtRiskRunResponse(
+        gym_id=gym_id, evaluated_members=len(memberships), flagged_members=len(flagged)
+    )
 
 
 @router.get("/gyms/{gym_id}/at-risk-members", response_model=list[AtRiskMemberItem])
@@ -616,7 +722,9 @@ def at_risk_members(
     inactivity_days: int = Query(default=14, ge=1, le=120),
     drop_percent: float = Query(default=50.0, ge=1.0, le=100.0),
 ) -> list[AtRiskMemberItem]:
-    return _compute_at_risk_members(session, gym_id, inactivity_days=inactivity_days, drop_percent=drop_percent)
+    return _compute_at_risk_members(
+        session, gym_id, inactivity_days=inactivity_days, drop_percent=drop_percent
+    )
 
 
 @router.get("/gyms/{gym_id}/dashboard", response_model=GymOwnerDashboardResponse)
@@ -630,16 +738,35 @@ def gym_owner_dashboard(
     now = datetime.now(UTC)
 
     failed_payments = session.exec(
-        select(Payment).where(Payment.gym_id == gym_id, col(Payment.status).in_([PaymentStatus.FAILED, PaymentStatus.FAILED_PERMANENT]))
+        select(Payment).where(
+            Payment.gym_id == gym_id,
+            col(Payment.status).in_(
+                [PaymentStatus.FAILED, PaymentStatus.FAILED_PERMANENT]
+            ),
+        )
     ).all()
     at_risk = _compute_at_risk_members(session, gym_id)
     sessions_today = session.exec(
-        select(ClassSession).where(ClassSession.gym_id == gym_id, col(ClassSession.start_time) >= today_start, col(ClassSession.start_time) <= now + timedelta(days=1))
+        select(ClassSession).where(
+            ClassSession.gym_id == gym_id,
+            col(ClassSession.start_time) >= today_start,
+            col(ClassSession.start_time) <= now + timedelta(days=1),
+        )
     ).all()
-    underperforming = [s for s in sessions_today if s.capacity > 0 and (s.spots_booked / s.capacity) < 0.4]
+    underperforming = [
+        s
+        for s in sessions_today
+        if s.capacity > 0 and (s.spots_booked / s.capacity) < 0.4
+    ]
 
-    memberships = session.exec(select(GymMembership).where(GymMembership.gym_id == gym_id)).all()
-    expiring = [m for m in memberships if m.ended_at and now <= m.ended_at <= now + timedelta(days=14)]
+    memberships = session.exec(
+        select(GymMembership).where(GymMembership.gym_id == gym_id)
+    ).all()
+    expiring = [
+        m
+        for m in memberships
+        if m.ended_at and now <= m.ended_at <= now + timedelta(days=14)
+    ]
 
     today_revenue: int = int(
         session.exec(
@@ -655,14 +782,26 @@ def gym_owner_dashboard(
     )
 
     today_check_ins = session.exec(
-        select(CheckInRecord).where(CheckInRecord.gym_id == gym_id, col(CheckInRecord.checked_in_at) >= today_start, col(CheckInRecord.checked_in_at) <= now)
+        select(CheckInRecord).where(
+            CheckInRecord.gym_id == gym_id,
+            col(CheckInRecord.checked_in_at) >= today_start,
+            col(CheckInRecord.checked_in_at) <= now,
+        )
     ).all()
     today_bookings = session.exec(
-        select(Booking).where(Booking.gym_id == gym_id, col(Booking.created_at) >= today_start, col(Booking.created_at) <= now)
+        select(Booking).where(
+            Booking.gym_id == gym_id,
+            col(Booking.created_at) >= today_start,
+            col(Booking.created_at) <= now,
+        )
     ).all()
 
-    active_members = len([m for m in memberships if m.status == GymMembershipStatus.ACTIVE])
-    fill_rates = [(s.spots_booked / s.capacity) * 100 for s in sessions_today if s.capacity > 0]
+    active_members = len(
+        [m for m in memberships if m.status == GymMembershipStatus.ACTIVE]
+    )
+    fill_rates = [
+        (s.spots_booked / s.capacity) * 100 for s in sessions_today if s.capacity > 0
+    ]
 
     return GymOwnerDashboardResponse(
         gym_id=gym_id,
@@ -680,6 +819,8 @@ def gym_owner_dashboard(
         quick_metrics={
             "active_members": active_members,
             "classes_today": len(sessions_today),
-            "fill_rate_percent": round(sum(fill_rates) / len(fill_rates), 2) if fill_rates else 0.0,
+            "fill_rate_percent": round(sum(fill_rates) / len(fill_rates), 2)
+            if fill_rates
+            else 0.0,
         },
     )

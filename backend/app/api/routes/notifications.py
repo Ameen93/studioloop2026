@@ -18,11 +18,10 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query
 from pydantic import BaseModel as PydanticBaseModel
-from sqlmodel import Session, col, select
+from sqlmodel import col, select
 
 from app.api.deps import (
     CurrentConsumer,
-    CurrentStaff,
     RequireOwnerOrManager,
     SessionDep,
     StaffGymDep,
@@ -37,13 +36,9 @@ from app.models.notification import (
     Notification,
     NotificationChannel,
     NotificationPreference,
-    NotificationStatus,
     NotificationType,
 )
-from app.models.payment import Payment, PaymentStatus
 from app.services.notifications.service import (
-    create_notification,
-    dispatch_notification,
     get_consumer_preferences,
     send_gym_message,
     send_multi_channel,
@@ -225,7 +220,11 @@ def send_booking_confirmation(
         f"You're booked for {req.class_name} at {req.gym_name}, "
         f"{req.date} {req.time}{instructor_part}"
     )
-    channels = [NotificationChannel.IN_APP, NotificationChannel.EMAIL, NotificationChannel.PUSH]
+    channels = [
+        NotificationChannel.IN_APP,
+        NotificationChannel.EMAIL,
+        NotificationChannel.PUSH,
+    ]
     results = send_multi_channel(
         session,
         consumer_id=consumer.id,
@@ -313,7 +312,11 @@ def send_waitlist_notification(
         f"A spot opened for {req.class_name} at {req.gym_name}. "
         f"Confirm within {req.time_to_respond_minutes} minutes."
     )
-    channels = [NotificationChannel.IN_APP, NotificationChannel.EMAIL, NotificationChannel.PUSH]
+    channels = [
+        NotificationChannel.IN_APP,
+        NotificationChannel.EMAIL,
+        NotificationChannel.PUSH,
+    ]
     results = send_multi_channel(
         session,
         consumer_id=req.consumer_id,
@@ -368,7 +371,11 @@ def trigger_payment_reminders(
             session,
             consumer_id=consumer.id,
             notification_type=NotificationType.PAYMENT_REMINDER,
-            channels=[NotificationChannel.IN_APP, NotificationChannel.EMAIL, NotificationChannel.PUSH],
+            channels=[
+                NotificationChannel.IN_APP,
+                NotificationChannel.EMAIL,
+                NotificationChannel.PUSH,
+            ],
             title=title,
             body=body,
             gym_id=gym.id,
@@ -398,7 +405,11 @@ def send_payment_failure_notification(
         body += f" Reason: {req.failure_reason}."
     body += " Please update your payment method."
 
-    channels = [NotificationChannel.IN_APP, NotificationChannel.EMAIL, NotificationChannel.PUSH]
+    channels = [
+        NotificationChannel.IN_APP,
+        NotificationChannel.EMAIL,
+        NotificationChannel.PUSH,
+    ]
     results = send_multi_channel(
         session,
         consumer_id=req.consumer_id,
@@ -609,16 +620,24 @@ def list_my_notifications(
     # Total & unread counts
     from sqlalchemy import func
 
-    count_stmt = select(func.count()).select_from(Notification).where(
-        Notification.consumer_id == consumer.id,
-        Notification.channel == NotificationChannel.IN_APP,
+    count_stmt = (
+        select(func.count())
+        .select_from(Notification)
+        .where(
+            Notification.consumer_id == consumer.id,
+            Notification.channel == NotificationChannel.IN_APP,
+        )
     )
     total = session.exec(count_stmt).one()
 
-    unread_stmt = select(func.count()).select_from(Notification).where(
-        Notification.consumer_id == consumer.id,
-        Notification.channel == NotificationChannel.IN_APP,
-        Notification.is_read == False,  # noqa: E712
+    unread_stmt = (
+        select(func.count())
+        .select_from(Notification)
+        .where(
+            Notification.consumer_id == consumer.id,
+            Notification.channel == NotificationChannel.IN_APP,
+            Notification.is_read == False,  # noqa: E712
+        )
     )
     unread_count = session.exec(unread_stmt).one()
 

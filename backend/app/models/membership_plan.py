@@ -19,11 +19,19 @@ class MembershipPlan(GymScopedSoftDeleteModel, table=True):
     name: str = Field(min_length=1, max_length=120)
     description: str | None = Field(default=None, max_length=1000)
     price_cents: int = Field(default=0, ge=0)
-    billing_cycle: MembershipBillingCycle = Field(default=MembershipBillingCycle.MONTHLY, max_length=20)
+    billing_cycle: MembershipBillingCycle = Field(
+        default=MembershipBillingCycle.MONTHLY, max_length=20
+    )
     tier: GymMembershipTier = Field(default=GymMembershipTier.BASIC, max_length=20)
-    benefits: list[str] = Field(default_factory=list, sa_column=Column(JSON, nullable=False))
-    usage_limits: dict[str, int | bool | str] = Field(default_factory=dict, sa_column=Column(JSON, nullable=False))
-    rules: dict[str, int | bool | str] = Field(default_factory=dict, sa_column=Column(JSON, nullable=False))
+    benefits: list[str] = Field(
+        default_factory=list, sa_column=Column(JSON, nullable=False)
+    )
+    usage_limits: dict[str, int | bool | str] = Field(
+        default_factory=dict, sa_column=Column(JSON, nullable=False)
+    )
+    rules: dict[str, int | bool | str] = Field(
+        default_factory=dict, sa_column=Column(JSON, nullable=False)
+    )
     waiver_text: str | None = Field(default=None, max_length=5000)
 
 
@@ -31,7 +39,9 @@ class MembershipPlanCreate(SQLModel):
     name: str = Field(min_length=1, max_length=120)
     description: str | None = Field(default=None, max_length=1000)
     price_cents: int = Field(default=0, ge=0)
-    billing_cycle: MembershipBillingCycle = Field(default=MembershipBillingCycle.MONTHLY)
+    billing_cycle: MembershipBillingCycle = Field(
+        default=MembershipBillingCycle.MONTHLY
+    )
     tier: GymMembershipTier = Field(default=GymMembershipTier.BASIC)
 
 

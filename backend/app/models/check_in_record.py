@@ -19,6 +19,8 @@ class CheckInRecord(GymScopedModel, table=True):
     consumer_id: UUID = Field(foreign_key="consumers.id", nullable=False, index=True)
     booking_id: UUID | None = Field(default=None, foreign_key="bookings.id", index=True)
     source: CheckInSource = Field(default=CheckInSource.MANUAL, max_length=20)
-    checked_in_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    checked_in_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+    )
     offline_recorded_at: datetime | None = Field(default=None)
     synced_at: datetime | None = Field(default=None)

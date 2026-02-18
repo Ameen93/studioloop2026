@@ -121,9 +121,7 @@ def create_notification(
     return notification
 
 
-def dispatch_notification(
-    session: Session, notification: Notification
-) -> Notification:
+def dispatch_notification(session: Session, notification: Notification) -> Notification:
     """Dispatch a notification via its channel.
 
     For MVP: email uses SMTP, push and WhatsApp are stubbed (logged).
@@ -245,9 +243,7 @@ def send_gym_message(
     for consumer_id in consumer_ids:
         for channel in channels:
             pref = get_consumer_preferences(session, consumer_id)
-            if not _is_channel_enabled(
-                pref, NotificationType.GYM_MESSAGE, channel
-            ):
+            if not _is_channel_enabled(pref, NotificationType.GYM_MESSAGE, channel):
                 continue
             notif = create_notification(
                 session,

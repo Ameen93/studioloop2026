@@ -14,11 +14,15 @@ class ClassSessionStatus(StrEnum):
 
 class ClassSessionBase(SQLModel):
     space_id: UUID = Field(foreign_key="spaces.id", nullable=False, index=True)
-    instructor_staff_id: UUID | None = Field(default=None, foreign_key="staff.id", index=True)
+    instructor_staff_id: UUID | None = Field(
+        default=None, foreign_key="staff.id", index=True
+    )
     title: str = Field(min_length=1, max_length=255)
     start_time: datetime
     end_time: datetime
-    status: ClassSessionStatus = Field(default=ClassSessionStatus.SCHEDULED, max_length=20)
+    status: ClassSessionStatus = Field(
+        default=ClassSessionStatus.SCHEDULED, max_length=20
+    )
     capacity: int = Field(default=0, ge=0)
     spots_booked: int = Field(default=0, ge=0)
     waitlist_enabled: bool = Field(default=True)

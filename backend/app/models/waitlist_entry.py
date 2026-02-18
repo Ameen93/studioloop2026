@@ -18,7 +18,9 @@ class WaitlistEntry(GymScopedModel, table=True):
     __tablename__ = "waitlist_entries"
 
     consumer_id: UUID = Field(foreign_key="consumers.id", nullable=False, index=True)
-    session_id: UUID = Field(foreign_key="class_sessions.id", nullable=False, index=True)
+    session_id: UUID = Field(
+        foreign_key="class_sessions.id", nullable=False, index=True
+    )
     position: int = Field(ge=1)
     status: WaitlistStatus = Field(default=WaitlistStatus.WAITLISTED, max_length=20)
     offered_at: datetime | None = Field(default=None)

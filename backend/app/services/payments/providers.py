@@ -29,9 +29,13 @@ class PaymentProvider(Protocol):
 
     def initiate(self, payment: Payment) -> PaymentInitiationResult: ...
 
-    def verify(self, payload: dict[str, str | int | bool | None], signature: str | None = None) -> PaymentVerificationResult: ...
+    def verify(
+        self, payload: dict[str, str | int | bool | None], signature: str | None = None
+    ) -> PaymentVerificationResult: ...
 
-    def refund(self, payment: Payment, amount_cents: int | None = None) -> PaymentVerificationResult: ...
+    def refund(
+        self, payment: Payment, amount_cents: int | None = None
+    ) -> PaymentVerificationResult: ...
 
 
 class OzowProvider:
@@ -44,17 +48,28 @@ class OzowProvider:
             redirect_url=f"https://payments.ozow.example/checkout/{payment.id}",
         )
 
-    def verify(self, payload: dict[str, str | int | bool | None], signature: str | None = None) -> PaymentVerificationResult:
+    def verify(
+        self, payload: dict[str, str | int | bool | None], signature: str | None = None
+    ) -> PaymentVerificationResult:
         secret = settings.SECRET_KEY.encode()
         event_id = str(payload.get("event_id", ""))
         payment_id = str(payload.get("payment_id", ""))
         status = str(payload.get("status", "")).lower()
-        expected = hmac.new(secret, f"{event_id}:{payment_id}:{status}".encode(), sha256).hexdigest()
+        expected = hmac.new(
+            secret, f"{event_id}:{payment_id}:{status}".encode(), sha256
+        ).hexdigest()
         valid = signature is not None and compare_digest(signature, expected)
-        return PaymentVerificationResult(is_valid=valid, provider_reference=str(payload.get("provider_reference") or ""))
+        return PaymentVerificationResult(
+            is_valid=valid,
+            provider_reference=str(payload.get("provider_reference") or ""),
+        )
 
-    def refund(self, payment: Payment, amount_cents: int | None = None) -> PaymentVerificationResult:
-        return PaymentVerificationResult(is_valid=True, provider_reference=f"ozow-refund-{payment.id}")
+    def refund(
+        self, payment: Payment, amount_cents: int | None = None
+    ) -> PaymentVerificationResult:
+        return PaymentVerificationResult(
+            is_valid=True, provider_reference=f"ozow-refund-{payment.id}"
+        )
 
 
 class PayFastProvider:
@@ -67,7 +82,9 @@ class PayFastProvider:
             redirect_url=f"https://sandbox.payfast.example/eng/process?reference={payment.id}",
         )
 
-    def verify(self, payload: dict[str, str | int | bool | None], signature: str | None = None) -> PaymentVerificationResult:
+    def verify(
+        self, payload: dict[str, str | int | bool | None], signature: str | None = None
+    ) -> PaymentVerificationResult:
         # MVP stub verifier: explicit flag for testability
         verified = bool(payload.get("verified", False))
         return PaymentVerificationResult(
@@ -76,8 +93,12 @@ class PayFastProvider:
             failure_reason=None if verified else "signature_verification_failed",
         )
 
-    def refund(self, payment: Payment, amount_cents: int | None = None) -> PaymentVerificationResult:
-        return PaymentVerificationResult(is_valid=True, provider_reference=f"payfast-refund-{payment.id}")
+    def refund(
+        self, payment: Payment, amount_cents: int | None = None
+    ) -> PaymentVerificationResult:
+        return PaymentVerificationResult(
+            is_valid=True, provider_reference=f"payfast-refund-{payment.id}"
+        )
 
 
 def get_payment_provider(name: PaymentProviderName) -> PaymentProvider:

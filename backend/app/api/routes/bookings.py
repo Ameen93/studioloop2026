@@ -129,7 +129,9 @@ def _is_membership_valid(
     return True, None, membership
 
 
-def _process_waitlist_offer(session: SessionDep, gym_id: UUID, session_id: UUID) -> None:
+def _process_waitlist_offer(
+    session: SessionDep, gym_id: UUID, session_id: UUID
+) -> None:
     entry = session.exec(
         select(WaitlistEntry)
         .where(
@@ -164,7 +166,9 @@ def book_with_membership(
     if class_session.gym_id != payload.gym_id:
         raise HTTPException(status_code=400, detail="Session does not belong to gym")
 
-    valid, message, membership = _is_membership_valid(session, current_consumer.id, payload.gym_id)
+    valid, message, membership = _is_membership_valid(
+        session, current_consumer.id, payload.gym_id
+    )
     if not valid or membership is None:
         raise HTTPException(status_code=400, detail=message)
 
@@ -217,8 +221,12 @@ def book_pay_per_class(
     return booking
 
 
-@router.post("/consumer/bookings/{booking_id}/cancel", response_model=CancelBookingResponse)
-def cancel_booking(booking_id: UUID, current_consumer: CurrentConsumer, session: SessionDep) -> CancelBookingResponse:
+@router.post(
+    "/consumer/bookings/{booking_id}/cancel", response_model=CancelBookingResponse
+)
+def cancel_booking(
+    booking_id: UUID, current_consumer: CurrentConsumer, session: SessionDep
+) -> CancelBookingResponse:
     booking = session.get(Booking, booking_id)
     if not booking or booking.consumer_id != current_consumer.id:
         raise HTTPException(status_code=404, detail="Booking not found")
@@ -232,7 +240,11 @@ def cancel_booking(booking_id: UUID, current_consumer: CurrentConsumer, session:
         raise HTTPException(status_code=404, detail="Gym not found")
 
     if booking.status == BookingStatus.CANCELLED:
-        return CancelBookingResponse(booking_id=booking.id, status=booking.status, refunded=booking.cancellation_refunded)
+        return CancelBookingResponse(
+            booking_id=booking.id,
+            status=booking.status,
+            refunded=booking.cancellation_refunded,
+        )
 
     now = datetime.now(timezone.utc)
     window_hours = _gym_cancellation_window_hours(gym)
@@ -249,25 +261,36 @@ def cancel_booking(booking_id: UUID, current_consumer: CurrentConsumer, session:
     _process_waitlist_offer(session, booking.gym_id, booking.session_id)
     session.commit()
 
-    return CancelBookingResponse(booking_id=booking.id, status=booking.status, refunded=refundable)
+    return CancelBookingResponse(
+        booking_id=booking.id, status=booking.status, refunded=refundable
+    )
 
 
 @router.post("/consumer/waitlist", response_model=WaitlistEntry)
-def join_waitlist(payload: WaitlistJoinRequest, current_consumer: CurrentConsumer, session: SessionDep) -> WaitlistEntry:
+def join_waitlist(
+    payload: WaitlistJoinRequest, current_consumer: CurrentConsumer, session: SessionDep
+) -> WaitlistEntry:
     class_session = _get_session_or_404(session, payload.session_id)
     if class_session.gym_id != payload.gym_id:
         raise HTTPException(status_code=400, detail="Session does not belong to gym")
     if not class_session.waitlist_enabled:
         raise HTTPException(status_code=400, detail="Waitlist is disabled")
-    if class_session.capacity == 0 or class_session.spots_booked < class_session.capacity:
-        raise HTTPException(status_code=400, detail="Class has open spots; book directly")
+    if (
+        class_session.capacity == 0
+        or class_session.spots_booked < class_session.capacity
+    ):
+        raise HTTPException(
+            status_code=400, detail="Class has open spots; book directly"
+        )
 
     existing = session.exec(
         select(WaitlistEntry).where(
             WaitlistEntry.gym_id == payload.gym_id,
             WaitlistEntry.session_id == payload.session_id,
             WaitlistEntry.consumer_id == current_consumer.id,
-            WaitlistEntry.status.in_([WaitlistStatus.WAITLISTED, WaitlistStatus.OFFERED]),
+            WaitlistEntry.status.in_(
+                [WaitlistStatus.WAITLISTED, WaitlistStatus.OFFERED]
+            ),
         )
     ).first()
     if existing:
@@ -292,7 +315,9 @@ def join_waitlist(payload: WaitlistJoinRequest, current_consumer: CurrentConsume
 
 
 @router.post("/consumer/waitlist/{waitlist_entry_id}/accept", response_model=Booking)
-def accept_waitlist_offer(waitlist_entry_id: UUID, current_consumer: CurrentConsumer, session: SessionDep) -> Booking:
+def accept_waitlist_offer(
+    waitlist_entry_id: UUID, current_consumer: CurrentConsumer, session: SessionDep
+) -> Booking:
     entry = session.get(WaitlistEntry, waitlist_entry_id)
     if not entry or entry.consumer_id != current_consumer.id:
         raise HTTPException(status_code=404, detail="Waitlist entry not found")
@@ -343,7 +368,9 @@ def expire_waitlist_offers(session: SessionDep) -> dict[str, int]:
 
 
 @router.get("/consumer/qr_code", response_model=QrCodeResponse)
-def get_consumer_qr(current_consumer: CurrentConsumer, session: SessionDep) -> QrCodeResponse:
+def get_consumer_qr(
+    current_consumer: CurrentConsumer, session: SessionDep
+) -> QrCodeResponse:
     now = datetime.now(timezone.utc)
     expires_at = now + timedelta(minutes=QR_TOKEN_MINUTES)
     token = jwt.encode(
@@ -378,12 +405,16 @@ def get_consumer_qr(current_consumer: CurrentConsumer, session: SessionDep) -> Q
 
 
 @router.post("/me/check_ins/scan_qr", response_model=CheckInRecord)
-def scan_qr(payload: ScanQrRequest, current_staff: CurrentStaff, session: SessionDep) -> CheckInRecord:
+def scan_qr(
+    payload: ScanQrRequest, current_staff: CurrentStaff, session: SessionDep
+) -> CheckInRecord:
     if current_staff.role not in {"owner", "manager", "front_desk"}:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
 
     try:
-        decoded = jwt.decode(payload.token, settings.SECRET_KEY, algorithms=[security.ALGORITHM])
+        decoded = jwt.decode(
+            payload.token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
+        )
     except jwt.InvalidTokenError as e:
         raise HTTPException(status_code=400, detail="Invalid QR token") from e
 
@@ -391,7 +422,9 @@ def scan_qr(payload: ScanQrRequest, current_staff: CurrentStaff, session: Sessio
         raise HTTPException(status_code=400, detail="Invalid QR token")
 
     consumer_id = UUID(decoded["sub"])
-    valid, message, _membership = _is_membership_valid(session, consumer_id, current_staff.gym_id)
+    valid, message, _membership = _is_membership_valid(
+        session, consumer_id, current_staff.gym_id
+    )
     if not valid:
         raise HTTPException(status_code=400, detail=message)
 
@@ -440,7 +473,9 @@ def search_members_for_check_in(
         return []
 
     q_lower = q.lower()
-    consumers = session.exec(select(Consumer).where(Consumer.id.in_(consumer_ids))).all()
+    consumers = session.exec(
+        select(Consumer).where(Consumer.id.in_(consumer_ids))
+    ).all()
     matches = [
         c
         for c in consumers
@@ -460,18 +495,26 @@ def search_members_for_check_in(
 
 
 @router.post("/me/check_ins/manual", response_model=CheckInRecord)
-def manual_check_in(payload: ManualCheckInRequest, current_staff: CurrentStaff, session: SessionDep) -> CheckInRecord:
+def manual_check_in(
+    payload: ManualCheckInRequest, current_staff: CurrentStaff, session: SessionDep
+) -> CheckInRecord:
     if current_staff.role not in {"owner", "manager", "front_desk"}:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
 
-    valid, message, _membership = _is_membership_valid(session, payload.consumer_id, current_staff.gym_id)
+    valid, message, _membership = _is_membership_valid(
+        session, payload.consumer_id, current_staff.gym_id
+    )
     if not valid:
         raise HTTPException(status_code=400, detail=message)
 
     booking: Booking | None = None
     if payload.booking_id is not None:
         booking = session.get(Booking, payload.booking_id)
-        if booking and booking.gym_id == current_staff.gym_id and booking.status == BookingStatus.BOOKED:
+        if (
+            booking
+            and booking.gym_id == current_staff.gym_id
+            and booking.status == BookingStatus.BOOKED
+        ):
             booking.mark_checked_in()
             session.add(booking)
 
@@ -488,20 +531,28 @@ def manual_check_in(payload: ManualCheckInRequest, current_staff: CurrentStaff, 
 
 
 @router.post("/me/check_ins/offline_sync")
-def offline_sync(payload: OfflineSyncRequest, current_staff: CurrentStaff, session: SessionDep) -> dict[str, int]:
+def offline_sync(
+    payload: OfflineSyncRequest, current_staff: CurrentStaff, session: SessionDep
+) -> dict[str, int]:
     if current_staff.role not in {"owner", "manager", "front_desk"}:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
 
     synced = 0
     for r in payload.records:
-        valid, _, _membership = _is_membership_valid(session, r.consumer_id, current_staff.gym_id)
+        valid, _, _membership = _is_membership_valid(
+            session, r.consumer_id, current_staff.gym_id
+        )
         if not valid:
             continue
 
         booking: Booking | None = None
         if r.booking_id:
             booking = session.get(Booking, r.booking_id)
-            if booking and booking.gym_id == current_staff.gym_id and booking.status == BookingStatus.BOOKED:
+            if (
+                booking
+                and booking.gym_id == current_staff.gym_id
+                and booking.status == BookingStatus.BOOKED
+            ):
                 booking.mark_checked_in()
                 session.add(booking)
 

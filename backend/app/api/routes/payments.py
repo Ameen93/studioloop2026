@@ -157,7 +157,9 @@ def _build_receipt(payment: Payment, consumer: Consumer) -> PaymentReceipt:
     divisor = Decimal("1") + (vat_rate / Decimal("100"))
     subtotal = (total / divisor).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
     vat_amount = int(total - subtotal)
-    receipt_number = f"RCP-{datetime.now(UTC).strftime('%Y%m%d')}-{str(payment.id)[:8].upper()}"
+    receipt_number = (
+        f"RCP-{datetime.now(UTC).strftime('%Y%m%d')}-{str(payment.id)[:8].upper()}"
+    )
     rendered = (
         f"StudioLoop Receipt\n"
         f"Date: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S UTC')}\n"
@@ -227,7 +229,11 @@ def process_payment_webhook(
     session: SessionDep,
     x_signature: str | None = Header(default=None, alias="X-Signature"),
 ) -> dict[str, str]:
-    existing = session.exec(select(PaymentWebhookEvent).where(PaymentWebhookEvent.event_id == payload.event_id)).first()
+    existing = session.exec(
+        select(PaymentWebhookEvent).where(
+            PaymentWebhookEvent.event_id == payload.event_id
+        )
+    ).first()
     if existing:
         return {"status": "already_processed"}
 
@@ -236,7 +242,9 @@ def process_payment_webhook(
         raise HTTPException(status_code=404, detail="Payment not found")
 
     verifier = get_payment_provider(provider)
-    verification = verifier.verify(payload.model_dump(mode="json", exclude_none=True), signature=x_signature)
+    verification = verifier.verify(
+        payload.model_dump(mode="json", exclude_none=True), signature=x_signature
+    )
     if not verification.is_valid:
         event = PaymentWebhookEvent(
             provider=provider,
@@ -259,7 +267,9 @@ def process_payment_webhook(
                 membership.ended_at = None
                 session.add(membership)
 
-        receipt = session.exec(select(PaymentReceipt).where(PaymentReceipt.payment_id == payment.id)).first()
+        receipt = session.exec(
+            select(PaymentReceipt).where(PaymentReceipt.payment_id == payment.id)
+        ).first()
         if not receipt:
             consumer = session.get(Consumer, payment.consumer_id)
             if consumer:
@@ -269,8 +279,12 @@ def process_payment_webhook(
         payment.mark_refunded(provider_reference=payload.provider_reference)
     elif payload.status == PaymentStatus.FAILED:
         offsets = _retry_offsets()
-        next_retry_at = datetime.now(UTC) + timedelta(days=offsets[min(payment.retry_count, len(offsets) - 1)])
-        payment.mark_failed(payload.failure_reason or "payment_failed", next_retry_at=next_retry_at)
+        next_retry_at = datetime.now(UTC) + timedelta(
+            days=offsets[min(payment.retry_count, len(offsets) - 1)]
+        )
+        payment.mark_failed(
+            payload.failure_reason or "payment_failed", next_retry_at=next_retry_at
+        )
         if payment.payment_type == PaymentType.MEMBERSHIP and payment.related_entity_id:
             membership = session.get(GymMembership, payment.related_entity_id)
             if membership:
@@ -324,9 +338,17 @@ def gym_payment_dashboard(
             names[consumer.id] = f"{consumer.first_name} {consumer.last_name}".strip()
 
     summary = GymPaymentsSummary(
-        total_received_cents=sum(p.amount_cents for p in payments if p.status == PaymentStatus.COMPLETED),
-        total_pending_cents=sum(p.amount_cents for p in payments if p.status == PaymentStatus.PENDING),
-        total_failed_cents=sum(p.amount_cents for p in payments if p.status in {PaymentStatus.FAILED, PaymentStatus.FAILED_PERMANENT}),
+        total_received_cents=sum(
+            p.amount_cents for p in payments if p.status == PaymentStatus.COMPLETED
+        ),
+        total_pending_cents=sum(
+            p.amount_cents for p in payments if p.status == PaymentStatus.PENDING
+        ),
+        total_failed_cents=sum(
+            p.amount_cents
+            for p in payments
+            if p.status in {PaymentStatus.FAILED, PaymentStatus.FAILED_PERMANENT}
+        ),
     )
     items = [
         PaymentItem(
@@ -355,7 +377,11 @@ def gym_payment_detail(
         raise HTTPException(status_code=404, detail="Payment not found")
 
     consumer = session.get(Consumer, payment.consumer_id)
-    member_name = f"{consumer.first_name} {consumer.last_name}".strip() if consumer else "Unknown Member"
+    member_name = (
+        f"{consumer.first_name} {consumer.last_name}".strip()
+        if consumer
+        else "Unknown Member"
+    )
     return GymPaymentDetailResponse(
         payment_id=payment.id,
         member_name=member_name,
@@ -374,16 +400,25 @@ def gym_payment_detail(
     )
 
 
-@router.get("/gyms/{gym_id}/failed/action-items", response_model=list[FailedPaymentActionItem])
-def failed_payment_action_items(gym_id: UUID, _current_staff: StaffGymDep, session: SessionDep) -> list[FailedPaymentActionItem]:
+@router.get(
+    "/gyms/{gym_id}/failed/action-items", response_model=list[FailedPaymentActionItem]
+)
+def failed_payment_action_items(
+    gym_id: UUID, _current_staff: StaffGymDep, session: SessionDep
+) -> list[FailedPaymentActionItem]:
     failed = [
-        p for p in session.exec(select(Payment).where(Payment.gym_id == gym_id)).all()
+        p
+        for p in session.exec(select(Payment).where(Payment.gym_id == gym_id)).all()
         if p.status in {PaymentStatus.FAILED, PaymentStatus.FAILED_PERMANENT}
     ]
     items: list[FailedPaymentActionItem] = []
     for payment in failed:
         consumer = session.get(Consumer, payment.consumer_id)
-        member_name = f"{consumer.first_name} {consumer.last_name}".strip() if consumer else "Unknown Member"
+        member_name = (
+            f"{consumer.first_name} {consumer.last_name}".strip()
+            if consumer
+            else "Unknown Member"
+        )
         items.append(
             FailedPaymentActionItem(
                 payment_id=payment.id,
@@ -399,7 +434,10 @@ def failed_payment_action_items(gym_id: UUID, _current_staff: StaffGymDep, sessi
 def run_payment_retry_worker(session: SessionDep) -> RetryRunResponse:
     now = datetime.now(UTC)
     candidates = [
-        p for p in session.exec(select(Payment).where(Payment.status == PaymentStatus.FAILED)).all()
+        p
+        for p in session.exec(
+            select(Payment).where(Payment.status == PaymentStatus.FAILED)
+        ).all()
         if p.next_retry_at is not None and p.next_retry_at <= now
     ]
 
@@ -414,7 +452,9 @@ def run_payment_retry_worker(session: SessionDep) -> RetryRunResponse:
             payment.status = PaymentStatus.FAILED_PERMANENT
             payment.next_retry_at = None
         else:
-            payment.next_retry_at = now + timedelta(days=offsets[min(payment.retry_count, len(offsets) - 1)])
+            payment.next_retry_at = now + timedelta(
+                days=offsets[min(payment.retry_count, len(offsets) - 1)]
+            )
         session.add(payment)
         processed.append(payment.id)
 
@@ -422,7 +462,9 @@ def run_payment_retry_worker(session: SessionDep) -> RetryRunResponse:
     return RetryRunResponse(processed_payment_ids=processed)
 
 
-@router.get("/gyms/{gym_id}/reports/marketplace-payout", response_model=MarketplacePayoutReport)
+@router.get(
+    "/gyms/{gym_id}/reports/marketplace-payout", response_model=MarketplacePayoutReport
+)
 def marketplace_payout_report(
     gym_id: UUID,
     _current_staff: StaffGymDep,
@@ -445,7 +487,9 @@ def marketplace_payout_report(
     for p in payments:
         class_name = str(p.extra_data.get("class_name") or "Unspecified Class")
         if class_name not in class_stats:
-            class_stats[class_name] = MarketplacePayoutClassBreakdown(class_name=class_name, bookings=0, gross_revenue_cents=0)
+            class_stats[class_name] = MarketplacePayoutClassBreakdown(
+                class_name=class_name, bookings=0, gross_revenue_cents=0
+            )
         class_stats[class_name].bookings += 1
         class_stats[class_name].gross_revenue_cents += p.amount_cents
 
@@ -480,7 +524,12 @@ def consumer_payment_history(
     payments = list(session.exec(query).all())
     payments.sort(key=lambda p: p.created_at, reverse=True)
     receipt_map = {
-        r.payment_id: r.id for r in session.exec(select(PaymentReceipt).where(PaymentReceipt.consumer_id == current_consumer.id)).all()
+        r.payment_id: r.id
+        for r in session.exec(
+            select(PaymentReceipt).where(
+                PaymentReceipt.consumer_id == current_consumer.id
+            )
+        ).all()
     }
 
     return ConsumerPaymentHistoryResponse(
@@ -501,14 +550,21 @@ def consumer_payment_history(
 
 
 @router.get("/me/{payment_id}/receipt", response_model=ReceiptResponse)
-def get_or_generate_receipt(payment_id: UUID, current_consumer: CurrentConsumer, session: SessionDep) -> ReceiptResponse:
+def get_or_generate_receipt(
+    payment_id: UUID, current_consumer: CurrentConsumer, session: SessionDep
+) -> ReceiptResponse:
     payment = session.get(Payment, payment_id)
     if not payment or payment.consumer_id != current_consumer.id:
         raise HTTPException(status_code=404, detail="Payment not found")
     if payment.status != PaymentStatus.COMPLETED:
-        raise HTTPException(status_code=400, detail="Receipt can only be generated for completed payments")
+        raise HTTPException(
+            status_code=400,
+            detail="Receipt can only be generated for completed payments",
+        )
 
-    receipt = session.exec(select(PaymentReceipt).where(PaymentReceipt.payment_id == payment.id)).first()
+    receipt = session.exec(
+        select(PaymentReceipt).where(PaymentReceipt.payment_id == payment.id)
+    ).first()
     if not receipt:
         receipt = _build_receipt(payment, current_consumer)
         session.add(receipt)
@@ -528,5 +584,7 @@ def get_or_generate_receipt(payment_id: UUID, current_consumer: CurrentConsumer,
 
 
 @router.get("/webhook-signature-test")
-def webhook_signature_test(event_id: str, payment_id: UUID, status: str) -> dict[str, str]:
+def webhook_signature_test(
+    event_id: str, payment_id: UUID, status: str
+) -> dict[str, str]:
     return {"signature": build_webhook_signature(event_id, payment_id, status)}

@@ -441,7 +441,9 @@ def _serialize_gym_profile(
         cover_photo_urls=gym.cover_photo_urls,
         business_hours=gym.business_hours,
         holiday_closures=[
-            GymClosureItem(id=closure.id, closure_date=closure.closure_date, reason=closure.reason)
+            GymClosureItem(
+                id=closure.id, closure_date=closure.closure_date, reason=closure.reason
+            )
             for closure in holiday_closures
         ],
         address_line1=gym.address_line1,
@@ -891,11 +893,16 @@ def get_my_marketplace_toggle(
 ) -> MarketplaceToggleResponse:
     gym = session.get(Gym, current_staff.gym_id)
     if not gym or not gym.is_active:
-        raise HTTPException(status_code=404, detail={"code": "GYM_NOT_FOUND", "message": "Gym not found", "details": {}})
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "GYM_NOT_FOUND", "message": "Gym not found", "details": {}},
+        )
 
     settings_data = dict(gym.settings or {})
     marketplace_enabled = bool(settings_data.get("marketplace_enabled", False))
-    return MarketplaceToggleResponse(gym_id=gym.id, marketplace_enabled=marketplace_enabled)
+    return MarketplaceToggleResponse(
+        gym_id=gym.id, marketplace_enabled=marketplace_enabled
+    )
 
 
 @router.patch(
@@ -910,7 +917,10 @@ def update_my_marketplace_toggle(
 ) -> MarketplaceToggleResponse:
     gym = session.get(Gym, current_staff.gym_id)
     if not gym or not gym.is_active:
-        raise HTTPException(status_code=404, detail={"code": "GYM_NOT_FOUND", "message": "Gym not found", "details": {}})
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "GYM_NOT_FOUND", "message": "Gym not found", "details": {}},
+        )
 
     settings_data = dict(gym.settings or {})
     settings_data["marketplace_enabled"] = payload.marketplace_enabled
@@ -919,7 +929,9 @@ def update_my_marketplace_toggle(
     session.commit()
     session.refresh(gym)
 
-    return MarketplaceToggleResponse(gym_id=gym.id, marketplace_enabled=payload.marketplace_enabled)
+    return MarketplaceToggleResponse(
+        gym_id=gym.id, marketplace_enabled=payload.marketplace_enabled
+    )
 
 
 @router.get(
@@ -933,18 +945,25 @@ def get_my_subscription_details(
 ) -> GymSubscriptionResponse:
     gym = session.get(Gym, current_staff.gym_id)
     if not gym or not gym.is_active:
-        raise HTTPException(status_code=404, detail={"code": "GYM_NOT_FOUND", "message": "Gym not found", "details": {}})
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "GYM_NOT_FOUND", "message": "Gym not found", "details": {}},
+        )
 
     member_limit, staff_limit = _subscription_limits_for_tier(gym.subscription_tier)
     member_count = session.exec(
-        select(func.count()).select_from(GymMembership).where(
+        select(func.count())
+        .select_from(GymMembership)
+        .where(
             GymMembership.gym_id == gym.id,
             GymMembership.is_active.is_(True),
             GymMembership.status == GymMembershipStatus.ACTIVE,
         )
     ).one()
     staff_count = session.exec(
-        select(func.count()).select_from(Staff).where(
+        select(func.count())
+        .select_from(Staff)
+        .where(
             Staff.gym_id == gym.id,
             Staff.is_active.is_(True),
         )
@@ -975,12 +994,16 @@ def get_my_subscription_details(
     response_model=list[SpaceResponse],
     dependencies=[RequireOwnerOrManager],
 )
-def list_my_spaces(session: SessionDep, current_staff: CurrentStaff) -> list[SpaceResponse]:
+def list_my_spaces(
+    session: SessionDep, current_staff: CurrentStaff
+) -> list[SpaceResponse]:
     spaces = session.exec(
-        select(Space).where(
+        select(Space)
+        .where(
             Space.gym_id == current_staff.gym_id,
             Space.is_active.is_(True),
-        ).order_by(Space.created_at.asc())
+        )
+        .order_by(Space.created_at.asc())
     ).all()
     return [_serialize_space(space) for space in spaces]
 
@@ -1027,7 +1050,14 @@ def update_my_space(
         )
     ).first()
     if not space:
-        raise HTTPException(status_code=404, detail={"code": "SPACE_NOT_FOUND", "message": "Space not found", "details": {}})
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "code": "SPACE_NOT_FOUND",
+                "message": "Space not found",
+                "details": {},
+            },
+        )
 
     for key, value in payload.model_dump(exclude_unset=True).items():
         setattr(space, key, value)
@@ -1056,7 +1086,14 @@ def deactivate_my_space(
         )
     ).first()
     if not space:
-        raise HTTPException(status_code=404, detail={"code": "SPACE_NOT_FOUND", "message": "Space not found", "details": {}})
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "code": "SPACE_NOT_FOUND",
+                "message": "Space not found",
+                "details": {},
+            },
+        )
 
     space.soft_delete()
     session.add(space)
@@ -1082,7 +1119,14 @@ def update_my_space_amenities(
         )
     ).first()
     if not space:
-        raise HTTPException(status_code=404, detail={"code": "SPACE_NOT_FOUND", "message": "Space not found", "details": {}})
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "code": "SPACE_NOT_FOUND",
+                "message": "Space not found",
+                "details": {},
+            },
+        )
 
     space.amenities = payload.amenities
     space.equipment = payload.equipment
@@ -1114,7 +1158,14 @@ def create_my_class_session(
         )
     ).first()
     if not space:
-        raise HTTPException(status_code=404, detail={"code": "SPACE_NOT_FOUND", "message": "Space not found", "details": {}})
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "code": "SPACE_NOT_FOUND",
+                "message": "Space not found",
+                "details": {},
+            },
+        )
 
     session.exec(
         text("SELECT pg_advisory_xact_lock(hashtext(:space_key))"),
@@ -1155,7 +1206,8 @@ def create_my_class_session(
                 code="SPACE_TIME_CONFLICT",
                 message="The selected space is already booked for the requested time.",
                 alternative_spaces=[
-                    AlternativeSpaceOption(space_id=s.id, space_name=s.name) for s in alternatives
+                    AlternativeSpaceOption(space_id=s.id, space_name=s.name)
+                    for s in alternatives
                 ],
             ).model_dump(mode="json"),
         )
@@ -1200,7 +1252,14 @@ def cancel_my_class_session(
         )
     ).first()
     if not class_session:
-        raise HTTPException(status_code=404, detail={"code": "CLASS_SESSION_NOT_FOUND", "message": "Class session not found", "details": {}})
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "code": "CLASS_SESSION_NOT_FOUND",
+                "message": "Class session not found",
+                "details": {},
+            },
+        )
 
     class_session.status = ClassSessionStatus.CANCELLED
     session.add(class_session)
@@ -1228,7 +1287,14 @@ async def preview_member_import_csv(
     file: UploadFile = File(...),
 ) -> MemberImportPreviewResponse:
     if not file.filename or not file.filename.lower().endswith(".csv"):
-        raise HTTPException(status_code=400, detail={"code": "UNSUPPORTED_FILE_TYPE", "message": "Only CSV imports are currently supported", "details": {}})
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "UNSUPPORTED_FILE_TYPE",
+                "message": "Only CSV imports are currently supported",
+                "details": {},
+            },
+        )
 
     _ = current_staff
     content = await file.read(MAX_CSV_SIZE_BYTES + 1)
@@ -1244,11 +1310,15 @@ async def preview_member_import_csv(
 
     rows = _extract_csv_rows(content)
 
-    emails = [str(row.get("email") or "").strip().lower() for row in rows if row.get("email")]
+    emails = [
+        str(row.get("email") or "").strip().lower() for row in rows if row.get("email")
+    ]
     email_counts = Counter(emails)
     duplicates = sorted(email for email, count in email_counts.items() if count > 1)
 
-    return MemberImportPreviewResponse(detected_members=rows, duplicate_emails=duplicates)
+    return MemberImportPreviewResponse(
+        detected_members=rows, duplicate_emails=duplicates
+    )
 
 
 @router.post(
@@ -1276,7 +1346,9 @@ def confirm_member_import(
             errors.append("Missing email for a row")
             continue
 
-        existing_consumer = session.exec(select(Consumer).where(Consumer.email == email)).first()
+        existing_consumer = session.exec(
+            select(Consumer).where(Consumer.email == email)
+        ).first()
         if existing_consumer:
             existing_membership = session.exec(
                 select(GymMembership).where(
@@ -1290,8 +1362,14 @@ def confirm_member_import(
                 continue
 
         full_name = str((row.get(name_column) if name_column else None) or "").strip()
-        phone = str((row.get(phone_column) if phone_column else None) or "").strip() or None
-        tier_raw = str((row.get(tier_column) if tier_column else None) or "basic").strip().lower()
+        phone = (
+            str((row.get(phone_column) if phone_column else None) or "").strip() or None
+        )
+        tier_raw = (
+            str((row.get(tier_column) if tier_column else None) or "basic")
+            .strip()
+            .lower()
+        )
 
         name_parts = [part for part in full_name.split(" ") if part]
         first_name = name_parts[0] if name_parts else "Member"

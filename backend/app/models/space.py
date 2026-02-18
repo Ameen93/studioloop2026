@@ -67,8 +67,12 @@ class Space(GymScopedSoftDeleteModel, SpaceBase, table=True):
     has_mirrors: bool = Field(default=False)
     has_sound_system: bool = Field(default=False)
     has_air_conditioning: bool = Field(default=False)
-    amenities: list[str] = Field(default_factory=list, sa_column=Column(JSON, nullable=False))
-    equipment: list[str] = Field(default_factory=list, sa_column=Column(JSON, nullable=False))
+    amenities: list[str] = Field(
+        default_factory=list, sa_column=Column(JSON, nullable=False)
+    )
+    equipment: list[str] = Field(
+        default_factory=list, sa_column=Column(JSON, nullable=False)
+    )
     custom_amenities: list[str] = Field(
         default_factory=list, sa_column=Column(JSON, nullable=False)
     )

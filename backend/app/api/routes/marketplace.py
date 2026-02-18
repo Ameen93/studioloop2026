@@ -32,7 +32,10 @@ def _distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     r = 6371.0
     d_lat = radians(lat2 - lat1)
     d_lon = radians(lon2 - lon1)
-    a = sin(d_lat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(d_lon / 2) ** 2
+    a = (
+        sin(d_lat / 2) ** 2
+        + cos(radians(lat1)) * cos(radians(lat2)) * sin(d_lon / 2) ** 2
+    )
     return round(2 * r * asin(sqrt(a)), 2)
 
 
@@ -149,7 +152,9 @@ _PLAN_ALLOCATIONS: dict[MarketplacePlanTier, int] = {
 }
 
 
-def _get_latest_subscription(session: SessionDep, consumer_id: UUID) -> MarketplaceSubscription | None:
+def _get_latest_subscription(
+    session: SessionDep, consumer_id: UUID
+) -> MarketplaceSubscription | None:
     return session.exec(
         select(MarketplaceSubscription)
         .where(MarketplaceSubscription.consumer_id == consumer_id)
@@ -159,8 +164,12 @@ def _get_latest_subscription(session: SessionDep, consumer_id: UUID) -> Marketpl
 
 def _next_month_reset_at(now: datetime) -> datetime:
     if now.month == 12:
-        return now.replace(year=now.year + 1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
-    return now.replace(month=now.month + 1, day=1, hour=0, minute=0, second=0, microsecond=0)
+        return now.replace(
+            year=now.year + 1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0
+        )
+    return now.replace(
+        month=now.month + 1, day=1, hour=0, minute=0, second=0, microsecond=0
+    )
 
 
 @router.get("/classes", response_model=list[MarketplaceClassItem])
@@ -195,15 +204,32 @@ def browse_marketplace_classes(
         )
     )
     if start_date and end_date and start_date > end_date:
-        raise HTTPException(status_code=400, detail="start_date must be on or before end_date")
+        raise HTTPException(
+            status_code=400, detail="start_date must be on or before end_date"
+        )
     if start_time_from and start_time_to and start_time_from > start_time_to:
-        raise HTTPException(status_code=400, detail="start_time_from must be on or before start_time_to")
-    if min_price_cents is not None and max_price_cents is not None and min_price_cents > max_price_cents:
-        raise HTTPException(status_code=400, detail="min_price_cents must be <= max_price_cents")
+        raise HTTPException(
+            status_code=400, detail="start_time_from must be on or before start_time_to"
+        )
+    if (
+        min_price_cents is not None
+        and max_price_cents is not None
+        and min_price_cents > max_price_cents
+    ):
+        raise HTTPException(
+            status_code=400, detail="min_price_cents must be <= max_price_cents"
+        )
 
     if class_type:
-        class_type_value = class_type.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-        query = query.where(ClassSession.title.ilike(f"%{class_type_value}%", escape="\\"))
+        class_type_value = (
+            class_type.strip()
+            .replace("\\", "\\\\")
+            .replace("%", "\\%")
+            .replace("_", "\\_")
+        )
+        query = query.where(
+            ClassSession.title.ilike(f"%{class_type_value}%", escape="\\")
+        )
     if city:
         city_value = city.strip().lower()
         query = query.where(func.lower(Gym.city) == city_value)
@@ -211,9 +237,15 @@ def browse_marketplace_classes(
         province_value = province.strip().lower()
         query = query.where(func.lower(Gym.province) == province_value)
     if start_date:
-        query = query.where(ClassSession.start_time >= datetime.combine(start_date, time.min, tzinfo=timezone.utc))
+        query = query.where(
+            ClassSession.start_time
+            >= datetime.combine(start_date, time.min, tzinfo=timezone.utc)
+        )
     if end_date:
-        query = query.where(ClassSession.start_time <= datetime.combine(end_date, time.max, tzinfo=timezone.utc))
+        query = query.where(
+            ClassSession.start_time
+            <= datetime.combine(end_date, time.max, tzinfo=timezone.utc)
+        )
     if min_price_cents is not None:
         query = query.where(ClassSession.price_cents >= min_price_cents)
     if max_price_cents is not None:
@@ -228,7 +260,11 @@ def browse_marketplace_classes(
             continue
         if start_time_to and session_time > start_time_to:
             continue
-        if only_available and class_session.capacity and class_session.spots_booked >= class_session.capacity:
+        if (
+            only_available
+            and class_session.capacity
+            and class_session.spots_booked >= class_session.capacity
+        ):
             continue
         filtered_rows.append((class_session, gym, space))
     rows = filtered_rows
@@ -285,7 +321,9 @@ def view_marketplace_gym_profile(
         and gym.latitude is not None
         and gym.longitude is not None
     ):
-        distance_km = _distance_km(current_latitude, current_longitude, gym.latitude, gym.longitude)
+        distance_km = _distance_km(
+            current_latitude, current_longitude, gym.latitude, gym.longitude
+        )
 
     amenities = (gym.settings or {}).get("amenities", [])
     if not isinstance(amenities, list):
@@ -343,7 +381,10 @@ def view_marketplace_class_details(
     class_session, gym, space, instructor = row
     remaining = max(0, class_session.capacity - class_session.spots_booked)
     action = "book" if remaining > 0 else "join_waitlist"
-    duration = max(1, int((class_session.end_time - class_session.start_time).total_seconds() // 60))
+    duration = max(
+        1,
+        int((class_session.end_time - class_session.start_time).total_seconds() // 60),
+    )
     return MarketplaceClassDetailResponse(
         session_id=class_session.id,
         gym_id=class_session.gym_id,
@@ -364,10 +405,16 @@ def view_marketplace_class_details(
         address_line1=gym.address_line1,
         city=gym.city,
         province=gym.province,
-        map_link=f"https://maps.google.com/?q={gym.latitude},{gym.longitude}" if gym.latitude and gym.longitude else None,
-        instructor_name=f"{instructor.first_name} {instructor.last_name}" if instructor else None,
+        map_link=f"https://maps.google.com/?q={gym.latitude},{gym.longitude}"
+        if gym.latitude and gym.longitude
+        else None,
+        instructor_name=f"{instructor.first_name} {instructor.last_name}"
+        if instructor
+        else None,
         instructor_bio=None,
-        cancellation_policy=(gym.settings or {}).get("cancellation_policy", "Cancel before class starts to avoid penalties."),
+        cancellation_policy=(gym.settings or {}).get(
+            "cancellation_policy", "Cancel before class starts to avoid penalties."
+        ),
     )
 
 
@@ -380,7 +427,9 @@ def subscribe_to_marketplace_plan(
     allocation = _PLAN_ALLOCATIONS[payload.plan_tier]
     existing = _get_latest_subscription(session, current_consumer.id)
     if existing and existing.status == MarketplaceSubscriptionStatus.ACTIVE:
-        raise HTTPException(status_code=400, detail="Active marketplace subscription already exists")
+        raise HTTPException(
+            status_code=400, detail="Active marketplace subscription already exists"
+        )
 
     now = datetime.now(timezone.utc)
     subscription = MarketplaceSubscription(
@@ -412,7 +461,11 @@ def book_marketplace_class_with_subscription(
     session: SessionDep,
 ) -> Booking:
     class_session = session.get(ClassSession, payload.session_id)
-    if not class_session or not class_session.is_active or class_session.status != ClassSessionStatus.SCHEDULED:
+    if (
+        not class_session
+        or not class_session.is_active
+        or class_session.status != ClassSessionStatus.SCHEDULED
+    ):
         raise HTTPException(status_code=404, detail="Class session not found")
 
     gym = session.get(Gym, class_session.gym_id)
@@ -434,7 +487,9 @@ def book_marketplace_class_with_subscription(
 
     subscription = _get_latest_subscription(session, current_consumer.id)
     if not subscription or subscription.status != MarketplaceSubscriptionStatus.ACTIVE:
-        raise HTTPException(status_code=400, detail="Active marketplace subscription required")
+        raise HTTPException(
+            status_code=400, detail="Active marketplace subscription required"
+        )
     if subscription.classes_remaining <= 0:
         raise HTTPException(status_code=400, detail="No marketplace credits remaining")
 
@@ -463,7 +518,9 @@ def view_marketplace_subscription_status(
 ) -> MarketplaceSubscriptionResponse:
     subscription = _get_latest_subscription(session, current_consumer.id)
     if not subscription:
-        raise HTTPException(status_code=404, detail="Marketplace subscription not found")
+        raise HTTPException(
+            status_code=404, detail="Marketplace subscription not found"
+        )
 
     return MarketplaceSubscriptionResponse(
         subscription_id=subscription.id,
@@ -484,13 +541,19 @@ def manage_marketplace_subscription(
 ) -> MarketplaceSubscriptionResponse:
     subscription = _get_latest_subscription(session, current_consumer.id)
     if not subscription:
-        raise HTTPException(status_code=404, detail="Marketplace subscription not found")
+        raise HTTPException(
+            status_code=404, detail="Marketplace subscription not found"
+        )
 
     if subscription.status == MarketplaceSubscriptionStatus.CANCELLED:
-        raise HTTPException(status_code=400, detail="Cancelled subscriptions cannot be changed")
+        raise HTTPException(
+            status_code=400, detail="Cancelled subscriptions cannot be changed"
+        )
 
     if payload.action in {"upgrade", "downgrade"} and payload.target_tier is None:
-        raise HTTPException(status_code=400, detail="target_tier is required for tier changes")
+        raise HTTPException(
+            status_code=400, detail="target_tier is required for tier changes"
+        )
 
     if payload.action == "upgrade":
         previous_total = max(1, subscription.classes_total)
@@ -558,7 +621,9 @@ def share_class_details(
 
 
 @router.get("/referrals/me", response_model=ReferralLinkResponse)
-def get_referral_link(current_consumer: CurrentConsumer, session: SessionDep) -> ReferralLinkResponse:
+def get_referral_link(
+    current_consumer: CurrentConsumer, session: SessionDep
+) -> ReferralLinkResponse:
     referral_code = f"sl-{sha256(f'{current_consumer.id}'.encode()).hexdigest()[:12]}"
     existing = session.exec(
         select(ReferralInvite).where(

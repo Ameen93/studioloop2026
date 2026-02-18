@@ -33,8 +33,12 @@ class Payment(GymScopedModel, table=True):
     amount_cents: int = Field(ge=0, nullable=False)
     currency: str = Field(default="ZAR", max_length=3)
     payment_type: PaymentType = Field(default=PaymentType.MEMBERSHIP, max_length=40)
-    status: PaymentStatus = Field(default=PaymentStatus.PENDING, max_length=24, index=True)
-    provider: PaymentProviderName = Field(default=PaymentProviderName.OZOW, max_length=20)
+    status: PaymentStatus = Field(
+        default=PaymentStatus.PENDING, max_length=24, index=True
+    )
+    provider: PaymentProviderName = Field(
+        default=PaymentProviderName.OZOW, max_length=20
+    )
     provider_reference: str | None = Field(default=None, max_length=255, index=True)
     description: str = Field(max_length=255)
     return_url: str | None = Field(default=None, max_length=500)
@@ -48,7 +52,9 @@ class Payment(GymScopedModel, table=True):
     next_retry_at: datetime | None = Field(default=None, index=True)
     completed_at: datetime | None = Field(default=None)
     refunded_at: datetime | None = Field(default=None)
-    extra_data: dict[str, str | int | bool | None] = Field(default_factory=dict, sa_column=Column("metadata", JSON, nullable=False))
+    extra_data: dict[str, str | int | bool | None] = Field(
+        default_factory=dict, sa_column=Column("metadata", JSON, nullable=False)
+    )
 
     def mark_completed(self, provider_reference: str | None = None) -> None:
         self.status = PaymentStatus.COMPLETED
@@ -80,14 +86,20 @@ class PaymentWebhookEvent(BaseModel, table=True):
     payment_id: UUID | None = Field(default=None, foreign_key="payments.id", index=True)
     event_type: str = Field(max_length=64)
     signature_valid: bool = Field(default=False)
-    payload: dict[str, str | int | bool | None] = Field(default_factory=dict, sa_column=Column(JSON, nullable=False))
-    processed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    payload: dict[str, str | int | bool | None] = Field(
+        default_factory=dict, sa_column=Column(JSON, nullable=False)
+    )
+    processed_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+    )
 
 
 class PaymentReceipt(BaseModel, table=True):
     __tablename__ = "payment_receipts"
 
-    payment_id: UUID = Field(foreign_key="payments.id", nullable=False, index=True, unique=True)
+    payment_id: UUID = Field(
+        foreign_key="payments.id", nullable=False, index=True, unique=True
+    )
     consumer_id: UUID = Field(foreign_key="consumers.id", nullable=False, index=True)
     receipt_number: str = Field(max_length=64, index=True, unique=True)
     vat_rate_percent: float = Field(default=15.0, ge=0)
