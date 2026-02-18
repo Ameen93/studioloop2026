@@ -118,6 +118,7 @@ class GymProfileResponse(SQLModel):
     contact_phone: str | None
     logo_url: str | None
     cover_photo_urls: list[str]
+    business_hours: dict[str, dict[str, str | bool | None]]
     address_line1: str | None
     address_line2: str | None
     city: str | None
@@ -126,6 +127,43 @@ class GymProfileResponse(SQLModel):
     country: str
     latitude: float | None
     longitude: float | None
+
+
+class GymBusinessHoursUpdateRequest(SQLModel):
+    """Weekly operating hours by weekday."""
+
+    business_hours: dict[str, dict[str, str | bool | None]]
+
+    @field_validator("business_hours")
+    @classmethod
+    def validate_business_hours(
+        cls, value: dict[str, dict[str, str | bool | None]]
+    ) -> dict[str, dict[str, str | bool | None]]:
+        allowed_days = {
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        }
+        for day, config in value.items():
+            if day not in allowed_days:
+                raise ValueError(f"Invalid day: {day}")
+            if "is_closed" not in config:
+                raise ValueError(f"Missing is_closed for {day}")
+            if config.get("is_closed") is False:
+                if not config.get("open_time") or not config.get("close_time"):
+                    raise ValueError(
+                        f"open_time and close_time are required when {day} is open"
+                    )
+        return value
+
+
+class GymBusinessHoursResponse(SQLModel):
+    gym_id: UUID
+    business_hours: dict[str, dict[str, str | bool | None]]
 
 
 def _serialize_gym_profile(gym: Gym) -> GymProfileResponse:
@@ -139,6 +177,7 @@ def _serialize_gym_profile(gym: Gym) -> GymProfileResponse:
         contact_phone=gym.phone,
         logo_url=gym.logo_url,
         cover_photo_urls=gym.cover_photo_urls,
+        business_hours=gym.business_hours,
         address_line1=gym.address_line1,
         address_line2=gym.address_line2,
         city=gym.city,
@@ -331,6 +370,7 @@ def update_my_gym_profile(
         "contact_phone": "phone",
         "logo_url": "logo_url",
         "cover_photo_urls": "cover_photo_urls",
+        "business_hours": "business_hours",
         "address_line1": "address_line1",
         "address_line2": "address_line2",
         "city": "city",
@@ -358,6 +398,50 @@ def update_my_gym_profile(
     session.refresh(gym)
 
     return _serialize_gym_profile(gym)
+
+
+@router.get(
+    "/me/operating_hours",
+    response_model=GymBusinessHoursResponse,
+    dependencies=[RequireOwnerOrManager],
+)
+def get_my_gym_operating_hours(
+    session: SessionDep,
+    current_staff: CurrentStaff,
+) -> GymBusinessHoursResponse:
+    gym = session.get(Gym, current_staff.gym_id)
+    if not gym or not gym.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "GYM_NOT_FOUND", "message": "Gym not found", "details": {}},
+        )
+
+    return GymBusinessHoursResponse(gym_id=gym.id, business_hours=gym.business_hours)
+
+
+@router.patch(
+    "/me/operating_hours",
+    response_model=GymBusinessHoursResponse,
+    dependencies=[RequireOwnerOrManager],
+)
+def update_my_gym_operating_hours(
+    session: SessionDep,
+    current_staff: CurrentStaff,
+    payload: GymBusinessHoursUpdateRequest,
+) -> GymBusinessHoursResponse:
+    gym = session.get(Gym, current_staff.gym_id)
+    if not gym or not gym.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "GYM_NOT_FOUND", "message": "Gym not found", "details": {}},
+        )
+
+    gym.business_hours = payload.business_hours
+    session.add(gym)
+    session.commit()
+    session.refresh(gym)
+
+    return GymBusinessHoursResponse(gym_id=gym.id, business_hours=gym.business_hours)
 
 
 @router.get("/{gym_slug}/profile", response_model=GymProfileResponse)

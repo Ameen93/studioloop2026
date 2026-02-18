@@ -296,3 +296,45 @@ def test_update_my_gym_profile_keeps_other_gyms_unchanged(
     updated_b = db.get(Gym, gym_b.id)
     assert updated_b is not None
     assert updated_b.name == original_name
+
+
+def test_update_operating_hours_success(client: TestClient, db: Session) -> None:
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+    headers = _staff_token_headers(client, db, gym, StaffRole.OWNER)
+
+    payload = {
+        "business_hours": {
+            "monday": {"is_closed": False, "open_time": "06:00", "close_time": "21:00"},
+            "sunday": {"is_closed": True, "open_time": None, "close_time": None},
+        }
+    }
+
+    response = client.patch(
+        "/api/v1/gyms/me/operating_hours",
+        json=payload,
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["business_hours"]["monday"]["open_time"] == "06:00"
+
+
+def test_update_operating_hours_rejects_invalid_day(
+    client: TestClient, db: Session
+) -> None:
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+    headers = _staff_token_headers(client, db, gym, StaffRole.MANAGER)
+
+    response = client.patch(
+        "/api/v1/gyms/me/operating_hours",
+        json={
+            "business_hours": {
+                "funday": {"is_closed": False, "open_time": "08:00", "close_time": "18:00"}
+            }
+        },
+        headers=headers,
+    )
+
+    assert response.status_code == 422

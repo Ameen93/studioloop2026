@@ -70,7 +70,7 @@ development_status:
   epic-2: in-progress
   2-1-gym-registration-and-owner-account: done
   2-2-gym-profile-configuration: done
-  2-3-operating-hours-configuration: backlog
+  2-3-operating-hours-configuration: done
   2-4-holiday-closures-management: backlog
   2-5-cancellation-policy-configuration: backlog
   2-6-marketplace-participation-toggle: backlog

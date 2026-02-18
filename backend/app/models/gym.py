@@ -52,6 +52,11 @@ class GymBase(SQLModel):
         sa_column=Column(JSON, nullable=False),
         description="Gallery of gym cover photos hosted on CDN",
     )
+    business_hours: dict[str, dict[str, str | bool | None]] = Field(
+        default_factory=dict,
+        sa_column=Column(JSON, nullable=False),
+        description="Operating hours keyed by weekday",
+    )
     is_marketplace_enabled: bool = Field(
         default=False,
         description="Whether gym participates in StudioLoop marketplace",
@@ -116,6 +121,7 @@ class GymUpdate(SQLModel):
     tagline: str | None = Field(default=None, max_length=180)
     logo_url: str | None = Field(default=None, max_length=2048)
     cover_photo_urls: list[str] | None = None
+    business_hours: dict[str, dict[str, str | bool | None]] | None = None
     is_marketplace_enabled: bool | None = None
     email: str | None = Field(default=None, max_length=255)
     phone: str | None = Field(default=None, max_length=50)
