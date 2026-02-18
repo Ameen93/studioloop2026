@@ -3,6 +3,7 @@
 Implements Story 2.1: Gym registration and owner account creation.
 """
 
+from datetime import date
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, status
@@ -13,7 +14,7 @@ from sqlmodel import Field, SQLModel, select
 from app.api.deps import CurrentStaff, RequireOwnerOrManager, SessionDep
 from app.core.config import settings
 from app.core.security import get_password_hash
-from app.models import Gym, Staff, StaffRole
+from app.models import Gym, GymClosure, Staff, StaffRole
 from app.utils import (
     generate_email_verification_email,
     generate_email_verification_token,
@@ -106,6 +107,12 @@ class GymProfileUpdateRequest(SQLModel):
         return value
 
 
+class GymClosureItem(SQLModel):
+    id: UUID
+    closure_date: date
+    reason: str | None = None
+
+
 class GymProfileResponse(SQLModel):
     """Gym profile response for owner dashboard + public view."""
 
@@ -119,6 +126,7 @@ class GymProfileResponse(SQLModel):
     logo_url: str | None
     cover_photo_urls: list[str]
     business_hours: dict[str, dict[str, str | bool | None]]
+    holiday_closures: list[GymClosureItem]
     address_line1: str | None
     address_line2: str | None
     city: str | None
@@ -166,7 +174,32 @@ class GymBusinessHoursResponse(SQLModel):
     business_hours: dict[str, dict[str, str | bool | None]]
 
 
-def _serialize_gym_profile(gym: Gym) -> GymProfileResponse:
+class GymClosureCreateRequest(SQLModel):
+    closure_date: date
+    reason: str | None = Field(default=None, max_length=255)
+
+
+class GymClosureResponse(SQLModel):
+    id: UUID
+    gym_id: UUID
+    closure_date: date
+    reason: str | None = None
+
+
+def _get_gym_closures(
+    session: SessionDep,
+    gym_id: UUID,
+    include_past: bool = True,
+) -> list[GymClosure]:
+    stmt = select(GymClosure).where(GymClosure.gym_id == gym_id)
+    if not include_past:
+        stmt = stmt.where(GymClosure.closure_date >= date.today())
+    return session.exec(stmt.order_by(GymClosure.closure_date.asc())).all()
+
+
+def _serialize_gym_profile(
+    gym: Gym, holiday_closures: list[GymClosure]
+) -> GymProfileResponse:
     return GymProfileResponse(
         gym_id=gym.id,
         slug=gym.slug,
@@ -178,6 +211,10 @@ def _serialize_gym_profile(gym: Gym) -> GymProfileResponse:
         logo_url=gym.logo_url,
         cover_photo_urls=gym.cover_photo_urls,
         business_hours=gym.business_hours,
+        holiday_closures=[
+            GymClosureItem(id=closure.id, closure_date=closure.closure_date, reason=closure.reason)
+            for closure in holiday_closures
+        ],
         address_line1=gym.address_line1,
         address_line2=gym.address_line2,
         city=gym.city,
@@ -322,7 +359,8 @@ def get_my_gym_profile(
             },
         )
 
-    return _serialize_gym_profile(gym)
+    closures = _get_gym_closures(session, gym.id)
+    return _serialize_gym_profile(gym, closures)
 
 
 @router.patch(
@@ -397,7 +435,8 @@ def update_my_gym_profile(
     session.commit()
     session.refresh(gym)
 
-    return _serialize_gym_profile(gym)
+    closures = _get_gym_closures(session, gym.id)
+    return _serialize_gym_profile(gym, closures)
 
 
 @router.get(
@@ -444,6 +483,126 @@ def update_my_gym_operating_hours(
     return GymBusinessHoursResponse(gym_id=gym.id, business_hours=gym.business_hours)
 
 
+@router.get(
+    "/me/closures",
+    response_model=list[GymClosureResponse],
+    dependencies=[RequireOwnerOrManager],
+)
+def list_my_gym_closures(
+    session: SessionDep,
+    current_staff: CurrentStaff,
+) -> list[GymClosureResponse]:
+    gym = session.get(Gym, current_staff.gym_id)
+    if not gym or not gym.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "GYM_NOT_FOUND", "message": "Gym not found", "details": {}},
+        )
+
+    closures = _get_gym_closures(session, gym.id)
+    return [
+        GymClosureResponse(
+            id=closure.id,
+            gym_id=closure.gym_id,
+            closure_date=closure.closure_date,
+            reason=closure.reason,
+        )
+        for closure in closures
+    ]
+
+
+@router.post(
+    "/me/closures",
+    response_model=GymClosureResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[RequireOwnerOrManager],
+)
+def add_my_gym_closure(
+    session: SessionDep,
+    current_staff: CurrentStaff,
+    payload: GymClosureCreateRequest,
+) -> GymClosureResponse:
+    gym = session.get(Gym, current_staff.gym_id)
+    if not gym or not gym.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "GYM_NOT_FOUND", "message": "Gym not found", "details": {}},
+        )
+
+    existing = session.exec(
+        select(GymClosure).where(
+            GymClosure.gym_id == gym.id,
+            GymClosure.closure_date == payload.closure_date,
+        )
+    ).first()
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "CLOSURE_ALREADY_EXISTS",
+                "message": "A closure already exists for this date",
+                "details": {"closure_date": str(payload.closure_date)},
+            },
+        )
+
+    closure = GymClosure(
+        gym_id=gym.id,
+        closure_date=payload.closure_date,
+        reason=payload.reason,
+    )
+    session.add(closure)
+    try:
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "CLOSURE_ALREADY_EXISTS",
+                "message": "A closure already exists for this date",
+                "details": {"closure_date": str(payload.closure_date)},
+            },
+        )
+    session.refresh(closure)
+
+    return GymClosureResponse(
+        id=closure.id,
+        gym_id=closure.gym_id,
+        closure_date=closure.closure_date,
+        reason=closure.reason,
+    )
+
+
+@router.delete(
+    "/me/closures/{closure_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[RequireOwnerOrManager],
+)
+def delete_my_gym_closure(
+    session: SessionDep,
+    current_staff: CurrentStaff,
+    closure_id: UUID,
+) -> None:
+    closure = session.exec(
+        select(GymClosure).where(
+            GymClosure.id == closure_id,
+            GymClosure.gym_id == current_staff.gym_id,
+        )
+    ).first()
+    if not closure:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "code": "CLOSURE_NOT_FOUND",
+                "message": "Closure not found",
+                "details": {},
+            },
+        )
+
+    session.delete(closure)
+    session.commit()
+
+
 @router.get("/{gym_slug}/profile", response_model=GymProfileResponse)
 def get_public_gym_profile(
     session: SessionDep,
@@ -461,4 +620,5 @@ def get_public_gym_profile(
             },
         )
 
-    return _serialize_gym_profile(gym)
+    closures = _get_gym_closures(session, gym.id, include_past=False)
+    return _serialize_gym_profile(gym, closures)

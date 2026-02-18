@@ -14,6 +14,7 @@ from sqlmodel import Field, Relationship, SQLModel
 from app.models.base import BaseModel, SoftDeleteMixin
 
 if TYPE_CHECKING:
+    from app.models.gym_closure import GymClosure
     from app.models.staff import Staff
 
 
@@ -79,6 +80,7 @@ class Gym(SoftDeleteMixin, BaseModel, GymBase, table=True):
 
     # Relationships
     staff: list["Staff"] = Relationship(back_populates="gym")
+    closures: list["GymClosure"] = Relationship(back_populates="gym")
 
     # Contact information
     email: str | None = Field(

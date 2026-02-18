@@ -338,3 +338,74 @@ def test_update_operating_hours_rejects_invalid_day(
     )
 
     assert response.status_code == 422
+
+
+def test_add_list_and_delete_holiday_closures(client: TestClient, db: Session) -> None:
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+    headers = _staff_token_headers(client, db, gym, StaffRole.OWNER)
+
+    create_response = client.post(
+        "/api/v1/gyms/me/closures",
+        json={"closure_date": "2026-12-25", "reason": "Christmas Day"},
+        headers=headers,
+    )
+    assert create_response.status_code == 201
+    body = create_response.json()
+    assert body["closure_date"] == "2026-12-25"
+    assert body["reason"] == "Christmas Day"
+
+    list_response = client.get("/api/v1/gyms/me/closures", headers=headers)
+    assert list_response.status_code == 200
+    listed = list_response.json()
+    assert len(listed) >= 1
+    assert any(item["closure_date"] == "2026-12-25" for item in listed)
+
+    closure_id = body["id"]
+    delete_response = client.delete(f"/api/v1/gyms/me/closures/{closure_id}", headers=headers)
+    assert delete_response.status_code == 204
+
+
+def test_add_holiday_closure_rejects_duplicate_date(
+    client: TestClient, db: Session
+) -> None:
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+    headers = _staff_token_headers(client, db, gym, StaffRole.MANAGER)
+
+    first = client.post(
+        "/api/v1/gyms/me/closures",
+        json={"closure_date": "2026-01-01", "reason": "New Year"},
+        headers=headers,
+    )
+    assert first.status_code == 201
+
+    second = client.post(
+        "/api/v1/gyms/me/closures",
+        json={"closure_date": "2026-01-01", "reason": "Duplicate"},
+        headers=headers,
+    )
+    assert second.status_code == 400
+    assert second.json()["detail"]["code"] == "CLOSURE_ALREADY_EXISTS"
+
+
+def test_public_profile_includes_holiday_closures(client: TestClient, db: Session) -> None:
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+    headers = _staff_token_headers(client, db, gym, StaffRole.OWNER)
+
+    create = client.post(
+        "/api/v1/gyms/me/closures",
+        json={"closure_date": "2026-04-27", "reason": "Freedom Day"},
+        headers=headers,
+    )
+    assert create.status_code == 201
+
+    response = client.get(f"/api/v1/gyms/{gym.slug}/profile")
+    assert response.status_code == 200
+    body = response.json()
+    assert "holiday_closures" in body
+    assert any(
+        c["closure_date"] == "2026-04-27" and c["reason"] == "Freedom Day"
+        for c in body["holiday_closures"]
+    )

@@ -33,6 +33,7 @@ from app.models.consumer import (
 
 # Domain models
 from app.models.gym import Gym, GymCreate, GymPublic, GymUpdate
+from app.models.gym_closure import GymClosure, GymClosureCreate, GymClosurePublic
 from app.models.space import Space, SpaceCreate, SpacePublic, SpaceUpdate
 from app.models.staff import Staff, StaffLoginRequest, StaffRole, StaffToken
 
@@ -74,6 +75,9 @@ __all__ = [
     "GymCreate",
     "GymUpdate",
     "GymPublic",
+    "GymClosure",
+    "GymClosureCreate",
+    "GymClosurePublic",
     "AccountDeletionRequest",
     "AuthProvider",
     "Consumer",
