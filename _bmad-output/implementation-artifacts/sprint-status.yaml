@@ -185,16 +185,16 @@ development_status:
   epic-9-retrospective: optional
 
   # Epic 10: Reporting & Analytics (9 stories)
-  epic-10: backlog
-  10-1-revenue-reports: backlog
-  10-2-attendance-reports: backlog
-  10-3-membership-health-reports: backlog
-  10-4-class-performance-reports: backlog
-  10-5-staff-performance-reports: backlog
-  10-6-consumer-class-history: backlog
-  10-7-consumer-statistics-dashboard: backlog
-  10-8-at-risk-member-detection: backlog
-  10-9-gym-owner-dashboard: backlog
+  epic-10: done
+  10-1-revenue-reports: done
+  10-2-attendance-reports: done
+  10-3-membership-health-reports: done
+  10-4-class-performance-reports: done
+  10-5-staff-performance-reports: done
+  10-6-consumer-class-history: done
+  10-7-consumer-statistics-dashboard: done
+  10-8-at-risk-member-detection: done
+  10-9-gym-owner-dashboard: done
   epic-10-retrospective: optional
 
   # Epic 11: Platform Administration & Real-time (10 stories)
