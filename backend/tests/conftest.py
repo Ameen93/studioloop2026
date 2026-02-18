@@ -15,8 +15,12 @@ from app.models import (
     Consumer,
     Gym,
     GymMembership,
+    GymMessage,
     Item,
     MarketplaceSubscription,
+    Notification,
+    NotificationPreference,
+    NotificationTemplate,
     Payment,
     PaymentReceipt,
     PaymentWebhookEvent,
@@ -42,6 +46,10 @@ def db() -> Generator[Session, None, None]:
         seed_all(session)
         yield session
         # Clean up in reverse dependency order (children before parents)
+        session.execute(delete(Notification))
+        session.execute(delete(NotificationPreference))
+        session.execute(delete(NotificationTemplate))
+        session.execute(delete(GymMessage))
         session.execute(delete(CheckInRecord))
         session.execute(delete(WaitlistEntry))
         session.execute(delete(Booking))

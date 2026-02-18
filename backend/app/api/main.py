@@ -7,6 +7,7 @@ from app.api.routes import (
     items,
     login,
     marketplace,
+    notifications,
     payments,
     private,
     rbac_examples,
@@ -25,6 +26,7 @@ api_router.include_router(staff_auth.router)
 api_router.include_router(staff_memberships.router)
 api_router.include_router(bookings.router)
 api_router.include_router(marketplace.router)
+api_router.include_router(notifications.router)
 api_router.include_router(payments.router)
 api_router.include_router(users.router)
 api_router.include_router(utils.router)

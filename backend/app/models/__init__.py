@@ -64,6 +64,15 @@ from app.models.marketplace_subscription import (
 )
 from app.models.space import Space, SpaceCreate, SpacePublic, SpaceUpdate
 from app.models.staff import Staff, StaffLoginRequest, StaffRole, StaffToken
+from app.models.notification import (
+    GymMessage,
+    Notification,
+    NotificationChannel,
+    NotificationPreference,
+    NotificationStatus,
+    NotificationTemplate,
+    NotificationType,
+)
 from app.models.payment import (
     Payment,
     PaymentProviderName,
@@ -161,6 +170,13 @@ __all__ = [
     "PaymentProviderName",
     "PaymentWebhookEvent",
     "PaymentReceipt",
+    "Notification",
+    "NotificationChannel",
+    "NotificationType",
+    "NotificationStatus",
+    "NotificationTemplate",
+    "NotificationPreference",
+    "GymMessage",
     # Legacy models (from models_legacy.py)
     "User",
     "UserBase",
