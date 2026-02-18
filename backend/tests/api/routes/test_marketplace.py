@@ -100,3 +100,40 @@ def test_filter_marketplace_classes_by_type(client: TestClient, db: Session) -> 
     assert res.status_code == 200
     titles = [item["title"] for item in res.json()]
     assert titles == ["Morning Yoga Flow"]
+
+
+def test_filter_marketplace_classes_by_location(client: TestClient, db: Session) -> None:
+    headers, _ = _consumer_headers(client, db)
+
+    cpt_gym = Gym(
+        name=f"CPT Gym {uuid4().hex[:6]}",
+        slug=f"cpt-gym-{uuid4().hex[:6]}",
+        is_marketplace_enabled=True,
+        city="Cape Town",
+        province="Western Cape",
+    )
+    jhb_gym = Gym(
+        name=f"JHB Gym {uuid4().hex[:6]}",
+        slug=f"jhb-gym-{uuid4().hex[:6]}",
+        is_marketplace_enabled=True,
+        city="Johannesburg",
+        province="Gauteng",
+    )
+    db.add(cpt_gym)
+    db.add(jhb_gym)
+    db.commit()
+    db.refresh(cpt_gym)
+    db.refresh(jhb_gym)
+
+    _create_marketplace_session(db, cpt_gym, title="CPT Pilates")
+    _create_marketplace_session(db, jhb_gym, title="JHB Pilates")
+
+    res = client.get(
+        "/api/v1/marketplace/classes",
+        params={"city": "cape town", "province": "western cape"},
+        headers=headers,
+    )
+    assert res.status_code == 200
+    titles = [item["title"] for item in res.json()]
+    assert "CPT Pilates" in titles
+    assert "JHB Pilates" not in titles

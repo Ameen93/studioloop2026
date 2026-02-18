@@ -3,6 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
+from sqlalchemy import func
 from sqlmodel import select
 
 from app.api.deps import CurrentConsumer, SessionDep
@@ -31,6 +32,8 @@ def browse_marketplace_classes(
     _current_consumer: CurrentConsumer,
     session: SessionDep,
     class_type: str | None = Query(default=None, min_length=1, max_length=80),
+    city: str | None = Query(default=None, min_length=1, max_length=100),
+    province: str | None = Query(default=None, min_length=1, max_length=100),
     limit: int = Query(default=50, ge=1, le=200),
 ) -> list[MarketplaceClassItem]:
     now = datetime.now(timezone.utc)
@@ -51,6 +54,12 @@ def browse_marketplace_classes(
     if class_type:
         class_type_value = class_type.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
         query = query.where(ClassSession.title.ilike(f"%{class_type_value}%", escape="\\"))
+    if city:
+        city_value = city.strip().lower()
+        query = query.where(func.lower(Gym.city) == city_value)
+    if province:
+        province_value = province.strip().lower()
+        query = query.where(func.lower(Gym.province) == province_value)
 
     rows = session.exec(query.order_by(ClassSession.start_time).limit(limit)).all()
 
