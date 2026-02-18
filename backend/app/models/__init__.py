@@ -56,6 +56,12 @@ from app.models.membership_plan import (
     MembershipPlanPublic,
     MembershipPlanUpdate,
 )
+from app.models.marketplace_subscription import (
+    MarketplacePlanTier,
+    MarketplaceSubscription,
+    MarketplaceSubscriptionStatus,
+    ReferralInvite,
+)
 from app.models.space import Space, SpaceCreate, SpacePublic, SpaceUpdate
 from app.models.staff import Staff, StaffLoginRequest, StaffRole, StaffToken
 
@@ -133,6 +139,10 @@ __all__ = [
     "MembershipPlanUpdate",
     "MembershipPlanPublic",
     "MembershipBillingCycle",
+    "MarketplaceSubscription",
+    "MarketplacePlanTier",
+    "MarketplaceSubscriptionStatus",
+    "ReferralInvite",
     "Staff",
     "StaffRole",
     "StaffLoginRequest",

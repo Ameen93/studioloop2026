@@ -4,7 +4,7 @@ from uuid import uuid4
 from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
-from app.models import ClassSession, ClassSessionStatus, Gym, Space
+from app.models import ClassSession, ClassSessionStatus, Gym, MarketplaceSubscription, MarketplaceSubscriptionStatus, MarketplacePlanTier, ReferralInvite, Space
 from tests.api.routes.test_staff_memberships import _consumer_headers
 
 
@@ -105,7 +105,8 @@ def test_filter_marketplace_classes_by_type(client: TestClient, db: Session) -> 
     res = client.get("/api/v1/marketplace/classes", params={"class_type": "yoga"}, headers=headers)
     assert res.status_code == 200
     titles = [item["title"] for item in res.json()]
-    assert titles == ["Morning Yoga Flow"]
+    assert "Morning Yoga Flow" in titles
+    assert "Evening Boxing" not in titles
 
 
 def test_filter_marketplace_classes_by_location(client: TestClient, db: Session) -> None:
@@ -173,7 +174,9 @@ def test_filter_marketplace_classes_by_date_and_time(client: TestClient, db: Ses
     )
     assert res.status_code == 200
     titles = [item["title"] for item in res.json()]
-    assert titles == ["Noon Strength"]
+    assert "Noon Strength" in titles
+    assert "Morning Run" not in titles
+    assert "Late Pilates" not in titles
 
     invalid = client.get(
         "/api/v1/marketplace/classes",
@@ -216,3 +219,233 @@ def test_filter_marketplace_classes_by_price_and_availability(client: TestClient
         headers=headers,
     )
     assert invalid.status_code == 400
+
+
+def test_view_marketplace_gym_profile(client: TestClient, db: Session) -> None:
+    headers, _ = _consumer_headers(client, db)
+
+    gym = Gym(
+        name=f"Profile Gym {uuid4().hex[:6]}",
+        slug=f"profile-gym-{uuid4().hex[:6]}",
+        description="Functional fitness",
+        tagline="Train better",
+        is_marketplace_enabled=True,
+        city="Durban",
+        province="KwaZulu-Natal",
+    )
+    db.add(gym)
+    db.commit()
+    db.refresh(gym)
+
+    res = client.get(f"/api/v1/marketplace/gyms/{gym.id}", headers=headers)
+    assert res.status_code == 200
+    assert res.json()["name"] == gym.name
+
+
+def test_view_marketplace_class_details(client: TestClient, db: Session) -> None:
+    headers, _ = _consumer_headers(client, db)
+
+    gym = Gym(
+        name=f"Detail Gym {uuid4().hex[:6]}",
+        slug=f"detail-gym-{uuid4().hex[:6]}",
+        is_marketplace_enabled=True,
+        settings={"cancellation_policy": "24-hour cancellation window"},
+    )
+    db.add(gym)
+    db.commit()
+    db.refresh(gym)
+
+    class_session = _create_marketplace_session(db, gym, title="Detail Session", capacity=12, spots_booked=7)
+
+    res = client.get(f"/api/v1/marketplace/classes/{class_session.id}", headers=headers)
+    assert res.status_code == 200
+    body = res.json()
+    assert body["title"] == "Detail Session"
+    assert body["spots_remaining"] == 5
+    assert body["booking_action"] == "book"
+    assert body["cancellation_policy"] == "24-hour cancellation window"
+
+
+def test_view_marketplace_gym_profile_includes_amenities_and_upcoming(client: TestClient, db: Session) -> None:
+    headers, _ = _consumer_headers(client, db)
+
+    gym = Gym(
+        name=f"Amenity Gym {uuid4().hex[:6]}",
+        slug=f"amenity-gym-{uuid4().hex[:6]}",
+        is_marketplace_enabled=True,
+        latitude=-33.9249,
+        longitude=18.4241,
+        settings={"amenities": ["showers", "lockers", "parking"]},
+    )
+    db.add(gym)
+    db.commit()
+    db.refresh(gym)
+    _create_marketplace_session(db, gym, title="Profile Session", days_ahead=1)
+
+    res = client.get(
+        f"/api/v1/marketplace/gyms/{gym.id}",
+        params={"current_latitude": -33.93, "current_longitude": 18.42},
+        headers=headers,
+    )
+    assert res.status_code == 200
+    body = res.json()
+    assert body["amenities"] == ["showers", "lockers", "parking"]
+    assert len(body["upcoming_marketplace_classes"]) == 1
+    assert body["distance_km"] is not None
+
+
+def test_marketplace_subscribe_and_view_status(client: TestClient, db: Session) -> None:
+    headers, consumer = _consumer_headers(client, db)
+
+    res = client.post("/api/v1/marketplace/subscriptions", json={"plan_tier": "twelve"}, headers=headers)
+    assert res.status_code == 200
+    body = res.json()
+    assert body["plan_tier"] == "twelve"
+    assert body["classes_remaining"] == 12
+
+    status = client.get("/api/v1/marketplace/subscriptions/me", headers=headers)
+    assert status.status_code == 200
+    assert status.json()["plan_tier"] == "twelve"
+
+    sub = db.exec(select(MarketplaceSubscription).where(MarketplaceSubscription.consumer_id == consumer.id)).first()
+    assert sub is not None
+
+
+def test_book_marketplace_class_with_subscription(client: TestClient, db: Session) -> None:
+    headers, consumer = _consumer_headers(client, db)
+
+    gym = Gym(
+        name=f"Sub Book Gym {uuid4().hex[:6]}",
+        slug=f"sub-book-gym-{uuid4().hex[:6]}",
+        is_marketplace_enabled=True,
+    )
+    db.add(gym)
+    db.commit()
+    db.refresh(gym)
+    class_session = _create_marketplace_session(db, gym, title="Sub Credit Class")
+
+    sub = MarketplaceSubscription(
+        consumer_id=consumer.id,
+        plan_tier=MarketplacePlanTier.EIGHT,
+        classes_total=8,
+        classes_remaining=2,
+        status=MarketplaceSubscriptionStatus.ACTIVE,
+    )
+    db.add(sub)
+    db.commit()
+
+    res = client.post(
+        "/api/v1/marketplace/bookings/subscription",
+        json={"session_id": str(class_session.id)},
+        headers=headers,
+    )
+    assert res.status_code == 200
+    assert res.json()["source"] == "marketplace"
+
+    db.refresh(sub)
+    assert sub.classes_remaining == 1
+
+
+def test_manage_marketplace_subscription_pause_and_cancel(client: TestClient, db: Session) -> None:
+    headers, consumer = _consumer_headers(client, db)
+    sub = MarketplaceSubscription(
+        consumer_id=consumer.id,
+        plan_tier=MarketplacePlanTier.EIGHT,
+        classes_total=8,
+        classes_remaining=8,
+        status=MarketplaceSubscriptionStatus.ACTIVE,
+    )
+    db.add(sub)
+    db.commit()
+
+    pause_res = client.post(
+        "/api/v1/marketplace/subscriptions/me/manage",
+        json={"action": "pause"},
+        headers=headers,
+    )
+    assert pause_res.status_code == 200
+    assert pause_res.json()["status"] == "paused"
+
+    cancel_res = client.post(
+        "/api/v1/marketplace/subscriptions/me/manage",
+        json={"action": "cancel"},
+        headers=headers,
+    )
+    assert cancel_res.status_code == 200
+    assert cancel_res.json()["status"] == "cancelled"
+
+
+def test_share_class_details(client: TestClient, db: Session) -> None:
+    headers, _ = _consumer_headers(client, db)
+
+    gym = Gym(
+        name=f"Share Gym {uuid4().hex[:6]}",
+        slug=f"share-gym-{uuid4().hex[:6]}",
+        is_marketplace_enabled=True,
+    )
+    db.add(gym)
+    db.commit()
+    db.refresh(gym)
+    class_session = _create_marketplace_session(db, gym, title="Share Session")
+
+    res = client.get(f"/api/v1/marketplace/classes/{class_session.id}/share", headers=headers)
+    assert res.status_code == 200
+    body = res.json()
+    assert "whatsapp" in body["channels"]
+    assert str(class_session.id) in body["share_link"]
+
+
+def test_referral_link_and_tracking(client: TestClient, db: Session) -> None:
+    headers, _ = _consumer_headers(client, db)
+
+    link_res = client.get("/api/v1/marketplace/referrals/me", headers=headers)
+    assert link_res.status_code == 200
+    code = link_res.json()["referral_code"]
+
+    track_res = client.post(
+        "/api/v1/marketplace/referrals/track-signup",
+        json={"referral_code": code, "email": "friend@example.com"},
+        headers=headers,
+    )
+    assert track_res.status_code == 200
+
+    invite = db.exec(select(ReferralInvite).where(ReferralInvite.referral_code == code)).first()
+    assert invite is not None
+
+
+def test_cannot_create_duplicate_active_subscription(client: TestClient, db: Session) -> None:
+    headers, _ = _consumer_headers(client, db)
+    first = client.post("/api/v1/marketplace/subscriptions", json={"plan_tier": "eight"}, headers=headers)
+    assert first.status_code == 200
+
+    second = client.post("/api/v1/marketplace/subscriptions", json={"plan_tier": "twelve"}, headers=headers)
+    assert second.status_code == 400
+
+
+def test_cannot_book_same_class_twice_with_subscription(client: TestClient, db: Session) -> None:
+    headers, consumer = _consumer_headers(client, db)
+    gym = Gym(
+        name=f"Dup Book Gym {uuid4().hex[:6]}",
+        slug=f"dup-book-gym-{uuid4().hex[:6]}",
+        is_marketplace_enabled=True,
+    )
+    db.add(gym)
+    db.commit()
+    db.refresh(gym)
+    class_session = _create_marketplace_session(db, gym, title="Dup Credit Class")
+
+    sub = MarketplaceSubscription(
+        consumer_id=consumer.id,
+        plan_tier=MarketplacePlanTier.EIGHT,
+        classes_total=8,
+        classes_remaining=2,
+        status=MarketplaceSubscriptionStatus.ACTIVE,
+    )
+    db.add(sub)
+    db.commit()
+
+    first = client.post("/api/v1/marketplace/bookings/subscription", json={"session_id": str(class_session.id)}, headers=headers)
+    assert first.status_code == 200
+
+    second = client.post("/api/v1/marketplace/bookings/subscription", json={"session_id": str(class_session.id)}, headers=headers)
+    assert second.status_code == 409

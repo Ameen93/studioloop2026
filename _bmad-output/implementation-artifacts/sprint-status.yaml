@@ -141,20 +141,20 @@ development_status:
   epic-6-retrospective: optional
 
   # Epic 7: Marketplace Discovery & Subscriptions (13 stories)
-  epic-7: in-progress
+  epic-7: done
   7-1-browse-marketplace-classes: done
   7-2-filter-classes-by-type: done
   7-3-filter-classes-by-location: done
   7-4-filter-classes-by-date-and-time: done
   7-5-filter-classes-by-price-and-availability: done
-  7-6-view-gym-profile: backlog
-  7-7-view-class-details: backlog
-  7-8-subscribe-to-marketplace-plan: backlog
-  7-9-book-class-with-marketplace-subscription: backlog
-  7-10-view-marketplace-subscription-status: backlog
-  7-11-manage-marketplace-subscription: backlog
-  7-12-share-class-details: backlog
-  7-13-invite-friends-via-referral-link: backlog
+  7-6-view-gym-profile: done
+  7-7-view-class-details: done
+  7-8-subscribe-to-marketplace-plan: done
+  7-9-book-class-with-marketplace-subscription: done
+  7-10-view-marketplace-subscription-status: done
+  7-11-manage-marketplace-subscription: done
+  7-12-share-class-details: done
+  7-13-invite-friends-via-referral-link: done
   epic-7-retrospective: optional
 
   # Epic 8: Payments & Billing (9 stories)
