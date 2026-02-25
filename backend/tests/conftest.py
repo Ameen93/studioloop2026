@@ -14,6 +14,7 @@ from app.models import (
     ClassSession,
     Consumer,
     Gym,
+    GymClosure,
     GymMembership,
     GymMessage,
     Item,
@@ -29,6 +30,8 @@ from app.models import (
     Staff,
     User,
     WaitlistEntry,
+    WebhookDelivery,
+    WebhookEndpoint,
 )
 from app.models.digital_waiver import DigitalWaiverAcceptance
 from app.models.membership_plan import MembershipPlan
@@ -50,6 +53,8 @@ def db() -> Generator[Session, None, None]:
         session.execute(delete(NotificationPreference))
         session.execute(delete(NotificationTemplate))
         session.execute(delete(GymMessage))
+        session.execute(delete(WebhookDelivery))
+        session.execute(delete(WebhookEndpoint))
         session.execute(delete(CheckInRecord))
         session.execute(delete(WaitlistEntry))
         session.execute(delete(Booking))
@@ -63,6 +68,7 @@ def db() -> Generator[Session, None, None]:
         session.execute(delete(ReferralInvite))
         session.execute(delete(MarketplaceSubscription))
         session.execute(delete(MembershipPlan))
+        session.execute(delete(GymClosure))
         session.execute(delete(Staff))
         session.execute(delete(Consumer))
         session.execute(delete(Gym))

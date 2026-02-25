@@ -1,40 +1,36 @@
 /**
- * Schedule tab - today's classes with times, instructors, and booking counts.
- *
- * Displays the gym's class schedule for the current day
- * with instructor assignments and booking numbers.
+ * Schedule tab - today's upcoming classes.
  */
 
-import { View, Text, FlatList, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
-
-interface ScheduleClass {
-  id: string;
-  name: string;
-  instructorName: string;
-  startTime: string;
-  endTime: string;
-  currentBookings: number;
-  maxCapacity: number;
-  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
-  room: string;
-}
-
-const STATUS_STYLES = {
-  scheduled: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Scheduled' },
-  in_progress: { bg: 'bg-green-100', text: 'text-green-800', label: 'In Progress' },
-  completed: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Completed' },
-  cancelled: { bg: 'bg-red-100', text: 'text-red-800', label: 'Cancelled' },
-} as const;
+import { marketplaceBrowseMarketplaceClasses } from '@sl/api-client';
+import type { MarketplaceClassItem } from '@sl/api-client';
+import { getStaffProfile } from '../../lib/auth';
+import { getAuthHeaders } from '../../lib/apiAuth';
 
 export default function ScheduleTab() {
-  const scheduleQuery = useQuery<ScheduleClass[]>({
-    queryKey: ['gym', 'schedule', 'today'],
+  const staff = getStaffProfile();
+
+  const scheduleQuery = useQuery({
+    queryKey: ['gym', 'schedule', 'today', staff?.gymId],
     queryFn: async () => {
-      // TODO: Replace with actual API call
-      // e.g., gymScheduleListToday({ path: { gym_id: gymId } })
-      return [];
+      const response = await marketplaceBrowseMarketplaceClasses({
+        headers: getAuthHeaders(),
+        query: {
+          start_date: new Date().toISOString().slice(0, 10),
+          end_date: new Date().toISOString().slice(0, 10),
+          limit: 200,
+        },
+      });
+
+      const rows = response.data ?? [];
+      if (!staff?.gymId) {
+        return rows;
+      }
+
+      return rows.filter((item) => item.gym_id === staff.gymId);
     },
   });
 
@@ -44,22 +40,21 @@ export default function ScheduleTab() {
       minute: '2-digit',
     });
 
-  const renderClass = ({ item }: { item: ScheduleClass }) => {
-    const statusStyle = STATUS_STYLES[item.status];
-    const isFull = item.currentBookings >= item.maxCapacity;
+  const renderClass = ({ item }: { item: MarketplaceClassItem }) => {
+    const isFull = item.spots_booked >= item.capacity;
 
     return (
       <View className="bg-white rounded-lg p-4 mb-3 border border-gray-200">
         <View className="flex-row justify-between items-start">
           <View className="flex-1 mr-3">
-            <Text className="text-lg font-semibold text-gray-900">{item.name}</Text>
+            <Text className="text-lg font-semibold text-gray-900">{item.title}</Text>
             <View className="flex-row items-center mt-1">
-              <Ionicons name="person-outline" size={14} color="#6b7280" />
-              <Text className="text-sm text-gray-600 ml-1">{item.instructorName}</Text>
+              <Ionicons name="business-outline" size={14} color="#6b7280" />
+              <Text className="text-sm text-gray-600 ml-1">{item.gym_name}</Text>
             </View>
           </View>
-          <View className={`${statusStyle.bg} px-3 py-1 rounded-full`}>
-            <Text className={`${statusStyle.text} text-xs font-medium`}>{statusStyle.label}</Text>
+          <View className="bg-blue-100 px-3 py-1 rounded-full">
+            <Text className="text-blue-800 text-xs font-medium">Scheduled</Text>
           </View>
         </View>
 
@@ -67,21 +62,14 @@ export default function ScheduleTab() {
           <View className="flex-row items-center flex-1">
             <Ionicons name="time-outline" size={16} color="#6b7280" />
             <Text className="text-sm text-gray-600 ml-1">
-              {formatTime(item.startTime)} - {formatTime(item.endTime)}
+              {formatTime(item.start_time)} - {formatTime(item.end_time)}
             </Text>
           </View>
-
-          {item.room && (
-            <View className="flex-row items-center mr-4">
-              <Ionicons name="location-outline" size={16} color="#6b7280" />
-              <Text className="text-sm text-gray-600 ml-1">{item.room}</Text>
-            </View>
-          )}
 
           <View className="flex-row items-center">
             <Ionicons name="people-outline" size={16} color={isFull ? '#ef4444' : '#6b7280'} />
             <Text className={`text-sm ml-1 font-medium ${isFull ? 'text-red-600' : 'text-gray-600'}`}>
-              {item.currentBookings}/{item.maxCapacity}
+              {item.spots_booked}/{item.capacity}
             </Text>
           </View>
         </View>
@@ -101,7 +89,7 @@ export default function ScheduleTab() {
       <FlatList
         data={scheduleQuery.data ?? []}
         renderItem={renderClass}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.session_id}
         contentContainerClassName="px-4 pt-4 pb-8"
         refreshControl={
           <RefreshControl
@@ -122,9 +110,6 @@ export default function ScheduleTab() {
             <View className="items-center py-12">
               <Ionicons name="calendar-outline" size={48} color="#d1d5db" />
               <Text className="text-gray-500 text-lg mt-4 mb-2">No classes today</Text>
-              <Text className="text-gray-400 text-center">
-                There are no classes scheduled for today
-              </Text>
             </View>
           )
         }

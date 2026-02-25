@@ -1,0 +1,9 @@
+frontend/
+_bmad-output/
+docs/
+.git/
+*.pyc
+__pycache__/
+.pytest_cache/
+backend/.tmp/
+node_modules/

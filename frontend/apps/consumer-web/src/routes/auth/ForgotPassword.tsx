@@ -6,6 +6,7 @@
 
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
+import { consumerAuthForgotPassword } from '@sl/api-client';
 
 export function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -23,13 +24,17 @@ export function ForgotPassword() {
     }
 
     setIsLoading(true);
-
-    // TODO: Wire up to actual password reset API endpoint when available
-    // For now, simulate the request
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    setIsLoading(false);
-    setSubmitted(true);
+    try {
+      await consumerAuthForgotPassword({
+        body: { email },
+        throwOnError: true,
+      });
+      setSubmitted(true);
+    } catch {
+      setError('Unable to submit request right now. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (submitted) {

@@ -347,19 +347,19 @@ def test_add_list_and_delete_holiday_closures(client: TestClient, db: Session) -
 
     create_response = client.post(
         "/api/v1/gyms/me/closures",
-        json={"closure_date": "2026-12-25", "reason": "Christmas Day"},
+        json={"closure_date": "2027-03-15", "reason": "Test closure day"},
         headers=headers,
     )
     assert create_response.status_code == 201
     body = create_response.json()
-    assert body["closure_date"] == "2026-12-25"
-    assert body["reason"] == "Christmas Day"
+    assert body["closure_date"] == "2027-03-15"
+    assert body["reason"] == "Test closure day"
 
     list_response = client.get("/api/v1/gyms/me/closures", headers=headers)
     assert list_response.status_code == 200
     listed = list_response.json()
     assert len(listed) >= 1
-    assert any(item["closure_date"] == "2026-12-25" for item in listed)
+    assert any(item["closure_date"] == "2027-03-15" for item in listed)
 
     closure_id = body["id"]
     delete_response = client.delete(f"/api/v1/gyms/me/closures/{closure_id}", headers=headers)
@@ -375,14 +375,14 @@ def test_add_holiday_closure_rejects_duplicate_date(
 
     first = client.post(
         "/api/v1/gyms/me/closures",
-        json={"closure_date": "2026-01-01", "reason": "New Year"},
+        json={"closure_date": "2027-06-10", "reason": "Test day"},
         headers=headers,
     )
     assert first.status_code == 201
 
     second = client.post(
         "/api/v1/gyms/me/closures",
-        json={"closure_date": "2026-01-01", "reason": "Duplicate"},
+        json={"closure_date": "2027-06-10", "reason": "Duplicate"},
         headers=headers,
     )
     assert second.status_code == 400
@@ -396,7 +396,7 @@ def test_public_profile_includes_holiday_closures(client: TestClient, db: Sessio
 
     create = client.post(
         "/api/v1/gyms/me/closures",
-        json={"closure_date": "2026-04-27", "reason": "Freedom Day"},
+        json={"closure_date": "2027-04-27", "reason": "Test Freedom Day"},
         headers=headers,
     )
     assert create.status_code == 201
@@ -406,7 +406,7 @@ def test_public_profile_includes_holiday_closures(client: TestClient, db: Sessio
     body = response.json()
     assert "holiday_closures" in body
     assert any(
-        c["closure_date"] == "2026-04-27" and c["reason"] == "Freedom Day"
+        c["closure_date"] == "2027-04-27" and c["reason"] == "Test Freedom Day"
         for c in body["holiday_closures"]
     )
 

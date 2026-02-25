@@ -1,49 +1,231 @@
 """Seed data for Staff entities.
 
-DEFERRED: Staff model will be created in Epic 3 (Staff Management & Permissions).
-
-This module is a placeholder that documents the planned staff seed data
-structure for when the model becomes available.
-
-Planned Staff Roles:
-- Owner: Gym creator with full access to all features
-- Manager: Can manage scheduling, staff, and member data
-- Front Desk: Can handle check-ins and view basic member info
-- Instructor: Can view/manage only their own assigned classes
-
-Planned Seed Data:
-- Each gym will get 1 owner, 1-2 managers, 1-2 front desk staff
-- Some gyms will have instructors
-- Staff will have realistic SA names and working hours
+Creates realistic South African staff members for each gym.
+Each gym gets an owner, managers, front desk staff, and instructors.
 """
 
-from typing import TYPE_CHECKING
+from typing import Any
 
-from sqlmodel import Session
+from sqlmodel import Session, select
 
-if TYPE_CHECKING:
-    from app.models import Gym
+from app.core.security import get_password_hash
+from app.models import Gym, Staff
+from app.models.staff import StaffRole
+
+# Staff templates per gym - keyed by gym slug
+# Each staff member gets realistic SA names and roles
+SEED_STAFF: dict[str, list[dict[str, Any]]] = {
+    "fitzone-sandton": [
+        {
+            "email": "owner@fitzone-sandton.co.za",
+            "first_name": "Kabelo",
+            "last_name": "Moagi",
+            "role": StaffRole.OWNER,
+            "phone": "+27 82 100 0001",
+            "is_email_verified": True,
+        },
+        {
+            "email": "manager@fitzone-sandton.co.za",
+            "first_name": "Lindiwe",
+            "last_name": "Khumalo",
+            "role": StaffRole.MANAGER,
+            "phone": "+27 82 100 0002",
+            "is_email_verified": True,
+        },
+        {
+            "email": "frontdesk@fitzone-sandton.co.za",
+            "first_name": "Tumelo",
+            "last_name": "Mahlangu",
+            "role": StaffRole.FRONT_DESK,
+            "phone": "+27 82 100 0003",
+            "is_email_verified": True,
+        },
+        {
+            "email": "yoga.instructor@fitzone-sandton.co.za",
+            "first_name": "Naledi",
+            "last_name": "Tshabalala",
+            "role": StaffRole.INSTRUCTOR,
+            "phone": "+27 82 100 0004",
+            "is_email_verified": True,
+            "working_hours": {
+                "monday": {"start": "06:00", "end": "12:00", "off": False},
+                "tuesday": {"start": "06:00", "end": "12:00", "off": False},
+                "wednesday": {"start": "06:00", "end": "12:00", "off": False},
+                "thursday": {"start": "06:00", "end": "12:00", "off": False},
+                "friday": {"start": "06:00", "end": "12:00", "off": False},
+                "saturday": {"start": "08:00", "end": "11:00", "off": False},
+                "sunday": {"start": None, "end": None, "off": True},
+            },
+        },
+        {
+            "email": "spin.instructor@fitzone-sandton.co.za",
+            "first_name": "Bongani",
+            "last_name": "Ndlovu",
+            "role": StaffRole.INSTRUCTOR,
+            "phone": "+27 82 100 0005",
+            "is_email_verified": True,
+            "working_hours": {
+                "monday": {"start": "16:00", "end": "21:00", "off": False},
+                "tuesday": {"start": "16:00", "end": "21:00", "off": False},
+                "wednesday": {"start": "16:00", "end": "21:00", "off": False},
+                "thursday": {"start": "16:00", "end": "21:00", "off": False},
+                "friday": {"start": "16:00", "end": "20:00", "off": False},
+                "saturday": {"start": "09:00", "end": "13:00", "off": False},
+                "sunday": {"start": None, "end": None, "off": True},
+            },
+        },
+    ],
+    "oxygen-cape-town": [
+        {
+            "email": "owner@oxygenfitness.co.za",
+            "first_name": "Chantal",
+            "last_name": "du Plessis",
+            "role": StaffRole.OWNER,
+            "phone": "+27 82 200 0001",
+            "is_email_verified": True,
+        },
+        {
+            "email": "manager@oxygenfitness.co.za",
+            "first_name": "Mandla",
+            "last_name": "Sithole",
+            "role": StaffRole.MANAGER,
+            "phone": "+27 82 200 0002",
+            "is_email_verified": True,
+        },
+        {
+            "email": "frontdesk@oxygenfitness.co.za",
+            "first_name": "Zandile",
+            "last_name": "Mkhize",
+            "role": StaffRole.FRONT_DESK,
+            "phone": "+27 82 200 0003",
+            "is_email_verified": True,
+        },
+        {
+            "email": "yoga@oxygenfitness.co.za",
+            "first_name": "Emma",
+            "last_name": "Williams",
+            "role": StaffRole.INSTRUCTOR,
+            "phone": "+27 82 200 0004",
+            "is_email_verified": True,
+        },
+    ],
+    "pure-energy-pretoria": [
+        {
+            "email": "owner@pureenergy.co.za",
+            "first_name": "Hennie",
+            "last_name": "Venter",
+            "role": StaffRole.OWNER,
+            "phone": "+27 82 300 0001",
+            "is_email_verified": True,
+        },
+        {
+            "email": "manager@pureenergy.co.za",
+            "first_name": "Precious",
+            "last_name": "Dube",
+            "role": StaffRole.MANAGER,
+            "phone": "+27 82 300 0002",
+            "is_email_verified": True,
+        },
+        {
+            "email": "hiit@pureenergy.co.za",
+            "first_name": "Siyabonga",
+            "last_name": "Zwane",
+            "role": StaffRole.INSTRUCTOR,
+            "phone": "+27 82 300 0003",
+            "is_email_verified": True,
+        },
+    ],
+    "sweat-box-durban": [
+        {
+            "email": "owner@thesweatbox.co.za",
+            "first_name": "Vikash",
+            "last_name": "Govender",
+            "role": StaffRole.OWNER,
+            "phone": "+27 82 400 0001",
+            "is_email_verified": True,
+        },
+        {
+            "email": "manager@thesweatbox.co.za",
+            "first_name": "Nokukhanya",
+            "last_name": "Cele",
+            "role": StaffRole.MANAGER,
+            "phone": "+27 82 400 0002",
+            "is_email_verified": True,
+        },
+        {
+            "email": "frontdesk@thesweatbox.co.za",
+            "first_name": "Ayanda",
+            "last_name": "Mnguni",
+            "role": StaffRole.FRONT_DESK,
+            "phone": "+27 82 400 0003",
+            "is_email_verified": True,
+        },
+    ],
+    "crossfit-centurion": [
+        {
+            "email": "owner@crossfitcenturion.co.za",
+            "first_name": "Jacques",
+            "last_name": "Steyn",
+            "role": StaffRole.OWNER,
+            "phone": "+27 82 500 0001",
+            "is_email_verified": True,
+        },
+        {
+            "email": "coach@crossfitcenturion.co.za",
+            "first_name": "Ruan",
+            "last_name": "de Villiers",
+            "role": StaffRole.INSTRUCTOR,
+            "phone": "+27 82 500 0002",
+            "is_email_verified": True,
+        },
+    ],
+}
+
+_DEFAULT_PASSWORD = get_password_hash("staffpass123")
 
 
-def seed_staff(_session: Session, _gyms: list["Gym"]) -> int:
-    """Seed staff members for each gym.
+def seed_staff(session: Session, gyms: list[Gym]) -> int:
+    """Seed staff members for each gym idempotently.
 
-    DEFERRED: Returns 0 until Staff model is created in Epic 3.
-
-    Planned implementation:
-    - Create owner for each gym
-    - Create 1-2 managers per gym
-    - Create 1-2 front desk staff per gym
-    - Assign instructors to relevant gyms
+    Checks for existing staff by email before creating.
+    All staff get password 'staffpass123' for local testing.
 
     Args:
         session: SQLModel database session
         gyms: List of Gym objects to create staff for
 
     Returns:
-        Number of staff members created (currently 0)
+        Number of staff members created/found
     """
-    # TODO: Implement when Staff model is created in Epic 3
-    # See Epic 3: Staff Management & Permissions for model definition
+    count = 0
+    gym_by_slug = {g.slug: g for g in gyms}
 
-    return 0
+    for slug, staff_list in SEED_STAFF.items():
+        gym = gym_by_slug.get(slug)
+        if not gym:
+            continue
+
+        for staff_data in staff_list:
+            existing = session.exec(
+                select(Staff).where(Staff.email == staff_data["email"])
+            ).first()
+            if existing:
+                count += 1
+                continue
+
+            staff = Staff(
+                gym_id=gym.id,
+                email=staff_data["email"],
+                first_name=staff_data["first_name"],
+                last_name=staff_data["last_name"],
+                role=staff_data["role"],
+                phone=staff_data.get("phone"),
+                is_email_verified=staff_data.get("is_email_verified", True),
+                hashed_password=_DEFAULT_PASSWORD,
+                working_hours=staff_data.get("working_hours", {}),
+            )
+            session.add(staff)
+            count += 1
+
+    session.commit()
+    return count

@@ -1,15 +1,14 @@
 /**
- * QR Code display screen for consumer check-in.
- *
- * Displays a QR code that gym staff can scan for check-in.
- * Works offline by caching QR data in MMKV.
+ * QR code display screen for consumer check-in.
  */
 
 import { useEffect } from 'react';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import QRCode from 'react-native-qrcode-svg';
+import { bookingsGetConsumerQr } from '@sl/api-client';
 import { getConsumerProfile } from '../../lib/auth';
+import { getAuthHeaders } from '../../lib/apiAuth';
 import { cacheQrData, getCachedQrData, getCachedQrMeta } from '../../lib/qr-cache';
 
 export default function QrCodeTab() {
@@ -17,39 +16,27 @@ export default function QrCodeTab() {
   const cachedQr = getCachedQrData();
   const cachedMeta = getCachedQrMeta();
 
-  // Fetch fresh QR data from consumer profile / memberships
   const qrQuery = useQuery({
     queryKey: ['consumer', 'qr-data'],
     queryFn: async () => {
-      // TODO: Replace with actual API call to get consumer's active membership
-      // For now, generate QR data from stored profile
-      if (!profile) return null;
-
-      const data = {
-        consumerId: profile.id,
-        membershipId: undefined as string | undefined,
-        updatedAt: new Date().toISOString(),
-      };
-
-      return data;
+      const response = await bookingsGetConsumerQr({ headers: getAuthHeaders() });
+      return response.data ?? null;
     },
     enabled: !!profile,
   });
 
-  // Cache the QR data whenever we get fresh data
   useEffect(() => {
-    if (qrQuery.data) {
-      cacheQrData(qrQuery.data);
+    if (qrQuery.data && profile) {
+      cacheQrData({
+        consumerId: profile.id,
+        membershipId: undefined,
+        token: qrQuery.data.token,
+        updatedAt: new Date().toISOString(),
+      });
     }
-  }, [qrQuery.data]);
+  }, [qrQuery.data, profile]);
 
-  // Use cached QR data if available, otherwise show loading
-  const qrValue = cachedQr ?? (qrQuery.data ? JSON.stringify({
-    type: 'studioloop_checkin',
-    consumer_id: qrQuery.data.consumerId,
-    membership_id: qrQuery.data.membershipId,
-    ts: qrQuery.data.updatedAt,
-  }) : null);
+  const qrValue = qrQuery.data?.token ?? cachedQr;
 
   if (!profile) {
     return (
@@ -71,12 +58,7 @@ export default function QrCodeTab() {
 
         {qrValue ? (
           <View className="p-4 bg-white rounded-lg">
-            <QRCode
-              value={qrValue}
-              size={220}
-              backgroundColor="#ffffff"
-              color="#1f2937"
-            />
+            <QRCode value={qrValue} size={220} backgroundColor="#ffffff" color="#1f2937" />
           </View>
         ) : (
           <View className="w-56 h-56 items-center justify-center">
@@ -98,7 +80,7 @@ export default function QrCodeTab() {
 
         <View className="mt-4 bg-green-50 px-4 py-2 rounded-full">
           <Text className="text-green-700 text-xs font-medium">
-            {cachedQr ? 'Available offline' : 'Online only'}
+            {qrQuery.data ? 'Online' : cachedQr ? 'Available offline' : 'Online only'}
           </Text>
         </View>
       </View>

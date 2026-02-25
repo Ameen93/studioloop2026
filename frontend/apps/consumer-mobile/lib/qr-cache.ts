@@ -22,6 +22,8 @@ export interface QrCodeData {
   consumerId: string;
   /** Active membership ID (if any) */
   membershipId?: string;
+  /** Raw signed token returned by backend (preferred when available) */
+  token?: string;
   /** Timestamp when the QR data was last updated */
   updatedAt: string;
 }
@@ -30,13 +32,14 @@ export interface QrCodeData {
  * Cache QR code data in MMKV for offline display.
  */
 export function cacheQrData(data: QrCodeData): void {
-  // Store a JSON payload as the QR value
-  const qrPayload = JSON.stringify({
-    type: 'studioloop_checkin',
-    consumer_id: data.consumerId,
-    membership_id: data.membershipId,
-    ts: data.updatedAt,
-  });
+  const qrPayload = data.token
+    ? data.token
+    : JSON.stringify({
+        type: 'studioloop_checkin',
+        consumer_id: data.consumerId,
+        membership_id: data.membershipId,
+        ts: data.updatedAt,
+      });
 
   storage.set(KEYS.QR_DATA, qrPayload);
   storage.set(KEYS.QR_CONSUMER_ID, data.consumerId);

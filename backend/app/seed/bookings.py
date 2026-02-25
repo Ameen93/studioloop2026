@@ -1,55 +1,108 @@
 """Seed data for Booking entities.
 
-DEFERRED: Booking model will be created in Epic 6 (Booking & Check-in).
-
-This module is a placeholder that documents the planned booking
-seed data structure for when the model becomes available.
-
-Planned Bookings:
-- Mix of confirmed, checked-in, cancelled, and no-show bookings
-- Some bookings in the past (for history testing)
-- Some bookings in the future (for check-in testing)
-- Include waitlist entries for popular classes
-- Various booking sources (direct, marketplace)
+Creates realistic bookings linking consumers to class sessions.
+Includes a mix of past bookings (checked-in, cancelled) and
+future bookings (confirmed, waiting) for testing all flows.
 """
 
-from sqlmodel import Session
+from datetime import datetime, timezone
 
-# Documented for future implementation
-PLANNED_BOOKING_STATUSES = [
-    "confirmed",  # Booking confirmed, awaiting class
-    "checked_in",  # Consumer attended the class
-    "cancelled",  # Consumer cancelled before class
-    "no_show",  # Consumer didn't attend
-    "waitlisted",  # On waitlist for full class
-]
+from sqlmodel import Session, select
 
-PLANNED_BOOKING_SOURCES = [
-    "direct",  # Booked directly at gym
-    "marketplace",  # Booked via StudioLoop marketplace
-    "walk_in",  # Walk-in booking at reception
-]
+from app.models import Booking, ClassSession, Consumer
+from app.models.booking import BookingSource, BookingStatus, BookingType
+from app.models.class_session import ClassSessionStatus
 
 
-def seed_bookings(_session: Session) -> int:
-    """Seed sample bookings.
+def seed_bookings(session: Session) -> int:
+    """Seed bookings across consumers and sessions.
 
-    DEFERRED: Returns 0 until Booking model is created in Epic 6.
-
-    Planned implementation:
-    - Create bookings linking consumers to class sessions
-    - Mix of booking statuses (confirmed, checked_in, cancelled)
-    - Include past bookings for testing history views
-    - Include future bookings for testing check-in flows
-    - Create some waitlist entries for full classes
+    - Past scheduled sessions: consumers get checked_in or cancelled bookings
+    - Future sessions: consumers get confirmed bookings
+    - Mix of direct and marketplace sources
 
     Args:
         session: SQLModel database session
 
     Returns:
-        Number of bookings created (currently 0)
+        Number of bookings created/found
     """
-    # TODO: Implement when Booking model is created in Epic 6
-    # See Epic 6: Booking & Check-in for model definition
+    existing = session.exec(select(Booking.id)).all()
+    if len(existing) > 0:
+        return len(existing)
 
-    return 0
+    consumers = session.exec(select(Consumer)).all()
+    if not consumers:
+        return 0
+
+    # Get scheduled sessions only (skip cancelled ones)
+    sessions_list = session.exec(
+        select(ClassSession).where(ClassSession.status == ClassSessionStatus.SCHEDULED)
+    ).all()
+    if not sessions_list:
+        return 0
+
+    now = datetime.now(timezone.utc)
+    count = 0
+
+    for i, cs in enumerate(sessions_list):
+        # Book 2-5 consumers per session
+        num_bookings = 2 + (i % 4)
+
+        for j in range(num_bookings):
+            consumer = consumers[(i + j) % len(consumers)]
+            # Handle both naive and aware datetimes from DB
+            cs_start = (
+                cs.start_time.replace(tzinfo=timezone.utc)
+                if cs.start_time.tzinfo is None
+                else cs.start_time
+            )
+            is_past = cs_start < now
+
+            if is_past:
+                # Past sessions: 70% checked in, 20% cancelled, 10% booked (no-show)
+                roll = (i + j) % 10
+                if roll < 7:
+                    status = BookingStatus.CHECKED_IN
+                    checked_in_at = cs_start
+                elif roll < 9:
+                    status = BookingStatus.CANCELLED
+                    checked_in_at = None
+                else:
+                    status = BookingStatus.BOOKED
+                    checked_in_at = None
+            else:
+                # Future sessions: all confirmed
+                status = BookingStatus.BOOKED
+                checked_in_at = None
+
+            # Alternate between direct and marketplace bookings
+            source = (
+                BookingSource.MARKETPLACE if (i + j) % 5 == 0 else BookingSource.DIRECT
+            )
+            booking_type = (
+                BookingType.PAY_PER_CLASS
+                if cs.price_cents > 0
+                else BookingType.MEMBERSHIP_BENEFIT
+            )
+
+            cancelled_at = cs_start if status == BookingStatus.CANCELLED else None
+
+            booking = Booking(
+                gym_id=cs.gym_id,
+                consumer_id=consumer.id,
+                session_id=cs.id,
+                booking_type=booking_type,
+                source=source,
+                status=status,
+                price_paid_cents=cs.price_cents
+                if booking_type == BookingType.PAY_PER_CLASS
+                else None,
+                cancelled_at=cancelled_at,
+                checked_in_at=checked_in_at,
+            )
+            session.add(booking)
+            count += 1
+
+    session.commit()
+    return count

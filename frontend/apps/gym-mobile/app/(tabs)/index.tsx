@@ -1,15 +1,14 @@
 /**
  * Dashboard tab - today's metrics and quick actions for gym staff.
- *
- * Shows key metrics: check-ins today, active members, upcoming classes,
- * revenue summary, and quick navigation to reports.
  */
 
 import { View, Text, ScrollView, Pressable, RefreshControl } from 'react-native';
 import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
+import { analyticsGymOwnerDashboard } from '@sl/api-client';
 import { getStaffProfile } from '../../lib/auth';
+import { getAuthHeaders } from '../../lib/apiAuth';
 
 interface DashboardMetrics {
   checkinsToday: number;
@@ -19,28 +18,63 @@ interface DashboardMetrics {
   pendingCheckins: number;
 }
 
+function toNumber(value: number | string | undefined): number {
+  if (typeof value === 'number') {
+    return value;
+  }
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+}
+
 export default function DashboardTab() {
   const staff = getStaffProfile();
 
   const metricsQuery = useQuery<DashboardMetrics>({
-    queryKey: ['gym', 'dashboard', 'metrics'],
+    queryKey: ['gym', 'dashboard', 'metrics', staff?.gymId],
     queryFn: async () => {
-      // TODO: Replace with actual API call
-      // e.g., gymDashboardGetMetrics({ path: { gym_id: staff?.gymId } })
+      if (!staff?.gymId) {
+        return {
+          checkinsToday: 0,
+          activeMembers: 0,
+          upcomingClasses: 0,
+          revenueToday: 0,
+          pendingCheckins: 0,
+        };
+      }
+
+      const response = await analyticsGymOwnerDashboard({
+        path: { gym_id: staff.gymId },
+        headers: getAuthHeaders(),
+      });
+
+      const dashboard = response.data;
+      if (!dashboard) {
+        return {
+          checkinsToday: 0,
+          activeMembers: 0,
+          upcomingClasses: 0,
+          revenueToday: 0,
+          pendingCheckins: 0,
+        };
+      }
+
       return {
-        checkinsToday: 0,
-        activeMembers: 0,
-        upcomingClasses: 0,
-        revenueToday: 0,
-        pendingCheckins: 0,
+        checkinsToday: toNumber(dashboard.today_summary.check_ins_today),
+        activeMembers: toNumber(dashboard.quick_metrics.active_members),
+        upcomingClasses: toNumber(dashboard.today_summary.classes_today),
+        revenueToday: toNumber(dashboard.today_summary.revenue_today_cents),
+        pendingCheckins: toNumber(dashboard.action_items.pending_offline_checkins),
       };
     },
   });
 
   const metrics = metricsQuery.data;
 
-  const formatCurrency = (amount: number) =>
-    `R ${amount.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`;
+  const formatCurrency = (amountCents: number) =>
+    `R ${(amountCents / 100).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`;
 
   return (
     <ScrollView
@@ -53,7 +87,6 @@ export default function DashboardTab() {
         />
       }
     >
-      {/* Header */}
       <View className="bg-emerald-600 px-4 pt-6 pb-8">
         <Text className="text-white text-sm opacity-80">
           {new Date().toLocaleDateString('en-ZA', {
@@ -71,7 +104,6 @@ export default function DashboardTab() {
         </Text>
       </View>
 
-      {/* Metrics cards */}
       <View className="px-4 -mt-4">
         <View className="flex-row flex-wrap -mx-1.5">
           <MetricCard
@@ -101,7 +133,6 @@ export default function DashboardTab() {
         </View>
       </View>
 
-      {/* Pending offline check-ins alert */}
       {metrics && metrics.pendingCheckins > 0 && (
         <View className="mx-4 mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <View className="flex-row items-center">
@@ -114,7 +145,6 @@ export default function DashboardTab() {
         </View>
       )}
 
-      {/* Quick actions */}
       <View className="px-4 mt-6">
         <Text className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">
           Quick Actions
@@ -136,14 +166,14 @@ export default function DashboardTab() {
 
         <Pressable
           className="bg-white rounded-lg p-4 mb-3 border border-gray-200 flex-row items-center"
-          onPress={() => router.push('/(tabs)/schedule')}
+          onPress={() => router.push('/(tabs)/members')}
         >
           <View className="w-10 h-10 rounded-lg bg-indigo-100 items-center justify-center">
-            <Ionicons name="calendar" size={22} color="#6366f1" />
+            <Ionicons name="people" size={22} color="#6366f1" />
           </View>
           <View className="flex-1 ml-3">
-            <Text className="text-gray-900 font-semibold">View Schedule</Text>
-            <Text className="text-gray-500 text-sm">Today's classes and bookings</Text>
+            <Text className="text-gray-900 font-semibold">View Members</Text>
+            <Text className="text-gray-500 text-sm">Search membership roster</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color="#d1d5db" />
         </Pressable>

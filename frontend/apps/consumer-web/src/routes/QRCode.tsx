@@ -1,24 +1,13 @@
-/**
- * QR Code display screen (Story 13.4).
- *
- * Shows a full-screen QR code for gym check-in.
- * Encodes the consumer ID as a simple QR code with their name displayed below.
- * Uses a simple SVG-based QR code representation.
- */
-
 import { Link } from 'react-router';
-import { useAuth } from '../hooks/useAuth';
+import { useQuery } from '@tanstack/react-query';
+import { bookingsGetConsumerQr } from '@sl/api-client';
+import { getAuthHeaders } from '../lib/apiAuth';
 
-/**
- * Generate a simple deterministic pattern from a string to render as a QR-like grid.
- * This is a visual placeholder - in production, use a proper QR library like `qrcode`.
- */
 function generateQRMatrix(input: string, size: number = 21): boolean[][] {
   const matrix: boolean[][] = Array.from({ length: size }, () =>
     Array.from({ length: size }, () => false),
   );
 
-  // Finder patterns (top-left, top-right, bottom-left)
   const drawFinder = (startRow: number, startCol: number) => {
     for (let r = 0; r < 7; r++) {
       for (let c = 0; c < 7; c++) {
@@ -33,7 +22,6 @@ function generateQRMatrix(input: string, size: number = 21): boolean[][] {
   drawFinder(0, size - 7);
   drawFinder(size - 7, 0);
 
-  // Fill data area with deterministic pattern from input
   let hash = 0;
   for (let i = 0; i < input.length; i++) {
     hash = ((hash << 5) - hash + input.charCodeAt(i)) | 0;
@@ -46,7 +34,6 @@ function generateQRMatrix(input: string, size: number = 21): boolean[][] {
     }
   }
 
-  // Timing patterns
   for (let i = 8; i < size - 8; i++) {
     matrix[6]![i] = i % 2 === 0;
     matrix[i]![6] = i % 2 === 0;
@@ -55,7 +42,7 @@ function generateQRMatrix(input: string, size: number = 21): boolean[][] {
   return matrix;
 }
 
-function QRCodeSVG({ data, size = 200 }: { data: string; size?: number }) {
+function QRCodeSVG({ data, size = 220 }: { data: string; size?: number }) {
   const moduleCount = 21;
   const matrix = generateQRMatrix(data, moduleCount);
   const cellSize = size / moduleCount;
@@ -82,12 +69,17 @@ function QRCodeSVG({ data, size = 200 }: { data: string; size?: number }) {
 }
 
 export function QRCode() {
-  const { consumer } = useAuth();
+  const qrQuery = useQuery({
+    queryKey: ['consumer-qr-code'],
+    queryFn: async () => {
+      const response = await bookingsGetConsumerQr({
+        headers: getAuthHeaders(),
+      });
+      return response.data;
+    },
+  });
 
-  const consumerId = consumer?.id ?? 'demo-consumer-id';
-  const consumerName = consumer
-    ? `${consumer.first_name} ${consumer.last_name}`
-    : 'Demo User';
+  const qrData = qrQuery.data;
 
   return (
     <div className="max-w-md mx-auto px-4 py-8 flex flex-col items-center">
@@ -95,26 +87,46 @@ export function QRCode() {
         to="/"
         className="self-start mb-6 text-sm text-indigo-600 hover:text-indigo-500 font-medium"
       >
-        &larr; Back to bookings
+        &larr; Back to home
       </Link>
 
-      <div className="w-full bg-white rounded-2xl shadow-lg border border-gray-100 p-8 text-center">
-        <h1 className="text-xl font-bold text-gray-900 mb-2">Check-in QR Code</h1>
-        <p className="text-sm text-gray-500 mb-6">Show this to the front desk to check in</p>
-
-        <div className="bg-white p-4 rounded-xl border-2 border-gray-100 inline-block">
-          <QRCodeSVG data={consumerId} size={220} />
+      {qrQuery.isLoading && (
+        <div className="w-full rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-600">
+          Loading QR code...
         </div>
+      )}
 
-        <div className="mt-6">
-          <p className="text-lg font-semibold text-gray-900">{consumerName}</p>
-          <p className="text-xs text-gray-400 mt-1 font-mono">{consumerId.slice(0, 8)}...</p>
+      {qrQuery.error && (
+        <div className="w-full rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          Could not generate QR code.
         </div>
-      </div>
+      )}
 
-      <p className="mt-6 text-center text-xs text-gray-400 max-w-xs">
-        Your QR code is unique to your account. Present it at any StudioLoop partner studio for quick check-in.
-      </p>
+      {!qrData ? null : (
+        <>
+          <div className="w-full bg-white rounded-2xl shadow-lg border border-gray-100 p-8 text-center">
+            <h1 className="text-xl font-bold text-gray-900 mb-2">Check-in QR Code</h1>
+            <p className="text-sm text-gray-500 mb-6">
+              Show this at the front desk to check in
+            </p>
+
+            <div className="bg-white p-4 rounded-xl border-2 border-gray-100 inline-block">
+              <QRCodeSVG data={qrData.token} size={220} />
+            </div>
+
+            <div className="mt-6">
+              <p className="text-lg font-semibold text-gray-900">{qrData.consumer_name}</p>
+              <p className="text-xs text-gray-400 mt-1">
+                Expires: {new Date(qrData.expires_at).toLocaleTimeString('en-ZA')}
+              </p>
+            </div>
+          </div>
+
+          <p className="mt-6 text-center text-xs text-gray-400 max-w-xs">
+            This token updates and expires automatically for secure check-in.
+          </p>
+        </>
+      )}
     </div>
   );
 }

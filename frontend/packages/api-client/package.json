@@ -23,7 +23,8 @@
     "lint": "eslint src --ignore-pattern 'src/generated/**'",
     "type-check": "tsc --noEmit",
     "test": "echo \"No tests configured for @sl/api-client - generated code\"",
-    "generate": "openapi-ts"
+    "export-openapi": "bash ../../scripts/export-openapi.sh",
+    "generate": "pnpm run export-openapi && openapi-ts"
   },
   "dependencies": {
     "@hey-api/client-fetch": "^0.9.0",

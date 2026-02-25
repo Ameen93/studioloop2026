@@ -13,7 +13,9 @@ from uuid import uuid4
 from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
+from app.core.security import get_password_hash
 from app.models import (
+    Consumer,
     Gym,
     Notification,
     NotificationChannel,
@@ -26,12 +28,10 @@ from app.services.notifications.service import (
     _is_channel_enabled,
     create_notification,
     dispatch_notification,
-    get_consumer_preferences,
     render_template,
     send_multi_channel,
 )
 from tests.api.routes.test_staff_memberships import _consumer_headers, _staff_headers
-
 
 # ---------------------------------------------------------------------------
 # Story 9-1: Health check
@@ -447,12 +447,43 @@ def test_list_and_mark_read_notifications(client: TestClient, db: Session) -> No
     db.commit()
 
 
+def test_notifications_denies_cross_tenant_gym_message_access(
+    client: TestClient, db: Session
+) -> None:
+    gym_a = db.exec(select(Gym)).first()
+    assert gym_a is not None
+
+    gym_b = Gym(
+        name=f"Notify Gym {uuid4().hex[:6]}",
+        slug=f"notify-gym-{uuid4().hex[:8]}",
+        is_active=True,
+    )
+    db.add(gym_b)
+    db.commit()
+    db.refresh(gym_b)
+
+    staff_headers = _staff_headers(client, db, gym_a, StaffRole.OWNER)
+
+    response = client.post(
+        f"/api/v1/notifications/gyms/{gym_b.id}/messages",
+        headers=staff_headers,
+        json={
+            "subject": "Cross-tenant check",
+            "body": "Should be blocked",
+            "recipient_filter": "all",
+            "channels": ["in_app"],
+        },
+    )
+
+    assert response.status_code == 403
+    body = response.json()
+    assert body["detail"]["code"] == "FORBIDDEN"
+    assert "Access denied to this gym" in body["detail"]["message"]
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
-from app.core.security import get_password_hash
-from app.models import Consumer
 
 
 def _get_or_create_consumer(db: Session) -> tuple[dict[str, str], Consumer]:

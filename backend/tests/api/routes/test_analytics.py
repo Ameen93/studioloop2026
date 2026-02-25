@@ -282,3 +282,52 @@ def test_story_10_9_gym_owner_dashboard(client: TestClient, db: Session) -> None
     assert body["action_items"]["failed_payments"] >= 1
     assert "today_summary" in body
     assert "quick_metrics" in body
+
+
+def test_analytics_denies_cross_tenant_dashboard_access(client: TestClient, db: Session) -> None:
+    gym_a = db.exec(select(Gym)).first()
+    assert gym_a is not None
+
+    gym_b = Gym(
+        name=f"Tenant Gym {uuid4().hex[:6]}",
+        slug=f"tenant-gym-{uuid4().hex[:8]}",
+        is_active=True,
+    )
+    db.add(gym_b)
+    db.commit()
+    db.refresh(gym_b)
+
+    owner_headers = _staff_headers(client, db, gym_a, StaffRole.OWNER)
+
+    res = client.get(
+        f"/api/v1/analytics/gyms/{gym_b.id}/dashboard",
+        headers=owner_headers,
+    )
+
+    assert res.status_code == 403
+    assert res.json()["detail"]["code"] == "FORBIDDEN"
+    assert "Access denied to this gym" in res.json()["detail"]["message"]
+
+
+def test_analytics_denies_cross_tenant_revenue_access(client: TestClient, db: Session) -> None:
+    gym_a = db.exec(select(Gym)).first()
+    assert gym_a is not None
+
+    gym_b = Gym(
+        name=f"Revenue Gym {uuid4().hex[:6]}",
+        slug=f"revenue-gym-{uuid4().hex[:8]}",
+        is_active=True,
+    )
+    db.add(gym_b)
+    db.commit()
+    db.refresh(gym_b)
+
+    owner_headers = _staff_headers(client, db, gym_a, StaffRole.OWNER)
+
+    res = client.get(
+        f"/api/v1/analytics/gyms/{gym_b.id}/revenue?period=monthly",
+        headers=owner_headers,
+    )
+
+    assert res.status_code == 403
+    assert res.json()["detail"]["code"] == "FORBIDDEN"

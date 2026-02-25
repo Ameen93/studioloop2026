@@ -27,21 +27,34 @@ export function Login() {
   const from = (location.state as { from?: string })?.from ?? '/';
 
   const loginMutation = useMutation({
-    mutationFn: (data: ConsumerLoginRequest) =>
-      consumerAuthLoginConsumer({
+    mutationFn: async (data: ConsumerLoginRequest) => {
+      const response = await consumerAuthLoginConsumer({
         body: data,
-      }),
-    onSuccess: (response) => {
-      login(response.data.access_token, response.data.refresh_token);
+        throwOnError: true,
+      });
+
+      if (!response.data) {
+        throw new Error('LOGIN_RESPONSE_INVALID');
+      }
+
+      return response.data;
+    },
+    onSuccess: (tokens) => {
+      login(tokens.access_token, tokens.refresh_token);
       navigate(from, { replace: true });
     },
     onError: (error: unknown) => {
-      const err = error as { body?: { detail?: { code?: string; message?: string } } };
-      if (err?.body?.detail?.code === 'EMAIL_NOT_VERIFIED') {
+      const err = error as {
+        body?: { detail?: { code?: string; message?: string } };
+        detail?: { code?: string; message?: string };
+      };
+      const code = err?.body?.detail?.code || err?.detail?.code;
+
+      if (code === 'EMAIL_NOT_VERIFIED') {
         setErrors({
           general: 'Please verify your email before logging in. Check your inbox for the verification link.',
         });
-      } else if (err?.body?.detail?.code === 'INVALID_CREDENTIALS') {
+      } else if (code === 'INVALID_CREDENTIALS') {
         setErrors({ general: 'Invalid email or password' });
       } else {
         setErrors({ general: 'Login failed. Please try again.' });

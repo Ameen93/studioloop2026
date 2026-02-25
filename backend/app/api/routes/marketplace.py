@@ -6,7 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import func
-from sqlmodel import select
+from sqlmodel import col, select
 
 from app.api.deps import CurrentConsumer, SessionDep
 from app.models import (
@@ -158,7 +158,7 @@ def _get_latest_subscription(
     return session.exec(
         select(MarketplaceSubscription)
         .where(MarketplaceSubscription.consumer_id == consumer_id)
-        .order_by(MarketplaceSubscription.created_at.desc())
+        .order_by(col(MarketplaceSubscription.created_at).desc())
     ).first()
 
 
@@ -192,13 +192,13 @@ def browse_marketplace_classes(
 
     query = (
         select(ClassSession, Gym, Space)
-        .join(Gym, Gym.id == ClassSession.gym_id)
-        .join(Space, Space.id == ClassSession.space_id)
+        .join(Gym, col(Gym.id) == col(ClassSession.gym_id))
+        .join(Space, col(Space.id) == col(ClassSession.space_id))
         .where(
-            ClassSession.is_active.is_(True),
-            Gym.is_active.is_(True),
-            Gym.is_marketplace_enabled.is_(True),
-            Space.is_active.is_(True),
+            col(ClassSession.is_active).is_(True),
+            col(Gym.is_active).is_(True),
+            col(Gym.is_marketplace_enabled).is_(True),
+            col(Space.is_active).is_(True),
             ClassSession.status == ClassSessionStatus.SCHEDULED,
             ClassSession.start_time >= now,
         )
@@ -228,7 +228,7 @@ def browse_marketplace_classes(
             .replace("_", "\\_")
         )
         query = query.where(
-            ClassSession.title.ilike(f"%{class_type_value}%", escape="\\")
+            col(ClassSession.title).ilike(f"%{class_type_value}%", escape="\\")
         )
     if city:
         city_value = city.strip().lower()
@@ -251,7 +251,7 @@ def browse_marketplace_classes(
     if max_price_cents is not None:
         query = query.where(ClassSession.price_cents <= max_price_cents)
 
-    rows = session.exec(query.order_by(ClassSession.start_time)).all()
+    rows = session.exec(query.order_by(col(ClassSession.start_time))).all()
 
     filtered_rows: list[tuple[ClassSession, Gym, Space]] = []
     for class_session, gym, space in rows:
@@ -306,11 +306,11 @@ def view_marketplace_gym_profile(
         select(ClassSession)
         .where(
             ClassSession.gym_id == gym.id,
-            ClassSession.is_active.is_(True),
+            col(ClassSession.is_active).is_(True),
             ClassSession.status == ClassSessionStatus.SCHEDULED,
             ClassSession.start_time >= datetime.now(timezone.utc),
         )
-        .order_by(ClassSession.start_time)
+        .order_by(col(ClassSession.start_time))
         .limit(10)
     ).all()
 
@@ -325,9 +325,10 @@ def view_marketplace_gym_profile(
             current_latitude, current_longitude, gym.latitude, gym.longitude
         )
 
-    amenities = (gym.settings or {}).get("amenities", [])
-    if not isinstance(amenities, list):
-        amenities = []
+    amenities: list[str] = []
+    raw_amenities: object = (gym.settings or {}).get("amenities", [])
+    if isinstance(raw_amenities, list):
+        amenities = [value for value in raw_amenities if isinstance(value, str)]
 
     return GymProfileResponse(
         gym_id=gym.id,
@@ -363,16 +364,16 @@ def view_marketplace_class_details(
 ) -> MarketplaceClassDetailResponse:
     row = session.exec(
         select(ClassSession, Gym, Space, Staff)
-        .join(Gym, Gym.id == ClassSession.gym_id)
-        .join(Space, Space.id == ClassSession.space_id)
-        .join(Staff, Staff.id == ClassSession.instructor_staff_id, isouter=True)
+        .join(Gym, col(Gym.id) == col(ClassSession.gym_id))
+        .join(Space, col(Space.id) == col(ClassSession.space_id))
+        .join(Staff, col(Staff.id) == col(ClassSession.instructor_staff_id), isouter=True)
         .where(
             ClassSession.id == session_id,
-            ClassSession.is_active.is_(True),
+            col(ClassSession.is_active).is_(True),
             ClassSession.status == ClassSessionStatus.SCHEDULED,
-            Gym.is_active.is_(True),
-            Gym.is_marketplace_enabled.is_(True),
-            Space.is_active.is_(True),
+            col(Gym.is_active).is_(True),
+            col(Gym.is_marketplace_enabled).is_(True),
+            col(Space.is_active).is_(True),
         )
     ).first()
     if not row:
@@ -385,6 +386,15 @@ def view_marketplace_class_details(
         1,
         int((class_session.end_time - class_session.start_time).total_seconds() // 60),
     )
+    policy_value = (gym.settings or {}).get(
+        "cancellation_policy", "Cancel before class starts to avoid penalties."
+    )
+    cancellation_policy = (
+        policy_value
+        if isinstance(policy_value, str)
+        else "Cancel before class starts to avoid penalties."
+    )
+
     return MarketplaceClassDetailResponse(
         session_id=class_session.id,
         gym_id=class_session.gym_id,
@@ -412,9 +422,7 @@ def view_marketplace_class_details(
         if instructor
         else None,
         instructor_bio=None,
-        cancellation_policy=(gym.settings or {}).get(
-            "cancellation_policy", "Cancel before class starts to avoid penalties."
-        ),
+        cancellation_policy=cancellation_policy,
     )
 
 
@@ -556,16 +564,26 @@ def manage_marketplace_subscription(
         )
 
     if payload.action == "upgrade":
+        target_tier = payload.target_tier
+        if target_tier is None:
+            raise HTTPException(
+                status_code=400, detail="target_tier is required for tier changes"
+            )
         previous_total = max(1, subscription.classes_total)
         previous_remaining = subscription.classes_remaining
-        new_total = _PLAN_ALLOCATIONS[payload.target_tier]
+        new_total = _PLAN_ALLOCATIONS[target_tier]
         consumed = max(0, previous_total - previous_remaining)
-        subscription.plan_tier = payload.target_tier
+        subscription.plan_tier = target_tier
         subscription.classes_total = new_total
         subscription.classes_remaining = max(0, new_total - consumed)
         subscription.status = MarketplaceSubscriptionStatus.ACTIVE
     elif payload.action == "downgrade":
-        subscription.downgrade_to_tier = payload.target_tier
+        target_tier = payload.target_tier
+        if target_tier is None:
+            raise HTTPException(
+                status_code=400, detail="target_tier is required for tier changes"
+            )
+        subscription.downgrade_to_tier = target_tier
     elif payload.action == "pause":
         subscription.status = MarketplaceSubscriptionStatus.PAUSED
         subscription.paused_at = datetime.now(timezone.utc)
@@ -595,12 +613,12 @@ def share_class_details(
 ) -> ShareClassResponse:
     row = session.exec(
         select(ClassSession, Gym)
-        .join(Gym, Gym.id == ClassSession.gym_id)
+        .join(Gym, col(Gym.id) == col(ClassSession.gym_id))
         .where(
             ClassSession.id == session_id,
-            ClassSession.is_active.is_(True),
-            Gym.is_active.is_(True),
-            Gym.is_marketplace_enabled.is_(True),
+            col(ClassSession.is_active).is_(True),
+            col(Gym.is_active).is_(True),
+            col(Gym.is_marketplace_enabled).is_(True),
         )
     ).first()
     if not row:
@@ -658,7 +676,7 @@ def track_referral_signup(
     owner = session.exec(
         select(ReferralInvite)
         .where(ReferralInvite.referral_code == payload.referral_code)
-        .order_by(ReferralInvite.created_at.asc())
+        .order_by(col(ReferralInvite.created_at).asc())
     ).first()
     if not owner:
         raise HTTPException(status_code=404, detail="Referral code not found")

@@ -1,9 +1,16 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import './lib/configureApiClient';
 import { Login } from './routes/auth/Login';
 import { Register } from './routes/auth/Register';
 import { VerifyEmail } from './routes/auth/VerifyEmail';
 import { VerifyEmailSent } from './routes/auth/VerifyEmailSent';
+import { Home } from './routes/Home';
+import { AuthGuard } from './components/layout/AuthGuard';
+import { ForgotPassword } from './routes/auth/ForgotPassword';
+import { ResendVerification } from './routes/auth/ResendVerification';
+import { Privacy } from './routes/Privacy';
+import { Terms } from './routes/Terms';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -22,24 +29,25 @@ function App() {
           {/* Auth routes */}
           <Route path="/auth/login" element={<Login />} />
           <Route path="/auth/register" element={<Register />} />
+          <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+          <Route path="/auth/resend-verification" element={<ResendVerification />} />
           <Route path="/auth/verify-email" element={<VerifyEmail />} />
           <Route path="/auth/verify-email-sent" element={<VerifyEmailSent />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
 
-          {/* Default redirect - go to login for authenticated users */}
-          <Route path="/" element={<Navigate to="/auth/login" replace />} />
-
-          {/* Catch all - 404 */}
+          {/* Protected route */}
           <Route
-            path="*"
+            path="/"
             element={
-              <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="text-center">
-                  <h1 className="text-4xl font-bold text-gray-900">404</h1>
-                  <p className="mt-2 text-gray-600">Page not found</p>
-                </div>
-              </div>
+              <AuthGuard>
+                <Home />
+              </AuthGuard>
             }
           />
+
+          {/* Catch all - 404 */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>

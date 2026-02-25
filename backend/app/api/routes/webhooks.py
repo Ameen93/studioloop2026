@@ -19,7 +19,7 @@ from uuid import UUID
 import httpx
 from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import func
-from sqlmodel import SQLModel, select
+from sqlmodel import SQLModel, col, select
 
 from app.api.deps import RequireOwner, SessionDep, StaffGymDep
 from app.models.admin import (
@@ -165,7 +165,7 @@ def list_webhook_endpoints(
 
     total = session.exec(select(func.count()).select_from(stmt.subquery())).one()
 
-    endpoints = session.exec(stmt.order_by(WebhookEndpoint.created_at.desc())).all()
+    endpoints = session.exec(stmt.order_by(col(WebhookEndpoint.created_at).desc())).all()
 
     return WebhookEndpointListResponse(
         items=[_serialize_endpoint(ep) for ep in endpoints],
@@ -428,7 +428,7 @@ def list_webhook_deliveries(
     total = session.exec(select(func.count()).select_from(stmt.subquery())).one()
 
     deliveries = session.exec(
-        stmt.order_by(WebhookDelivery.created_at.desc()).offset(skip).limit(limit)
+        stmt.order_by(col(WebhookDelivery.created_at).desc()).offset(skip).limit(limit)
     ).all()
 
     items = [

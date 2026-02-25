@@ -5,11 +5,12 @@
  * authentication state for the consumer web app.
  */
 
-import { useState, useCallback } from 'react';
+import { useCallback, useMemo, useSyncExternalStore } from 'react';
 
 const ACCESS_TOKEN_KEY = 'consumer_access_token';
 const REFRESH_TOKEN_KEY = 'consumer_refresh_token';
 const CONSUMER_KEY = 'consumer_profile';
+const AUTH_CHANGE_EVENT = 'sl:consumer-auth-change';
 
 export interface ConsumerProfile {
   id: string;
@@ -20,15 +21,56 @@ export interface ConsumerProfile {
   avatar_url?: string | null;
 }
 
+function parseStoredProfile(raw: string | null): ConsumerProfile | null {
+  if (!raw) {
+    return null;
+  }
+  try {
+    return JSON.parse(raw) as ConsumerProfile;
+  } catch {
+    return null;
+  }
+}
+
+function subscribeAuthChange(onStoreChange: () => void): () => void {
+  const handleStorage = (event: StorageEvent) => {
+    if (
+      event.key === ACCESS_TOKEN_KEY ||
+      event.key === REFRESH_TOKEN_KEY ||
+      event.key === CONSUMER_KEY
+    ) {
+      onStoreChange();
+    }
+  };
+  const handleAuthEvent = () => onStoreChange();
+
+  window.addEventListener('storage', handleStorage);
+  window.addEventListener(AUTH_CHANGE_EVENT, handleAuthEvent);
+
+  return () => {
+    window.removeEventListener('storage', handleStorage);
+    window.removeEventListener(AUTH_CHANGE_EVENT, handleAuthEvent);
+  };
+}
+
+function emitAuthChange(): void {
+  window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
+}
+
 export function useAuth() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
-    () => !!localStorage.getItem(ACCESS_TOKEN_KEY),
+  const accessToken = useSyncExternalStore(
+    subscribeAuthChange,
+    () => localStorage.getItem(ACCESS_TOKEN_KEY),
+    () => null,
+  );
+  const consumerRaw = useSyncExternalStore(
+    subscribeAuthChange,
+    () => localStorage.getItem(CONSUMER_KEY),
+    () => null,
   );
 
-  const [consumer, setConsumer] = useState<ConsumerProfile | null>(() => {
-    const stored = localStorage.getItem(CONSUMER_KEY);
-    return stored ? (JSON.parse(stored) as ConsumerProfile) : null;
-  });
+  const isAuthenticated = !!accessToken;
+  const consumer = useMemo(() => parseStoredProfile(consumerRaw), [consumerRaw]);
 
   const login = useCallback(
     (accessToken: string, refreshToken: string, profile?: ConsumerProfile) => {
@@ -36,9 +78,8 @@ export function useAuth() {
       localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
       if (profile) {
         localStorage.setItem(CONSUMER_KEY, JSON.stringify(profile));
-        setConsumer(profile);
       }
-      setIsAuthenticated(true);
+      emitAuthChange();
     },
     [],
   );
@@ -47,8 +88,7 @@ export function useAuth() {
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(CONSUMER_KEY);
-    setIsAuthenticated(false);
-    setConsumer(null);
+    emitAuthChange();
   }, []);
 
   const getAccessToken = useCallback((): string | null => {
@@ -61,7 +101,7 @@ export function useAuth() {
 
   const updateProfile = useCallback((profile: ConsumerProfile) => {
     localStorage.setItem(CONSUMER_KEY, JSON.stringify(profile));
-    setConsumer(profile);
+    emitAuthChange();
   }, []);
 
   return {

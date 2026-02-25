@@ -4,7 +4,16 @@ from uuid import uuid4
 from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
-from app.models import ClassSession, ClassSessionStatus, Gym, MarketplaceSubscription, MarketplaceSubscriptionStatus, MarketplacePlanTier, ReferralInvite, Space
+from app.models import (
+    ClassSession,
+    ClassSessionStatus,
+    Gym,
+    MarketplacePlanTier,
+    MarketplaceSubscription,
+    MarketplaceSubscriptionStatus,
+    ReferralInvite,
+    Space,
+)
 from tests.api.routes.test_staff_memberships import _consumer_headers
 
 
@@ -78,7 +87,15 @@ def test_browse_marketplace_classes_only_enabled_gyms(client: TestClient, db: Se
 
     _create_marketplace_session(db, enabled_gym, title="Enabled Replacement")
 
-    res = client.get("/api/v1/marketplace/classes", headers=headers)
+    res = client.get(
+        "/api/v1/marketplace/classes",
+        params={
+            "city": "cape town",
+            "province": "western cape",
+            "limit": 200,
+        },
+        headers=headers,
+    )
     assert res.status_code == 200
 
     titles = [item["title"] for item in res.json()]

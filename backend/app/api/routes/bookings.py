@@ -4,7 +4,7 @@ from uuid import UUID
 import jwt
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
-from sqlmodel import select
+from sqlmodel import col, select
 
 from app.api.deps import CurrentConsumer, CurrentStaff, SessionDep
 from app.core import security
@@ -67,6 +67,24 @@ class QrCodeResponse(BaseModel):
     todays_booking_ids: list[UUID]
 
 
+class ConsumerBookingItem(BaseModel):
+    id: UUID
+    status: BookingStatus
+    booking_type: BookingType
+    class_name: str
+    gym_name: str
+    start_time: datetime
+    end_time: datetime
+    created_at: datetime
+    price_paid_cents: int | None
+    cancellation_refunded: bool
+
+
+class ConsumerBookingsResponse(BaseModel):
+    items: list[ConsumerBookingItem]
+    total: int
+
+
 class ScanQrRequest(BaseModel):
     token: str
 
@@ -107,7 +125,7 @@ def _is_membership_valid(
         select(GymMembership).where(
             GymMembership.consumer_id == consumer_id,
             GymMembership.gym_id == gym_id,
-            GymMembership.is_active.is_(True),
+            col(GymMembership.is_active).is_(True),
         )
     ).first()
     if not membership or membership.status != GymMembershipStatus.ACTIVE:
@@ -139,7 +157,7 @@ def _process_waitlist_offer(
             WaitlistEntry.session_id == session_id,
             WaitlistEntry.status == WaitlistStatus.WAITLISTED,
         )
-        .order_by(WaitlistEntry.position)
+        .order_by(col(WaitlistEntry.position))
     ).first()
     if not entry:
         return
@@ -149,9 +167,12 @@ def _process_waitlist_offer(
 
 def _gym_cancellation_window_hours(gym: Gym) -> int:
     raw_value = (gym.settings or {}).get("cancellation_window_hours", 24)
-    try:
-        parsed = int(raw_value)
-    except (TypeError, ValueError):
+    if isinstance(raw_value, str | int):
+        try:
+            parsed = int(raw_value)
+        except ValueError:
+            parsed = 24
+    else:
         parsed = 24
     return max(0, min(168, parsed))
 
@@ -288,7 +309,7 @@ def join_waitlist(
             WaitlistEntry.gym_id == payload.gym_id,
             WaitlistEntry.session_id == payload.session_id,
             WaitlistEntry.consumer_id == current_consumer.id,
-            WaitlistEntry.status.in_(
+            col(WaitlistEntry.status).in_(
                 [WaitlistStatus.WAITLISTED, WaitlistStatus.OFFERED]
             ),
         )
@@ -353,8 +374,8 @@ def expire_waitlist_offers(session: SessionDep) -> dict[str, int]:
     expired = session.exec(
         select(WaitlistEntry).where(
             WaitlistEntry.status == WaitlistStatus.OFFERED,
-            WaitlistEntry.expires_at.is_not(None),
-            WaitlistEntry.expires_at < now,
+            col(WaitlistEntry.expires_at).is_not(None),
+            col(WaitlistEntry.expires_at) < now,
         )
     ).all()
     count = 0
@@ -365,6 +386,61 @@ def expire_waitlist_offers(session: SessionDep) -> dict[str, int]:
         count += 1
     session.commit()
     return {"expired": count}
+
+
+@router.get("/consumer/bookings", response_model=ConsumerBookingsResponse)
+def list_consumer_bookings(
+    current_consumer: CurrentConsumer,
+    session: SessionDep,
+    status: BookingStatus | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+) -> ConsumerBookingsResponse:
+    """List the authenticated consumer's bookings with class and gym details."""
+    query = (
+        select(
+            Booking,
+            ClassSession.title,
+            ClassSession.start_time,
+            ClassSession.end_time,
+            Gym.name,
+        )
+        .join(ClassSession, col(ClassSession.id) == col(Booking.session_id))
+        .join(Gym, col(Gym.id) == col(Booking.gym_id))
+        .where(Booking.consumer_id == current_consumer.id)
+    )
+    if status is not None:
+        query = query.where(Booking.status == status)
+
+    count_query = (
+        select(Booking.id)
+        .where(Booking.consumer_id == current_consumer.id)
+    )
+    if status is not None:
+        count_query = count_query.where(Booking.status == status)
+    total = len(session.exec(count_query).all())
+
+    rows = session.exec(
+        query.order_by(ClassSession.start_time.desc()).offset(offset).limit(limit)
+    ).all()
+
+    items = [
+        ConsumerBookingItem(
+            id=booking.id,
+            status=booking.status,
+            booking_type=booking.booking_type,
+            class_name=class_name,
+            gym_name=gym_name,
+            start_time=start_time,
+            end_time=end_time,
+            created_at=booking.created_at,
+            price_paid_cents=booking.price_paid_cents,
+            cancellation_refunded=booking.cancellation_refunded,
+        )
+        for booking, class_name, start_time, end_time, gym_name in rows
+    ]
+
+    return ConsumerBookingsResponse(items=items, total=total)
 
 
 @router.get("/consumer/qr_code", response_model=QrCodeResponse)
@@ -387,7 +463,7 @@ def get_consumer_qr(
     today_end = today_start + timedelta(days=1)
     rows = session.exec(
         select(Booking.id)
-        .join(ClassSession, ClassSession.id == Booking.session_id)
+        .join(ClassSession, col(ClassSession.id) == col(Booking.session_id))
         .where(
             Booking.consumer_id == current_consumer.id,
             Booking.status == BookingStatus.BOOKED,
@@ -435,7 +511,7 @@ def scan_qr(
             Booking.gym_id == current_staff.gym_id,
             Booking.status == BookingStatus.BOOKED,
         )
-        .order_by(Booking.created_at.desc())
+        .order_by(col(Booking.created_at).desc())
     ).first()
     if booking:
         booking.mark_checked_in()
@@ -455,9 +531,9 @@ def scan_qr(
 
 @router.get("/me/check_ins/search", response_model=list[SearchResult])
 def search_members_for_check_in(
-    q: str = Query(min_length=2),
-    current_staff: CurrentStaff = None,
-    session: SessionDep = None,
+    current_staff: CurrentStaff,
+    session: SessionDep,
+    q: str = Query(..., min_length=2),
 ) -> list[SearchResult]:
     if current_staff.role not in {"owner", "manager", "front_desk"}:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
@@ -465,7 +541,7 @@ def search_members_for_check_in(
     memberships = session.exec(
         select(GymMembership).where(
             GymMembership.gym_id == current_staff.gym_id,
-            GymMembership.is_active.is_(True),
+            col(GymMembership.is_active).is_(True),
         )
     ).all()
     consumer_ids = [m.consumer_id for m in memberships]
@@ -474,7 +550,7 @@ def search_members_for_check_in(
 
     q_lower = q.lower()
     consumers = session.exec(
-        select(Consumer).where(Consumer.id.in_(consumer_ids))
+        select(Consumer).where(col(Consumer.id).in_(consumer_ids))
     ).all()
     matches = [
         c

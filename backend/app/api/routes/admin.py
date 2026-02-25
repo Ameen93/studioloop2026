@@ -17,7 +17,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import func
-from sqlmodel import SQLModel, select
+from sqlmodel import SQLModel, col, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.models.admin import (
@@ -234,10 +234,10 @@ def list_gyms(
     if search:
         search_term = f"%{search}%"
         stmt = stmt.where(
-            (Gym.name.ilike(search_term))
-            | (Gym.slug.ilike(search_term))
-            | (Gym.email.ilike(search_term))
-            | (Gym.city.ilike(search_term))
+            (col(Gym.name).ilike(search_term))
+            | (col(Gym.slug).ilike(search_term))
+            | (col(Gym.email).ilike(search_term))
+            | (col(Gym.city).ilike(search_term))
         )
 
     if is_active is not None:
@@ -255,7 +255,7 @@ def list_gyms(
 
     # Fetch page
     gyms = session.exec(
-        stmt.order_by(Gym.created_at.desc()).offset(skip).limit(limit)
+        stmt.order_by(col(Gym.created_at).desc()).offset(skip).limit(limit)
     ).all()
 
     items = [
@@ -542,7 +542,7 @@ def list_complaints(
     total = session.exec(count_stmt).one()
 
     complaints = session.exec(
-        stmt.order_by(Complaint.created_at.desc()).offset(skip).limit(limit)
+        stmt.order_by(col(Complaint.created_at).desc()).offset(skip).limit(limit)
     ).all()
 
     items = [
@@ -887,7 +887,7 @@ def platform_health(
     total_gyms = session.exec(select(func.count()).select_from(Gym)).one()
 
     active_gyms = session.exec(
-        select(func.count()).select_from(Gym).where(Gym.is_active.is_(True))
+        select(func.count()).select_from(Gym).where(col(Gym.is_active).is_(True))
     ).one()
 
     total_consumers = session.exec(select(func.count()).select_from(Consumer)).one()
@@ -905,7 +905,7 @@ def platform_health(
     open_complaints = session.exec(
         select(func.count())
         .select_from(Complaint)
-        .where(Complaint.status.in_([ComplaintStatus.OPEN, ComplaintStatus.ASSIGNED]))
+        .where(col(Complaint.status).in_([ComplaintStatus.OPEN, ComplaintStatus.ASSIGNED]))
     ).one()
 
     completed_payments = session.exec(
@@ -974,9 +974,9 @@ def get_gym_data(
     # Fetch members via gym memberships
     memberships = session.exec(
         select(GymMembership, Consumer)
-        .join(Consumer, GymMembership.consumer_id == Consumer.id)
+        .join(Consumer, col(GymMembership.consumer_id) == col(Consumer.id))
         .where(GymMembership.gym_id == gym_id)
-        .order_by(GymMembership.created_at.desc())
+        .order_by(col(GymMembership.created_at).desc())
         .limit(members_limit)
     ).all()
 
@@ -995,7 +995,7 @@ def get_gym_data(
     bookings = session.exec(
         select(Booking)
         .where(Booking.gym_id == gym_id)
-        .order_by(Booking.created_at.desc())
+        .order_by(col(Booking.created_at).desc())
         .limit(bookings_limit)
     ).all()
 
@@ -1014,7 +1014,7 @@ def get_gym_data(
     payments = session.exec(
         select(Payment)
         .where(Payment.gym_id == gym_id)
-        .order_by(Payment.created_at.desc())
+        .order_by(col(Payment.created_at).desc())
         .limit(payments_limit)
     ).all()
 
@@ -1041,7 +1041,7 @@ def get_gym_data(
         select(func.count()).select_from(Booking).where(Booking.gym_id == gym_id)
     ).one()
 
-    total_revenue = session.exec(
+    total_revenue_value: int = session.exec(
         select(func.coalesce(func.sum(Payment.amount_cents), 0)).where(
             Payment.gym_id == gym_id,
             Payment.status == PaymentStatus.COMPLETED,
@@ -1058,7 +1058,7 @@ def get_gym_data(
         recent_payments=recent_payments,
         total_members=total_members,
         total_bookings=total_bookings_count,
-        total_revenue_cents=int(total_revenue),
+        total_revenue_cents=total_revenue_value,
     )
 
 
@@ -1096,7 +1096,7 @@ def list_audit_logs(
     total = session.exec(count_stmt).one()
 
     logs = session.exec(
-        stmt.order_by(AuditLog.created_at.desc()).offset(skip).limit(limit)
+        stmt.order_by(col(AuditLog.created_at).desc()).offset(skip).limit(limit)
     ).all()
 
     items = [

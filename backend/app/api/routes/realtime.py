@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from app.core.db import engine
 from app.models.booking import Booking, BookingStatus
@@ -55,7 +55,7 @@ class ConnectionManager:
         if not self._connections[channel]:
             del self._connections[channel]
 
-    async def broadcast(self, channel: str, data: dict) -> None:
+    async def broadcast(self, channel: str, data: dict[str, object]) -> None:
         """Broadcast a message to all connections on a channel."""
         dead_connections: list[WebSocket] = []
         for ws in self._connections.get(channel, set()):
@@ -82,7 +82,7 @@ manager = ConnectionManager()
 # =============================================================================
 
 
-def _get_session_availability(session_id: UUID) -> dict | None:
+def _get_session_availability(session_id: UUID) -> dict[str, object] | None:
     """Fetch current availability for a class session from the database."""
     with Session(engine) as db:
         class_session = db.get(ClassSession, session_id)
@@ -111,7 +111,7 @@ def _get_session_availability(session_id: UUID) -> dict | None:
         }
 
 
-def _get_waitlist_positions(session_id: UUID) -> dict | None:
+def _get_waitlist_positions(session_id: UUID) -> dict[str, object] | None:
     """Fetch current waitlist for a class session from the database."""
     with Session(engine) as db:
         class_session = db.get(ClassSession, session_id)
@@ -122,11 +122,11 @@ def _get_waitlist_positions(session_id: UUID) -> dict | None:
             select(WaitlistEntry)
             .where(
                 WaitlistEntry.session_id == session_id,
-                WaitlistEntry.status.in_(
+                col(WaitlistEntry.status).in_(
                     [WaitlistStatus.WAITLISTED, WaitlistStatus.OFFERED]
                 ),
             )
-            .order_by(WaitlistEntry.position.asc())
+            .order_by(col(WaitlistEntry.position).asc())
         ).all()
 
         return {

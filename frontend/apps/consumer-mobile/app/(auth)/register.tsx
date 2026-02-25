@@ -48,16 +48,27 @@ export default function RegisterScreen() {
   const [errors, setErrors] = useState<FormErrors>({});
 
   const registerMutation = useMutation({
-    mutationFn: (data: ConsumerCreate) =>
-      consumerAuthRegisterConsumer({
+    mutationFn: async (data: ConsumerCreate) => {
+      const response = await consumerAuthRegisterConsumer({
         body: data,
-      }),
+        throwOnError: true,
+      });
+      if (!response.data) {
+        throw new Error('REGISTER_RESPONSE_INVALID');
+      }
+      return response.data;
+    },
     onSuccess: () => {
       router.replace('/(auth)/verify-email-sent');
     },
     onError: (error: unknown) => {
-      const err = error as { body?: { detail?: { code?: string; message?: string } } };
-      if (err?.body?.detail?.code === 'EMAIL_ALREADY_EXISTS') {
+      const err = error as {
+        body?: { detail?: { code?: string; message?: string } };
+        detail?: { code?: string; message?: string };
+      };
+      const code = err?.body?.detail?.code || err?.detail?.code;
+
+      if (code === 'EMAIL_ALREADY_EXISTS') {
         setErrors({ email: 'An account with this email already exists' });
       } else {
         setErrors({ general: 'Registration failed. Please try again.' });

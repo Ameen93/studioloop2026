@@ -1,85 +1,69 @@
 /**
  * Reports screen - simplified mobile reports for gym staff.
- *
- * Shows key reports: Revenue, Attendance, Membership Health.
- * Provides a high-level overview suitable for mobile viewing.
  */
 
 import { useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
+import {
+  analyticsAttendanceReport,
+  analyticsMembershipHealthReport,
+  analyticsRevenueReport,
+} from '@sl/api-client';
+import { getGymId } from '../lib/auth';
+import { getAuthHeaders } from '../lib/apiAuth';
 
 type ReportTab = 'revenue' | 'attendance' | 'memberships';
 
-interface RevenueData {
-  totalRevenue: number;
-  monthlyRevenue: number;
-  topPlans: { name: string; revenue: number; count: number }[];
-}
-
-interface AttendanceData {
-  totalCheckins: number;
-  avgDaily: number;
-  peakHour: string;
-  topClasses: { name: string; attendance: number }[];
-}
-
-interface MembershipData {
-  totalActive: number;
-  newThisMonth: number;
-  expiringThisMonth: number;
-  churnRate: number;
-  breakdown: { plan: string; count: number; percentage: number }[];
-}
-
 export default function ReportsScreen() {
   const [activeTab, setActiveTab] = useState<ReportTab>('revenue');
+  const gymId = getGymId();
 
-  const revenueQuery = useQuery<RevenueData>({
-    queryKey: ['gym', 'reports', 'revenue'],
+  const revenueQuery = useQuery({
+    queryKey: ['gym', 'reports', 'revenue', gymId],
     queryFn: async () => {
-      // TODO: Replace with actual API call
-      return {
-        totalRevenue: 0,
-        monthlyRevenue: 0,
-        topPlans: [],
-      };
+      if (!gymId) return null;
+
+      const response = await analyticsRevenueReport({
+        path: { gym_id: gymId },
+        headers: getAuthHeaders(),
+      });
+      return response.data ?? null;
     },
     enabled: activeTab === 'revenue',
   });
 
-  const attendanceQuery = useQuery<AttendanceData>({
-    queryKey: ['gym', 'reports', 'attendance'],
+  const attendanceQuery = useQuery({
+    queryKey: ['gym', 'reports', 'attendance', gymId],
     queryFn: async () => {
-      // TODO: Replace with actual API call
-      return {
-        totalCheckins: 0,
-        avgDaily: 0,
-        peakHour: '--',
-        topClasses: [],
-      };
+      if (!gymId) return null;
+
+      const response = await analyticsAttendanceReport({
+        path: { gym_id: gymId },
+        headers: getAuthHeaders(),
+      });
+      return response.data ?? null;
     },
     enabled: activeTab === 'attendance',
   });
 
-  const membershipQuery = useQuery<MembershipData>({
-    queryKey: ['gym', 'reports', 'memberships'],
+  const membershipQuery = useQuery({
+    queryKey: ['gym', 'reports', 'memberships', gymId],
     queryFn: async () => {
-      // TODO: Replace with actual API call
-      return {
-        totalActive: 0,
-        newThisMonth: 0,
-        expiringThisMonth: 0,
-        churnRate: 0,
-        breakdown: [],
-      };
+      if (!gymId) return null;
+
+      const response = await analyticsMembershipHealthReport({
+        path: { gym_id: gymId },
+        headers: getAuthHeaders(),
+      });
+      return response.data ?? null;
     },
     enabled: activeTab === 'memberships',
   });
 
-  const formatCurrency = (amount: number) =>
-    `R ${amount.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`;
+  const formatCurrency = (amountCents: number) =>
+    `R ${(amountCents / 100).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`;
 
   const isLoading =
     (activeTab === 'revenue' && revenueQuery.isLoading) ||
@@ -87,9 +71,9 @@ export default function ReportsScreen() {
     (activeTab === 'memberships' && membershipQuery.isLoading);
 
   const refetch = () => {
-    if (activeTab === 'revenue') revenueQuery.refetch();
-    if (activeTab === 'attendance') attendanceQuery.refetch();
-    if (activeTab === 'memberships') membershipQuery.refetch();
+    if (activeTab === 'revenue') void revenueQuery.refetch();
+    if (activeTab === 'attendance') void attendanceQuery.refetch();
+    if (activeTab === 'memberships') void membershipQuery.refetch();
   };
 
   return (
@@ -98,7 +82,6 @@ export default function ReportsScreen() {
       contentContainerClassName="pb-8"
       refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} />}
     >
-      {/* Tab selector */}
       <View className="flex-row bg-white border-b border-gray-200 px-4 py-2">
         {(['revenue', 'attendance', 'memberships'] as const).map((tab) => (
           <Pressable
@@ -119,106 +102,78 @@ export default function ReportsScreen() {
         <ActivityIndicator size="large" color="#059669" className="mt-12" />
       ) : (
         <View className="px-4 pt-4">
-          {/* Revenue report */}
           {activeTab === 'revenue' && revenueQuery.data && (
             <View>
               <View className="flex-row mb-3">
                 <StatCard
                   label="Total Revenue"
-                  value={formatCurrency(revenueQuery.data.totalRevenue)}
+                  value={formatCurrency(revenueQuery.data.total_revenue_cents)}
                   icon="cash"
                   color="#059669"
                 />
                 <StatCard
-                  label="This Month"
-                  value={formatCurrency(revenueQuery.data.monthlyRevenue)}
+                  label="Growth"
+                  value={`${revenueQuery.data.growth_percent.toFixed(1)}%`}
                   icon="trending-up"
                   color="#6366f1"
                 />
               </View>
 
-              <Text className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2 mt-4">
-                Top Plans by Revenue
-              </Text>
-              {revenueQuery.data.topPlans.length === 0 ? (
-                <EmptyState message="No revenue data available yet" />
-              ) : (
-                revenueQuery.data.topPlans.map((plan, i) => (
-                  <View key={i} className="bg-white rounded-lg p-4 mb-2 border border-gray-200">
-                    <View className="flex-row justify-between">
-                      <Text className="text-gray-900 font-medium">{plan.name}</Text>
-                      <Text className="text-gray-900 font-semibold">
-                        {formatCurrency(plan.revenue)}
-                      </Text>
-                    </View>
-                    <Text className="text-gray-500 text-sm mt-1">
-                      {plan.count} subscription{plan.count !== 1 ? 's' : ''}
-                    </Text>
-                  </View>
-                ))
-              )}
+              <View className="bg-white rounded-lg p-4 mb-2 border border-gray-200">
+                <Text className="text-sm text-gray-500">Memberships</Text>
+                <Text className="text-lg font-semibold text-gray-900">
+                  {formatCurrency(revenueQuery.data.source_breakdown.memberships_cents)}
+                </Text>
+              </View>
+              <View className="bg-white rounded-lg p-4 mb-2 border border-gray-200">
+                <Text className="text-sm text-gray-500">Classes</Text>
+                <Text className="text-lg font-semibold text-gray-900">
+                  {formatCurrency(revenueQuery.data.source_breakdown.classes_cents)}
+                </Text>
+              </View>
             </View>
           )}
 
-          {/* Attendance report */}
           {activeTab === 'attendance' && attendanceQuery.data && (
             <View>
               <View className="flex-row mb-3">
                 <StatCard
                   label="Total Check-ins"
-                  value={String(attendanceQuery.data.totalCheckins)}
+                  value={String(attendanceQuery.data.total_check_ins)}
                   icon="people"
                   color="#059669"
                 />
                 <StatCard
                   label="Avg Daily"
-                  value={String(attendanceQuery.data.avgDaily)}
+                  value={attendanceQuery.data.average_daily_attendance.toFixed(1)}
                   icon="bar-chart"
                   color="#f59e0b"
                 />
               </View>
-
               <View className="bg-white rounded-lg p-4 mb-3 border border-gray-200">
                 <View className="flex-row items-center">
                   <Ionicons name="time" size={20} color="#6366f1" />
                   <Text className="text-gray-500 ml-2">Peak Hour</Text>
                   <Text className="text-gray-900 font-semibold ml-auto">
-                    {attendanceQuery.data.peakHour}
+                    {attendanceQuery.data.peak_hour ?? '--'}:00
                   </Text>
                 </View>
               </View>
-
-              <Text className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2 mt-4">
-                Top Classes by Attendance
-              </Text>
-              {attendanceQuery.data.topClasses.length === 0 ? (
-                <EmptyState message="No attendance data available yet" />
-              ) : (
-                attendanceQuery.data.topClasses.map((cls, i) => (
-                  <View key={i} className="bg-white rounded-lg p-4 mb-2 border border-gray-200">
-                    <View className="flex-row justify-between">
-                      <Text className="text-gray-900 font-medium">{cls.name}</Text>
-                      <Text className="text-gray-900 font-semibold">{cls.attendance} visits</Text>
-                    </View>
-                  </View>
-                ))
-              )}
             </View>
           )}
 
-          {/* Membership health report */}
           {activeTab === 'memberships' && membershipQuery.data && (
             <View>
               <View className="flex-row mb-3">
                 <StatCard
                   label="Active Members"
-                  value={String(membershipQuery.data.totalActive)}
+                  value={String(membershipQuery.data.total_active_members)}
                   icon="person"
                   color="#059669"
                 />
                 <StatCard
-                  label="New This Month"
-                  value={String(membershipQuery.data.newThisMonth)}
+                  label="New This Period"
+                  value={String(membershipQuery.data.new_this_period)}
                   icon="add-circle"
                   color="#6366f1"
                 />
@@ -227,41 +182,24 @@ export default function ReportsScreen() {
               <View className="flex-row mb-3">
                 <StatCard
                   label="Expiring Soon"
-                  value={String(membershipQuery.data.expiringThisMonth)}
+                  value={String(membershipQuery.data.expiring_soon_member_count)}
                   icon="warning"
                   color="#f59e0b"
                 />
                 <StatCard
                   label="Churn Rate"
-                  value={`${membershipQuery.data.churnRate.toFixed(1)}%`}
+                  value={`${membershipQuery.data.churn_rate_percent.toFixed(1)}%`}
                   icon="trending-down"
                   color="#ef4444"
                 />
               </View>
-
-              <Text className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2 mt-4">
-                Membership Breakdown
-              </Text>
-              {membershipQuery.data.breakdown.length === 0 ? (
-                <EmptyState message="No membership data available yet" />
-              ) : (
-                membershipQuery.data.breakdown.map((item, i) => (
-                  <View key={i} className="bg-white rounded-lg p-4 mb-2 border border-gray-200">
-                    <View className="flex-row justify-between items-center">
-                      <Text className="text-gray-900 font-medium">{item.plan}</Text>
-                      <Text className="text-gray-900 font-semibold">{item.count}</Text>
-                    </View>
-                    <View className="mt-2 bg-gray-200 rounded-full h-2">
-                      <View
-                        className="bg-emerald-500 rounded-full h-2"
-                        style={{ width: `${item.percentage}%` }}
-                      />
-                    </View>
-                    <Text className="text-gray-500 text-xs mt-1">{item.percentage}% of total</Text>
-                  </View>
-                ))
-              )}
             </View>
+          )}
+
+          {((activeTab === 'revenue' && !revenueQuery.data) ||
+            (activeTab === 'attendance' && !attendanceQuery.data) ||
+            (activeTab === 'memberships' && !membershipQuery.data)) && (
+            <EmptyState message="No report data available yet" />
           )}
         </View>
       )}

@@ -1,3 +1,5 @@
+import os
+
 from fastapi import APIRouter
 
 from app.api.routes import (
@@ -39,8 +41,10 @@ api_router.include_router(items.router)
 api_router.include_router(rbac_examples.router)
 api_router.include_router(admin.router)
 api_router.include_router(webhooks.router)
-api_router.include_router(realtime.router)
 
+# WebSocket routes are not supported on Vercel serverless
+if not os.environ.get("VERCEL"):
+    api_router.include_router(realtime.router)
 
 if settings.ENVIRONMENT == "local":
     api_router.include_router(private.router)

@@ -1,78 +1,112 @@
 /**
  * Class detail screen with booking functionality.
- *
- * Displays full class information and allows consumers
- * to book a spot in the class.
  */
 
 import { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
+import {
+  bookingsBookPayPerClass,
+  bookingsBookWithMembership,
+  bookingsJoinWaitlist,
+  marketplaceBookMarketplaceClassWithSubscription,
+  marketplaceViewMarketplaceClassDetails,
+} from '@sl/api-client';
+import { getAuthHeaders } from '../../lib/apiAuth';
 
-// Placeholder types until API client types are generated
-interface ClassDetail {
-  id: string;
-  name: string;
-  description: string;
-  gymName: string;
-  gymAddress: string;
-  instructorName: string;
-  startTime: string;
-  endTime: string;
-  duration: number;
-  spotsAvailable: number;
-  totalSpots: number;
-  priceZar: number;
-  category: string;
-  requirements: string;
-  cancellationPolicy: string;
-}
+type BookingMethod = 'membership' | 'subscription' | 'pay_per_class';
 
 export default function ClassDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const queryClient = useQueryClient();
-  const [isBooking, setIsBooking] = useState(false);
+  const [bookingMethod, setBookingMethod] = useState<BookingMethod>('pay_per_class');
 
-  const classQuery = useQuery<ClassDetail>({
+  const classQuery = useQuery({
     queryKey: ['class', id],
     queryFn: async () => {
-      // TODO: Replace with actual API call
-      // e.g., marketplaceGetClass({ path: { class_id: id } })
-      throw new Error('Not implemented');
+      if (!id) {
+        return null;
+      }
+
+      const response = await marketplaceViewMarketplaceClassDetails({
+        path: { session_id: id },
+        headers: getAuthHeaders(),
+      });
+      return response.data ?? null;
     },
     enabled: !!id,
   });
 
   const bookMutation = useMutation({
     mutationFn: async () => {
-      // TODO: Replace with actual API call
-      // e.g., consumerBookingsCreateBooking({ body: { class_session_id: id } })
-      setIsBooking(true);
+      const classData = classQuery.data;
+      if (!classData) {
+        throw new Error('Missing class details');
+      }
+
+      const headers = getAuthHeaders();
+
+      if (classData.spots_remaining === 0) {
+        await bookingsJoinWaitlist({
+          body: {
+            gym_id: classData.gym_id,
+            session_id: classData.session_id,
+          },
+          headers,
+        });
+        return 'waitlist';
+      }
+
+      if (bookingMethod === 'membership') {
+        await bookingsBookWithMembership({
+          body: {
+            gym_id: classData.gym_id,
+            session_id: classData.session_id,
+          },
+          headers,
+        });
+        return 'booked';
+      }
+
+      if (bookingMethod === 'subscription') {
+        await marketplaceBookMarketplaceClassWithSubscription({
+          body: {
+            session_id: classData.session_id,
+          },
+          headers,
+        });
+        return 'booked';
+      }
+
+      await bookingsBookPayPerClass({
+        body: {
+          gym_id: classData.gym_id,
+          session_id: classData.session_id,
+          amount_cents: classData.price_cents,
+        },
+        headers,
+      });
+      return 'booked';
     },
-    onSuccess: () => {
-      setIsBooking(false);
-      queryClient.invalidateQueries({ queryKey: ['consumer', 'bookings'] });
-      Alert.alert('Booked!', 'Your spot has been reserved.', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
+    onSuccess: (mode) => {
+      void queryClient.invalidateQueries({ queryKey: ['consumer', 'class-history'] });
+      Alert.alert(
+        mode === 'waitlist' ? 'Added to waitlist' : 'Booked!',
+        mode === 'waitlist'
+          ? 'You were added to the waitlist for this class.'
+          : 'Your spot has been reserved.',
+        [{ text: 'OK', onPress: () => router.back() }],
+      );
     },
     onError: () => {
-      setIsBooking(false);
       Alert.alert('Booking Failed', 'Unable to book this class. Please try again.');
     },
   });
 
   const formatCurrency = (amount: number) =>
-    `R ${amount.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`;
+    `R ${(amount / 100).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`;
 
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString('en-ZA', {
@@ -101,9 +135,6 @@ export default function ClassDetailScreen() {
       <View className="flex-1 bg-gray-50 items-center justify-center px-6">
         <Ionicons name="alert-circle-outline" size={48} color="#d1d5db" />
         <Text className="text-gray-500 text-lg mt-4 mb-2">Class not found</Text>
-        <Text className="text-gray-400 text-center mb-4">
-          This class may no longer be available
-        </Text>
         <Pressable className="bg-indigo-600 rounded-lg py-3 px-6" onPress={() => router.back()}>
           <Text className="text-white font-semibold">Go Back</Text>
         </Pressable>
@@ -116,107 +147,115 @@ export default function ClassDetailScreen() {
   return (
     <View className="flex-1 bg-gray-50">
       <ScrollView contentContainerClassName="pb-24">
-        {/* Header */}
         <View className="bg-white px-4 py-6 border-b border-gray-200">
           <View className="flex-row justify-between items-start">
             <View className="flex-1 mr-3">
               <View className="bg-indigo-50 px-3 py-1 rounded-full self-start mb-2">
-                <Text className="text-indigo-700 text-sm font-medium">{classData.category}</Text>
+                <Text className="text-indigo-700 text-sm font-medium">{classData.class_type}</Text>
               </View>
-              <Text className="text-2xl font-bold text-gray-900">{classData.name}</Text>
+              <Text className="text-2xl font-bold text-gray-900">{classData.title}</Text>
             </View>
             <Text className="text-2xl font-bold text-indigo-600">
-              {formatCurrency(classData.priceZar)}
+              {formatCurrency(classData.price_cents)}
             </Text>
           </View>
         </View>
 
-        {/* Details */}
         <View className="bg-white mt-2 px-4 py-4 border-t border-b border-gray-200">
-          <DetailRow
-            icon="business-outline"
-            label="Gym"
-            value={classData.gymName}
-          />
+          <DetailRow icon="business-outline" label="Gym" value={classData.gym_name} />
           <DetailRow
             icon="location-outline"
             label="Address"
-            value={classData.gymAddress}
+            value={[classData.address_line1, classData.city, classData.province].filter(Boolean).join(', ') || '-'}
           />
-          <DetailRow
-            icon="person-outline"
-            label="Instructor"
-            value={classData.instructorName}
-          />
-          <DetailRow
-            icon="calendar-outline"
-            label="Date"
-            value={formatDate(classData.startTime)}
-          />
+          <DetailRow icon="person-outline" label="Instructor" value={classData.instructor_name ?? 'TBA'} />
+          <DetailRow icon="calendar-outline" label="Date" value={formatDate(classData.start_time)} />
           <DetailRow
             icon="time-outline"
             label="Time"
-            value={`${formatTime(classData.startTime)} - ${formatTime(classData.endTime)}`}
+            value={`${formatTime(classData.start_time)} - ${formatTime(classData.end_time)}`}
           />
           <DetailRow
             icon="timer-outline"
             label="Duration"
-            value={`${classData.duration} minutes`}
+            value={`${classData.duration_minutes} minutes`}
           />
           <DetailRow
             icon="people-outline"
             label="Availability"
-            value={`${classData.spotsAvailable} of ${classData.totalSpots} spots available`}
+            value={`${classData.spots_remaining} of ${classData.capacity} spots available`}
           />
         </View>
 
-        {/* Description */}
-        <View className="bg-white mt-2 px-4 py-4 border-t border-b border-gray-200">
-          <Text className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
-            About this class
-          </Text>
-          <Text className="text-gray-700 leading-5">{classData.description}</Text>
-        </View>
-
-        {/* Requirements */}
-        {classData.requirements && (
+        {!!classData.description && (
           <View className="bg-white mt-2 px-4 py-4 border-t border-b border-gray-200">
             <Text className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
-              Requirements
+              About this class
             </Text>
-            <Text className="text-gray-700 leading-5">{classData.requirements}</Text>
+            <Text className="text-gray-700 leading-5">{classData.description}</Text>
           </View>
         )}
 
-        {/* Cancellation policy */}
-        {classData.cancellationPolicy && (
+        {!!classData.cancellation_policy && (
           <View className="bg-white mt-2 px-4 py-4 border-t border-b border-gray-200">
             <Text className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
               Cancellation Policy
             </Text>
-            <Text className="text-gray-700 leading-5">{classData.cancellationPolicy}</Text>
+            <Text className="text-gray-700 leading-5">{classData.cancellation_policy}</Text>
           </View>
         )}
+
+        <View className="bg-white mt-2 px-4 py-4 border-t border-b border-gray-200">
+          <Text className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+            Booking Method
+          </Text>
+
+          <Pressable className="flex-row items-center py-2" onPress={() => setBookingMethod('membership')}>
+            <Ionicons
+              name={bookingMethod === 'membership' ? 'radio-button-on' : 'radio-button-off'}
+              size={18}
+              color="#4f46e5"
+            />
+            <Text className="ml-2 text-gray-800">Use gym membership</Text>
+          </Pressable>
+
+          <Pressable className="flex-row items-center py-2" onPress={() => setBookingMethod('subscription')}>
+            <Ionicons
+              name={bookingMethod === 'subscription' ? 'radio-button-on' : 'radio-button-off'}
+              size={18}
+              color="#4f46e5"
+            />
+            <Text className="ml-2 text-gray-800">Use marketplace subscription</Text>
+          </Pressable>
+
+          <Pressable className="flex-row items-center py-2" onPress={() => setBookingMethod('pay_per_class')}>
+            <Ionicons
+              name={bookingMethod === 'pay_per_class' ? 'radio-button-on' : 'radio-button-off'}
+              size={18}
+              color="#4f46e5"
+            />
+            <Text className="ml-2 text-gray-800">Pay per class</Text>
+          </Pressable>
+        </View>
       </ScrollView>
 
-      {/* Fixed booking button */}
       <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-4">
         <Pressable
           className={`w-full py-4 rounded-lg ${
-            classData.spotsAvailable === 0
-              ? 'bg-gray-300'
-              : isBooking
-                ? 'bg-indigo-400'
+            bookMutation.isPending
+              ? 'bg-indigo-400'
+              : classData.spots_remaining === 0
+                ? 'bg-orange-500'
                 : 'bg-indigo-600'
           }`}
           onPress={() => bookMutation.mutate()}
-          disabled={classData.spotsAvailable === 0 || isBooking}
+          disabled={bookMutation.isPending}
         >
-          {isBooking ? (
+          {bookMutation.isPending ? (
             <ActivityIndicator color="#fff" />
           ) : (
             <Text className="text-white text-center font-bold text-lg">
-              {classData.spotsAvailable === 0 ? 'Class Full' : `Book for ${formatCurrency(classData.priceZar)}`}
+              {classData.spots_remaining === 0 ? 'Join Waitlist' : `Book for ${formatCurrency(classData.price_cents)}`}
             </Text>
           )}
         </Pressable>

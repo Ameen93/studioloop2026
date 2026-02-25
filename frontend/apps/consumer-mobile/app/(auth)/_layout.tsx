@@ -42,6 +42,18 @@ export default function AuthLayout() {
           headerShown: false,
         }}
       />
+      <Stack.Screen
+        name="forgot-password"
+        options={{
+          title: 'Reset Password',
+        }}
+      />
+      <Stack.Screen
+        name="resend-verification"
+        options={{
+          title: 'Resend Verification',
+        }}
+      />
     </Stack>
   );
 }

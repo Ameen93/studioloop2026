@@ -1,11 +1,8 @@
 /**
  * Discover tab - browse marketplace classes and gyms.
- *
- * Allows consumers to search for and browse available
- * fitness classes from various gyms in the marketplace.
  */
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -18,94 +15,86 @@ import {
 import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
-
-// Placeholder type until API client types are generated
-interface MarketplaceClass {
-  id: string;
-  name: string;
-  description: string;
-  gymName: string;
-  instructorName: string;
-  startTime: string;
-  duration: number;
-  spotsAvailable: number;
-  totalSpots: number;
-  priceZar: number;
-  category: string;
-}
+import { marketplaceBrowseMarketplaceClasses } from '@sl/api-client';
+import type { MarketplaceClassItem } from '@sl/api-client';
+import { getAuthHeaders } from '../../lib/apiAuth';
 
 export default function DiscoverTab() {
   const [searchQuery, setSearchQuery] = useState('');
 
-  const classesQuery = useQuery<MarketplaceClass[]>({
-    queryKey: ['marketplace', 'classes', searchQuery],
+  const classesQuery = useQuery({
+    queryKey: ['marketplace', 'classes'],
     queryFn: async () => {
-      // TODO: Replace with actual API call
-      // e.g., marketplaceListClasses({ query: { search: searchQuery } })
-      return [];
+      const response = await marketplaceBrowseMarketplaceClasses({
+        headers: getAuthHeaders(),
+        query: { limit: 100 },
+      });
+      return response.data ?? [];
     },
   });
 
-  const formatCurrency = (amount: number) =>
-    `R ${amount.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`;
+  const filteredClasses = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    const classes = classesQuery.data ?? [];
+    if (!q) {
+      return classes;
+    }
 
-  const renderClass = ({ item }: { item: MarketplaceClass }) => (
-    <Pressable
-      className="bg-white rounded-lg p-4 mb-3 border border-gray-200"
-      onPress={() => router.push(`/class/${item.id}`)}
-    >
-      <View className="flex-row justify-between items-start">
-        <View className="flex-1 mr-3">
-          <Text className="text-lg font-semibold text-gray-900">{item.name}</Text>
-          <Text className="text-sm text-gray-600 mt-1">{item.gymName}</Text>
-        </View>
-        <View className="bg-indigo-50 px-3 py-1 rounded-full">
-          <Text className="text-indigo-700 text-sm font-medium">{item.category}</Text>
-        </View>
-      </View>
+    return classes.filter((item) => {
+      return (
+        item.title.toLowerCase().includes(q) ||
+        item.gym_name.toLowerCase().includes(q) ||
+        (item.city ?? '').toLowerCase().includes(q) ||
+        (item.province ?? '').toLowerCase().includes(q)
+      );
+    });
+  }, [classesQuery.data, searchQuery]);
 
-      <Text className="text-sm text-gray-500 mt-2" numberOfLines={2}>
-        {item.description}
-      </Text>
+  const formatCurrency = (amountCents: number) =>
+    `R ${(amountCents / 100).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`;
 
-      <View className="flex-row justify-between items-center mt-3 pt-3 border-t border-gray-100">
-        <View className="flex-row items-center">
-          <Ionicons name="person-outline" size={14} color="#6b7280" />
-          <Text className="text-sm text-gray-500 ml-1">{item.instructorName}</Text>
-        </View>
-        <View className="flex-row items-center">
-          <Ionicons name="time-outline" size={14} color="#6b7280" />
-          <Text className="text-sm text-gray-500 ml-1">{item.duration} min</Text>
-        </View>
-        <Text className="text-sm font-semibold text-gray-900">{formatCurrency(item.priceZar)}</Text>
-      </View>
+  const renderClass = ({ item }: { item: MarketplaceClassItem }) => {
+    const spotsAvailable = Math.max(0, item.capacity - item.spots_booked);
 
-      <View className="flex-row justify-between items-center mt-2">
-        <Text className="text-xs text-gray-400">
-          {new Date(item.startTime).toLocaleDateString('en-ZA', {
-            day: '2-digit',
-            month: 'short',
-          })}{' '}
-          at{' '}
-          {new Date(item.startTime).toLocaleTimeString('en-ZA', {
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
-        </Text>
-        <Text
-          className={`text-xs font-medium ${
-            item.spotsAvailable > 3 ? 'text-green-600' : 'text-orange-600'
-          }`}
-        >
-          {item.spotsAvailable} / {item.totalSpots} spots left
-        </Text>
-      </View>
-    </Pressable>
-  );
+    return (
+      <Pressable
+        className="bg-white rounded-lg p-4 mb-3 border border-gray-200"
+        onPress={() => router.push(`/class/${item.session_id}`)}
+      >
+        <View className="flex-row justify-between items-start">
+          <View className="flex-1 mr-3">
+            <Text className="text-lg font-semibold text-gray-900">{item.title}</Text>
+            <Text className="text-sm text-gray-600 mt-1">{item.gym_name}</Text>
+          </View>
+          <Text className="text-sm font-semibold text-gray-900">{formatCurrency(item.price_cents)}</Text>
+        </View>
+
+        <View className="flex-row justify-between items-center mt-3 pt-3 border-t border-gray-100">
+          <View className="flex-row items-center">
+            <Ionicons name="time-outline" size={14} color="#6b7280" />
+            <Text className="text-sm text-gray-500 ml-1">
+              {new Date(item.start_time).toLocaleDateString('en-ZA', {
+                day: '2-digit',
+                month: 'short',
+              })}{' '}
+              {new Date(item.start_time).toLocaleTimeString('en-ZA', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </Text>
+          </View>
+          <Text
+            className={`text-xs font-medium ${spotsAvailable > 3 ? 'text-green-600' : 'text-orange-600'}`}
+          >
+            {spotsAvailable} / {item.capacity} spots left
+          </Text>
+        </View>
+      </Pressable>
+    );
+  };
 
   return (
     <View className="flex-1 bg-gray-50">
-      {/* Search bar */}
       <View className="px-4 pt-4 pb-2">
         <View className="flex-row items-center bg-white border border-gray-300 rounded-lg px-3">
           <Ionicons name="search" size={20} color="#9ca3af" />
@@ -126,9 +115,9 @@ export default function DiscoverTab() {
       </View>
 
       <FlatList
-        data={classesQuery.data ?? []}
+        data={filteredClasses}
         renderItem={renderClass}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.session_id}
         contentContainerClassName="px-4 pb-8"
         refreshControl={
           <RefreshControl

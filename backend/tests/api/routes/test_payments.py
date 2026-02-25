@@ -240,3 +240,26 @@ def test_story_8_7_8_8_8_9_reports_history_receipt(client: TestClient, db: Sessi
     receipt = client.get(f"/api/v1/payments/me/{payment_id}/receipt", headers=consumer_headers)
     assert receipt.status_code == 200
     assert "VAT" in receipt.json()["rendered_text"]
+
+
+def test_payments_denies_cross_tenant_dashboard_access(client: TestClient, db: Session) -> None:
+    gym_a = db.exec(select(Gym)).first()
+    assert gym_a is not None
+
+    gym_b = Gym(
+        name=f"Payments Gym {uuid4().hex[:6]}",
+        slug=f"payments-gym-{uuid4().hex[:8]}",
+        is_active=True,
+    )
+    db.add(gym_b)
+    db.commit()
+    db.refresh(gym_b)
+
+    staff_headers = _staff_headers(client, db, gym_a, StaffRole.OWNER)
+
+    response = client.get(f"/api/v1/payments/gyms/{gym_b.id}", headers=staff_headers)
+
+    assert response.status_code == 403
+    body = response.json()
+    assert body["detail"]["code"] == "FORBIDDEN"
+    assert "Access denied to this gym" in body["detail"]["message"]

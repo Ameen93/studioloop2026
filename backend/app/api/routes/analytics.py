@@ -453,8 +453,8 @@ def staff_performance_report(
     start, end = _period_bounds(period, start_date, end_date)
 
     staff_list = session.exec(
-        select(Staff).where(Staff.gym_id == gym_id, Staff.is_active == True)
-    ).all()  # noqa: E712
+        select(Staff).where(Staff.gym_id == gym_id, Staff.is_active)
+    ).all()
     if staff_member_id:
         staff_list = [s for s in staff_list if s.id == staff_member_id]
     if role:

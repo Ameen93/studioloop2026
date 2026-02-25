@@ -10,12 +10,14 @@ import { View, Text, ScrollView, Pressable, Switch, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
+import * as Linking from 'expo-linking';
 import { getConsumerProfile, clearAuth } from '../../lib/auth';
 import { clearQrCache } from '../../lib/qr-cache';
 
 export default function ProfileTab() {
   const queryClient = useQueryClient();
   const profile = getConsumerProfile();
+  const legalBaseUrl = process.env.EXPO_PUBLIC_LEGAL_BASE_URL ?? 'https://studioloop.com';
 
   // Notification preferences (stored in state, would sync with API)
   const [pushEnabled, setPushEnabled] = useState(true);
@@ -36,6 +38,16 @@ export default function ProfileTab() {
         },
       },
     ]);
+  };
+
+  const openExternalLink = async (path: string) => {
+    const url = `${legalBaseUrl.replace(/\/$/, '')}${path}`;
+    const supported = await Linking.canOpenURL(url);
+    if (!supported) {
+      Alert.alert('Unable to open link', 'Please try again later.');
+      return;
+    }
+    await Linking.openURL(url);
   };
 
   const MenuRow = ({
@@ -112,16 +124,14 @@ export default function ProfileTab() {
           <MenuRow
             icon="person-outline"
             label="Edit Profile"
-            onPress={() => {
-              // TODO: Navigate to edit profile screen
-            }}
+            onPress={() => router.push('/(tabs)/memberships')}
           />
           <View className="h-px bg-gray-200 ml-12" />
           <MenuRow
             icon="lock-closed-outline"
             label="Change Password"
             onPress={() => {
-              // TODO: Navigate to change password screen
+              router.push('/(auth)/forgot-password');
             }}
           />
         </View>
@@ -166,24 +176,23 @@ export default function ProfileTab() {
             icon="help-circle-outline"
             label="Help & FAQ"
             onPress={() => {
-              // TODO: Navigate to help screen
+              Alert.alert(
+                'Help & FAQ',
+                'Support is available at support@studioloop.com',
+              );
             }}
           />
           <View className="h-px bg-gray-200 ml-12" />
           <MenuRow
             icon="document-text-outline"
             label="Privacy Policy"
-            onPress={() => {
-              // TODO: Open privacy policy
-            }}
+            onPress={() => void openExternalLink('/privacy')}
           />
           <View className="h-px bg-gray-200 ml-12" />
           <MenuRow
             icon="document-text-outline"
             label="Terms of Service"
-            onPress={() => {
-              // TODO: Open terms of service
-            }}
+            onPress={() => void openExternalLink('/terms')}
           />
         </View>
       </View>

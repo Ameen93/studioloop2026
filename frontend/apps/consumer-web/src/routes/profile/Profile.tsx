@@ -1,44 +1,16 @@
-/**
- * Profile & Settings screen (Story 13.8).
- *
- * Edit profile, notification preferences, class history,
- * payment history, and delete account.
- */
-
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import {
+  analyticsConsumerClassHistory,
+  consumerAuthDeleteConsumerAccount,
+  consumerAuthGetCurrentConsumerProfile,
+  consumerAuthUpdateConsumerProfile,
+  paymentsConsumerPaymentHistory,
+} from '@sl/api-client';
 import { useAuth } from '../../hooks/useAuth';
+import { getAuthHeaders } from '../../lib/apiAuth';
 
 type SectionType = 'profile' | 'notifications' | 'history' | 'payments' | 'danger';
-
-interface ClassHistoryItem {
-  id: string;
-  class_name: string;
-  gym_name: string;
-  date: string;
-  status: 'attended' | 'no_show' | 'cancelled';
-}
-
-interface PaymentHistoryItem {
-  id: string;
-  description: string;
-  amount_zar: number;
-  date: string;
-  status: 'paid' | 'pending' | 'refunded';
-}
-
-// Placeholder data
-const CLASS_HISTORY: ClassHistoryItem[] = [
-  { id: '1', class_name: 'Morning Yoga Flow', gym_name: 'ZenFit Studio', date: '2026-02-15', status: 'attended' },
-  { id: '2', class_name: 'HIIT Blast', gym_name: 'PowerHouse Gym', date: '2026-02-13', status: 'attended' },
-  { id: '3', class_name: 'Pilates Mat', gym_name: 'Body Balance', date: '2026-02-10', status: 'no_show' },
-  { id: '4', class_name: 'Spin & Burn', gym_name: 'CycleFit', date: '2026-02-08', status: 'cancelled' },
-];
-
-const PAYMENT_HISTORY: PaymentHistoryItem[] = [
-  { id: '1', description: 'HIIT Blast - Pay per class', amount_zar: 120, date: '2026-02-13', status: 'paid' },
-  { id: '2', description: 'ZenFit Studio - Monthly', amount_zar: 799, date: '2026-02-01', status: 'paid' },
-  { id: '3', description: 'StudioLoop Explorer - Monthly', amount_zar: 499, date: '2026-02-01', status: 'paid' },
-];
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-ZA', {
@@ -49,34 +21,100 @@ function formatDate(dateStr: string): string {
 }
 
 export function Profile() {
-  const { consumer, logout } = useAuth();
+  const { logout, updateProfile } = useAuth();
   const [activeSection, setActiveSection] = useState<SectionType>('profile');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-  // Profile form state
-  const [firstName, setFirstName] = useState(consumer?.first_name ?? '');
-  const [lastName, setLastName] = useState(consumer?.last_name ?? '');
-  const [phone, setPhone] = useState(consumer?.phone ?? '');
   const [profileSaved, setProfileSaved] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  // Notification preferences
   const [notifBookings, setNotifBookings] = useState(true);
   const [notifPromotions, setNotifPromotions] = useState(true);
   const [notifReminders, setNotifReminders] = useState(true);
   const [notifWhatsApp, setNotifWhatsApp] = useState(false);
 
-  const handleSaveProfile = async () => {
-    // TODO: Wire up to consumer profile update API
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    setProfileSaved(true);
-    setTimeout(() => setProfileSaved(false), 2000);
-  };
+  const profileQuery = useQuery({
+    queryKey: ['consumer-profile'],
+    queryFn: async () => {
+      const response = await consumerAuthGetCurrentConsumerProfile({
+        headers: getAuthHeaders(),
+      });
+      return response.data;
+    },
+  });
 
-  const handleDeleteAccount = async () => {
-    // TODO: Wire up to consumer account deletion API (POPIA compliance)
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    logout();
-  };
+  const classHistoryQuery = useQuery({
+    queryKey: ['consumer-class-history-profile'],
+    queryFn: async () => {
+      const response = await analyticsConsumerClassHistory({
+        headers: getAuthHeaders(),
+      });
+      return response.data?.items ?? [];
+    },
+  });
+
+  const paymentsQuery = useQuery({
+    queryKey: ['consumer-payments-profile'],
+    queryFn: async () => {
+      const response = await paymentsConsumerPaymentHistory({
+        headers: getAuthHeaders(),
+      });
+      return response.data?.items ?? [];
+    },
+  });
+
+  const updateProfileMutation = useMutation({
+    mutationFn: async (payload: {
+      first_name: string;
+      last_name: string;
+      phone: string | null;
+    }) => {
+      const response = await consumerAuthUpdateConsumerProfile({
+        body: payload,
+        headers: getAuthHeaders(),
+        throwOnError: true,
+      });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      setActionError(null);
+      if (data) {
+        updateProfile({
+          id: data.id,
+          email: data.email,
+          first_name: data.first_name,
+          last_name: data.last_name,
+          phone: data.phone,
+          avatar_url: data.avatar_url,
+        });
+      }
+      setProfileSaved(true);
+      setTimeout(() => setProfileSaved(false), 2000);
+    },
+    onError: () => {
+      setProfileSaved(false);
+      setActionError('Could not save profile changes. Please try again.');
+    },
+  });
+
+  const deleteAccountMutation = useMutation({
+    mutationFn: async () => {
+      await consumerAuthDeleteConsumerAccount({
+        body: { password: '' },
+        headers: getAuthHeaders(),
+        throwOnError: true,
+      });
+    },
+    onSuccess: () => {
+      setActionError(null);
+      logout();
+    },
+    onError: () => {
+      setActionError('Could not delete your account. Please try again.');
+    },
+  });
+
+  const classHistoryItems = classHistoryQuery.data ?? [];
+  const paymentItems = paymentsQuery.data ?? [];
 
   const sections: { key: SectionType; label: string }[] = [
     { key: 'profile', label: 'Edit Profile' },
@@ -86,11 +124,32 @@ export function Profile() {
     { key: 'danger', label: 'Account' },
   ];
 
+  const handleProfileSave = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const firstName = String(formData.get('firstName') ?? '').trim();
+    const lastName = String(formData.get('lastName') ?? '').trim();
+    const phone = String(formData.get('phone') ?? '').trim();
+    setActionError(null);
+    setProfileSaved(false);
+
+    updateProfileMutation.mutate({
+      first_name: firstName,
+      last_name: lastName,
+      phone: phone || null,
+    });
+  };
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Profile & Settings</h1>
 
-      {/* Section tabs */}
+      {actionError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 mb-4">
+          {actionError}
+        </div>
+      )}
+
       <div className="flex items-center gap-1 overflow-x-auto pb-2 mb-6 -mx-4 px-4">
         {sections.map(({ key, label }) => (
           <button
@@ -107,12 +166,23 @@ export function Profile() {
         ))}
       </div>
 
-      {/* Edit Profile */}
+      {(profileQuery.isLoading || classHistoryQuery.isLoading || paymentsQuery.isLoading) && (
+        <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-600 mb-4">
+          Loading profile data...
+        </div>
+      )}
+
+      {(profileQuery.error || classHistoryQuery.error || paymentsQuery.error) && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 mb-4">
+          Could not load all profile data.
+        </div>
+      )}
+
       {activeSection === 'profile' && (
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Edit Profile</h2>
 
-          <div className="space-y-4">
+          <form className="space-y-4" onSubmit={handleProfileSave}>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
@@ -120,9 +190,9 @@ export function Profile() {
                 </label>
                 <input
                   id="firstName"
+                  name="firstName"
                   type="text"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
+                  defaultValue={profileQuery.data?.first_name ?? ''}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
               </div>
@@ -132,9 +202,9 @@ export function Profile() {
                 </label>
                 <input
                   id="lastName"
+                  name="lastName"
                   type="text"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
+                  defaultValue={profileQuery.data?.last_name ?? ''}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
               </div>
@@ -147,44 +217,46 @@ export function Profile() {
               <input
                 id="email"
                 type="email"
-                value={consumer?.email ?? ''}
+                value={profileQuery.data?.email ?? ''}
                 disabled
                 className="mt-1 block w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 sm:text-sm"
               />
-              <p className="mt-1 text-xs text-gray-400">Email cannot be changed</p>
             </div>
 
             <div>
               <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
                 Phone number
               </label>
-              <input
-                id="phone"
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="+27821234567"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              />
+                <input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  defaultValue={profileQuery.data?.phone ?? ''}
+                  placeholder="+27821234567"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                />
             </div>
 
             <div className="pt-2">
               <button
-                onClick={handleSaveProfile}
-                className="px-6 py-2 text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+                type="submit"
+                disabled={updateProfileMutation.isPending}
+                className="px-6 py-2 text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors disabled:opacity-50"
               >
-                {profileSaved ? 'Saved!' : 'Save changes'}
+                {updateProfileMutation.isPending
+                  ? 'Saving...'
+                  : profileSaved
+                    ? 'Saved!'
+                    : 'Save changes'}
               </button>
             </div>
-          </div>
+          </form>
         </div>
       )}
 
-      {/* Notifications */}
       {activeSection === 'notifications' && (
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Notification Preferences</h2>
-
           <div className="space-y-4">
             <ToggleRow
               label="Booking confirmations & changes"
@@ -204,44 +276,33 @@ export function Profile() {
               checked={notifPromotions}
               onChange={setNotifPromotions}
             />
-
-            <div className="border-t border-gray-100 pt-4">
-              <ToggleRow
-                label="WhatsApp notifications"
-                description="Receive notifications via WhatsApp instead of email"
-                checked={notifWhatsApp}
-                onChange={setNotifWhatsApp}
-              />
-            </div>
+            <ToggleRow
+              label="WhatsApp notifications"
+              description="Receive notifications via WhatsApp instead of email"
+              checked={notifWhatsApp}
+              onChange={setNotifWhatsApp}
+            />
           </div>
         </div>
       )}
 
-      {/* Class History */}
       {activeSection === 'history' && (
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Class History</h2>
-
-          {CLASS_HISTORY.length === 0 ? (
+          {classHistoryItems.length === 0 ? (
             <p className="text-gray-500 text-center py-8">No class history yet.</p>
           ) : (
             <div className="divide-y divide-gray-100">
-              {CLASS_HISTORY.map((item) => (
-                <div key={item.id} className="py-3 flex items-center justify-between">
+              {classHistoryItems.map((item) => (
+                <div key={`${item.session_id}-${item.attended_at}`} className="py-3 flex items-center justify-between">
                   <div>
                     <p className="font-medium text-gray-900 text-sm">{item.class_name}</p>
-                    <p className="text-xs text-gray-500">{item.gym_name} - {formatDate(item.date)}</p>
+                    <p className="text-xs text-gray-500">
+                      {item.gym_id} - {formatDate(item.attended_at)}
+                    </p>
                   </div>
-                  <span
-                    className={`text-xs font-medium px-2 py-0.5 rounded-full capitalize ${
-                      item.status === 'attended'
-                        ? 'bg-green-100 text-green-700'
-                        : item.status === 'no_show'
-                          ? 'bg-red-100 text-red-700'
-                          : 'bg-gray-100 text-gray-600'
-                    }`}
-                  >
-                    {item.status.replace('_', ' ')}
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full capitalize bg-green-100 text-green-700">
+                    attended
                   </span>
                 </div>
               ))}
@@ -250,26 +311,26 @@ export function Profile() {
         </div>
       )}
 
-      {/* Payment History */}
       {activeSection === 'payments' && (
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Payment History</h2>
-
-          {PAYMENT_HISTORY.length === 0 ? (
+          {paymentItems.length === 0 ? (
             <p className="text-gray-500 text-center py-8">No payments yet.</p>
           ) : (
             <div className="divide-y divide-gray-100">
-              {PAYMENT_HISTORY.map((item) => (
-                <div key={item.id} className="py-3 flex items-center justify-between">
+              {paymentItems.map((item) => (
+                <div key={item.payment_id} className="py-3 flex items-center justify-between">
                   <div>
                     <p className="font-medium text-gray-900 text-sm">{item.description}</p>
-                    <p className="text-xs text-gray-500">{formatDate(item.date)}</p>
+                    <p className="text-xs text-gray-500">{formatDate(item.created_at)}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium text-gray-900 text-sm">R {item.amount_zar.toFixed(2)}</p>
+                    <p className="font-medium text-gray-900 text-sm">
+                      R {(item.amount_cents / 100).toFixed(2)}
+                    </p>
                     <span
                       className={`text-xs font-medium capitalize ${
-                        item.status === 'paid'
+                        item.status === 'completed'
                           ? 'text-green-600'
                           : item.status === 'refunded'
                             ? 'text-amber-600'
@@ -286,15 +347,12 @@ export function Profile() {
         </div>
       )}
 
-      {/* Danger Zone */}
       {activeSection === 'danger' && (
         <div className="bg-white rounded-xl border border-red-200 p-6">
           <h2 className="text-lg font-semibold text-red-700 mb-2">Delete Account</h2>
           <p className="text-sm text-gray-600 mb-4">
-            Permanently delete your account and all associated data. This action cannot be undone.
-            As per POPIA regulations, all your personal data will be erased.
+            Permanently delete your account and all associated data.
           </p>
-
           {!showDeleteConfirm ? (
             <button
               onClick={() => setShowDeleteConfirm(true)}
@@ -309,10 +367,11 @@ export function Profile() {
               </p>
               <div className="flex items-center gap-3">
                 <button
-                  onClick={handleDeleteAccount}
-                  className="px-4 py-2 text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 transition-colors"
+                  onClick={() => deleteAccountMutation.mutate()}
+                  disabled={deleteAccountMutation.isPending}
+                  className="px-4 py-2 text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50"
                 >
-                  Yes, delete my account
+                  {deleteAccountMutation.isPending ? 'Deleting...' : 'Yes, delete my account'}
                 </button>
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
@@ -338,21 +397,19 @@ function ToggleRow({
   label: string;
   description: string;
   checked: boolean;
-  onChange: (value: boolean) => void;
+  onChange: (val: boolean) => void;
 }) {
   return (
-    <div className="flex items-center justify-between">
+    <label className="flex items-start justify-between gap-4 cursor-pointer">
       <div>
         <p className="text-sm font-medium text-gray-900">{label}</p>
         <p className="text-xs text-gray-500">{description}</p>
       </div>
       <button
         type="button"
-        role="switch"
-        aria-checked={checked}
         onClick={() => onChange(!checked)}
         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-          checked ? 'bg-indigo-600' : 'bg-gray-200'
+          checked ? 'bg-indigo-600' : 'bg-gray-300'
         }`}
       >
         <span
@@ -361,7 +418,7 @@ function ToggleRow({
           }`}
         />
       </button>
-    </div>
+    </label>
   );
 }
 

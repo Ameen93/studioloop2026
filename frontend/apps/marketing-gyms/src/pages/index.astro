@@ -1,0 +1,547 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+
+const features = [
+  {
+    title: 'Member and plan management',
+    desc: 'Track memberships, handle sign-ups, and flag at-risk members before they churn.',
+    img: '/assets/marketing/features/b2b-member-management.png',
+  },
+  {
+    title: 'Class scheduling and attendance',
+    desc: 'Build weekly timetables, manage capacity, and track real attendance data.',
+    img: '/assets/marketing/features/b2b-class-scheduling.png',
+  },
+  {
+    title: 'Payment visibility and failed-payment alerts',
+    desc: 'See every transaction, catch failed debits instantly, and automate follow-ups.',
+    img: '/assets/marketing/features/b2b-billing.png',
+  },
+  {
+    title: 'Marketplace controls for off-peak slot fill',
+    desc: 'List spare capacity to the consumer marketplace and fill off-peak slots.',
+    img: '/assets/marketing/features/b2b-community.png',
+  },
+];
+
+const metrics = [
+  { label: 'Admin Hours', value: '15h -> <5h / week' },
+  { label: 'Collection Rate', value: '>95% on-time payments' },
+  { label: 'Off-Peak Fill', value: '>40% listed slots' },
+];
+
+const testimonials = [
+  {
+    quote: "We went from 3 spreadsheets and a WhatsApp group to one dashboard. My front desk runs itself now.",
+    name: 'Sipho N.',
+    detail: 'Owner, Iron House Gym',
+    img: '/assets/marketing/headshots/b2b-testimonial-1.png',
+  },
+  {
+    quote: "The failed payment alerts alone saved us R12,000 in the first month. Money we didn't even know we were losing.",
+    name: 'Lisa V.',
+    detail: 'Owner, Flow Boutique Studio',
+    img: '/assets/marketing/headshots/b2b-testimonial-2.png',
+  },
+  {
+    quote: "Marketplace filled 40% of our off-peak slots within weeks. That's revenue from empty time.",
+    name: 'Ruan D.',
+    detail: 'Owner, CrossFit Atlantic',
+    img: '/assets/marketing/headshots/b2b-testimonial-3.png',
+  },
+];
+
+const gymTypes = [
+  { label: 'Boutique Studios', img: '/assets/marketing/gym-interiors/boutique-studio.png' },
+  { label: 'CrossFit Boxes', img: '/assets/marketing/gym-interiors/crossfit-box.png' },
+  { label: 'Traditional Gyms', img: '/assets/marketing/gym-interiors/traditional-gym.png' },
+];
+
+const faq = [
+  {
+    q: 'Is this only for large gyms?',
+    a: 'No. StudioLoop is built first for independent and boutique gyms.',
+  },
+  {
+    q: 'Can we migrate from spreadsheets?',
+    a: 'Yes. The onboarding flow is designed to map existing member records quickly.',
+  },
+  {
+    q: 'When does marketplace activation happen?',
+    a: 'You can activate marketplace listings after core gym setup is complete.',
+  },
+];
+---
+
+<MainLayout
+  title="StudioLoop Manage | Gym Management Software"
+  description="Gym management software for Cape Town operators. Reduce admin, recover missed payments, and fill off-peak classes."
+>
+  <header class="container topbar">
+    <strong>StudioLoop Manage</strong>
+    <nav>
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+      <a class="btn btn-primary" href="#demo">Book Demo</a>
+    </nav>
+  </header>
+
+  <section class="hero-wrap">
+    <img
+      class="hero-bg"
+      src="/assets/marketing/heroes/b2b-hero.png"
+      alt="Gym owner reviewing analytics on a tablet in a modern gym lobby"
+      width="1536"
+      height="768"
+      loading="eager"
+      decoding="async"
+    />
+    <div class="hero-overlay"></div>
+    <div class="container hero">
+      <p class="eyebrow">Gym Management Platform</p>
+      <h1>Replace spreadsheet chaos with one operating system for your gym.</h1>
+      <p>
+        StudioLoop helps independent gym owners run memberships, schedules, check-ins, and
+        growth workflows without enterprise complexity.
+      </p>
+      <div class="actions">
+        <a class="btn btn-primary" href="#demo">Book a 30-min Demo</a>
+        <a class="btn btn-secondary" href="#roi">See ROI Model</a>
+      </div>
+      <div class="dashboard-mock card" aria-label="Dashboard preview">
+        <strong>Today at a glance</strong>
+        <p>3 failed payments flagged &bull; 2 at-risk members &bull; 68% class fill rate</p>
+      </div>
+    </div>
+  </section>
+
+  <main class="container">
+    <!-- Problem visual -->
+    <section class="section problem-section">
+      <div class="problem-grid">
+        <div class="problem-text">
+          <p class="eyebrow">The Problem</p>
+          <h2>Spreadsheets, WhatsApp, and manual follow-ups weren't built for this.</h2>
+          <p>Most independent gyms lose hours every week to admin chaos, missed payments, and empty off-peak slots.</p>
+        </div>
+        <div class="problem-img">
+          <img
+            src="/assets/marketing/features/b2b-problem.png"
+            alt="Stressed gym owner at a messy desk with spreadsheets"
+            width="1024"
+            height="768"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="section">
+      <h2>Feature set for owners, managers, and front desk teams</h2>
+      <div class="features-grid">
+        {features.map((feature) => (
+          <article class="feature-card">
+            <div class="feature-img">
+              <img
+                src={feature.img}
+                alt={feature.title}
+                width="1024"
+                height="768"
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
+            <div class="feature-text">
+              <h3>{feature.title}</h3>
+              <p>{feature.desc}</p>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section id="roi" class="section metrics">
+      {metrics.map((metric) => (
+        <article class="card">
+          <p class="eyebrow">{metric.label}</p>
+          <h3>{metric.value}</h3>
+        </article>
+      ))}
+    </section>
+
+    <section class="section">
+      <h2>What gym owners are saying</h2>
+      <div class="testimonials">
+        {testimonials.map((t) => (
+          <article class="card testimonial">
+            <img
+              class="testimonial-photo"
+              src={t.img}
+              alt={'Photo of ' + t.name}
+              width="768"
+              height="1024"
+              loading="lazy"
+              decoding="async"
+            />
+            <blockquote>
+              <p>"{t.quote}"</p>
+              <footer>
+                <strong>{t.name}</strong>
+                <span>{t.detail}</span>
+              </footer>
+            </blockquote>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Works for every gym</h2>
+      <p>From boutique studios to big boxes, StudioLoop adapts to your setup.</p>
+      <div class="gym-types">
+        {gymTypes.map((gym) => (
+          <article class="gym-type-card">
+            <img
+              src={gym.img}
+              alt={gym.label + ' interior'}
+              width="1536"
+              height="768"
+              loading="lazy"
+              decoding="async"
+            />
+            <div class="gym-type-label">
+              <h3>{gym.label}</h3>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section id="pricing" class="section card pricing">
+      <h2>Pricing built for growth-stage gyms</h2>
+      <p>Simple monthly software pricing with optional marketplace upside.</p>
+      <div class="actions">
+        <a class="btn btn-primary" href="#demo">Get Pricing Call</a>
+      </div>
+    </section>
+
+    <section id="faq" class="section">
+      <h2>FAQ</h2>
+      <div class="faq-grid">
+        {faq.map((item) => (
+          <article class="card">
+            <h3>{item.q}</h3>
+            <p>{item.a}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section id="demo" class="section card form-block">
+      <h2>Book your demo</h2>
+      <p>Share your gym size and current tools. We will tailor the walkthrough.</p>
+      <form>
+        <input type="text" placeholder="Gym name" />
+        <input type="email" placeholder="Work email" />
+        <button type="button" class="btn btn-primary">Request Demo</button>
+      </form>
+    </section>
+  </main>
+</MainLayout>
+
+<style>
+  .topbar {
+    padding-block: 1rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+    position: relative;
+    z-index: 10;
+  }
+
+  .topbar nav {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+  }
+
+  .topbar a {
+    text-decoration: none;
+    color: inherit;
+    font-weight: 700;
+  }
+
+  /* Hero with background image */
+  .hero-wrap {
+    position: relative;
+    overflow: hidden;
+    min-height: 520px;
+    display: flex;
+    align-items: center;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to right,
+      rgba(15, 23, 42, 0.8) 0%,
+      rgba(15, 23, 42, 0.5) 60%,
+      rgba(15, 23, 42, 0.25) 100%
+    );
+  }
+
+  .hero {
+    position: relative;
+    z-index: 2;
+    padding-block: 3rem 4rem;
+    color: #fff;
+  }
+
+  .hero h1 {
+    font-size: clamp(2rem, 7vw, 3.5rem);
+    max-width: 18ch;
+    color: #fff;
+  }
+
+  .hero > p {
+    max-width: 62ch;
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .hero .eyebrow {
+    color: #93c5fd;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(4px);
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+  }
+
+  .actions {
+    display: flex;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+    margin-block: 1rem;
+  }
+
+  .dashboard-mock {
+    max-width: 520px;
+    margin-top: 1rem;
+    border-width: 2px;
+    background: var(--surface);
+    color: var(--ink);
+  }
+
+  .section {
+    padding-block: 1.3rem;
+  }
+
+  /* Problem section */
+  .problem-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: center;
+  }
+
+  .problem-img {
+    border-radius: 1rem;
+    overflow: hidden;
+  }
+
+  .problem-img img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* Features grid */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .feature-card {
+    border-radius: 1rem;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: var(--surface);
+  }
+
+  .feature-img {
+    aspect-ratio: 4/3;
+    overflow: hidden;
+  }
+
+  .feature-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+  }
+
+  .feature-card:hover .feature-img img {
+    transform: scale(1.05);
+  }
+
+  .feature-text {
+    padding: 1rem;
+  }
+
+  .feature-text h3 {
+    margin: 0 0 0.35rem;
+    font-size: 1rem;
+  }
+
+  .feature-text p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  /* Metrics */
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.8rem;
+  }
+
+  /* Testimonials */
+  .testimonials {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
+  .testimonial {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .testimonial-photo {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: top;
+    flex-shrink: 0;
+  }
+
+  .testimonial blockquote {
+    margin: 0;
+  }
+
+  .testimonial blockquote p {
+    font-style: italic;
+    color: var(--ink);
+    margin: 0 0 0.5rem;
+  }
+
+  .testimonial blockquote footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .testimonial blockquote footer span {
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  /* Gym types gallery */
+  .gym-types {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .gym-type-card {
+    position: relative;
+    border-radius: 1rem;
+    overflow: hidden;
+    aspect-ratio: 2/1;
+  }
+
+  .gym-type-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+  }
+
+  .gym-type-card:hover img {
+    transform: scale(1.05);
+  }
+
+  .gym-type-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    padding: 1rem;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, transparent 50%);
+  }
+
+  .gym-type-label h3 {
+    color: #fff;
+    margin: 0;
+    font-size: 1.1rem;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+
+  .pricing {
+    background: linear-gradient(150deg, #ffffff, #e0f2fe);
+  }
+
+  .faq-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.8rem;
+  }
+
+  .form-block form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.6rem;
+    margin-top: 0.6rem;
+  }
+
+  input {
+    padding: 0.75rem;
+    border-radius: 0.7rem;
+    border: 1px solid var(--line);
+    font: inherit;
+  }
+
+  @media (max-width: 720px) {
+    .problem-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .testimonial {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+  }
+</style>

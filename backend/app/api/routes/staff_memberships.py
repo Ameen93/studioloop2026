@@ -4,7 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, status
 from pydantic import EmailStr
-from sqlmodel import Field, SQLModel, select
+from sqlmodel import Field, SQLModel, col, select
 
 from app.api.deps import (
     CurrentConsumer,
@@ -115,6 +115,8 @@ class MembershipPublic(SQLModel):
     membership_tier: GymMembershipTier
     status: GymMembershipStatus
     payment_method_last4: str | None
+    gym_name: str | None = None
+    plan_name: str | None = None
 
 
 class GymMemberListItem(SQLModel):
@@ -152,8 +154,8 @@ def list_staff(
 ) -> list[StaffPublicResponse]:
     staff_list = session.exec(
         select(Staff)
-        .where(Staff.gym_id == current_staff.gym_id, Staff.is_active.is_(True))
-        .order_by(Staff.created_at.asc())
+        .where(Staff.gym_id == current_staff.gym_id, col(Staff.is_active).is_(True))
+        .order_by(col(Staff.created_at).asc())
     ).all()
     return [_staff_public(item) for item in staff_list]
 
@@ -193,7 +195,7 @@ def add_staff_member(
         )
 
     existing_global = session.exec(
-        select(Staff).where(Staff.email == payload.email, Staff.is_active.is_(True))
+        select(Staff).where(Staff.email == payload.email, col(Staff.is_active).is_(True))
     ).first()
     if existing_global:
         raise HTTPException(
@@ -237,7 +239,7 @@ def update_staff_role(
         select(Staff).where(
             Staff.id == staff_id,
             Staff.gym_id == current_staff.gym_id,
-            Staff.is_active.is_(True),
+            col(Staff.is_active).is_(True),
         )
     ).first()
     if not staff:
@@ -281,7 +283,7 @@ def update_staff_working_hours(
         select(Staff).where(
             Staff.id == staff_id,
             Staff.gym_id == current_staff.gym_id,
-            Staff.is_active.is_(True),
+            col(Staff.is_active).is_(True),
         )
     ).first()
     if not staff:
@@ -315,7 +317,7 @@ def update_instructor_pay_rate(
         select(Staff).where(
             Staff.id == staff_id,
             Staff.gym_id == current_staff.gym_id,
-            Staff.is_active.is_(True),
+            col(Staff.is_active).is_(True),
         )
     ).first()
     if not staff:
@@ -366,9 +368,9 @@ def get_instructor_schedule(
         .where(
             ClassSession.gym_id == current_staff.gym_id,
             ClassSession.instructor_staff_id == current_staff.id,
-            ClassSession.is_active.is_(True),
+            col(ClassSession.is_active).is_(True),
         )
-        .order_by(ClassSession.start_time.asc())
+        .order_by(col(ClassSession.start_time).asc())
     ).all()
     return [
         InstructorScheduleItem(
@@ -403,7 +405,7 @@ def get_instructor_earnings(
         select(ClassSession).where(
             ClassSession.gym_id == current_staff.gym_id,
             ClassSession.instructor_staff_id == current_staff.id,
-            ClassSession.is_active.is_(True),
+            col(ClassSession.is_active).is_(True),
             ClassSession.status == ClassSessionStatus.SCHEDULED,
         )
     ).all()
@@ -432,7 +434,7 @@ def deactivate_staff_member(
         select(Staff).where(
             Staff.id == staff_id,
             Staff.gym_id == current_staff.gym_id,
-            Staff.is_active.is_(True),
+            col(Staff.is_active).is_(True),
         )
     ).first()
     if not staff:
@@ -489,7 +491,7 @@ def update_membership_plan(
         select(MembershipPlan).where(
             MembershipPlan.id == plan_id,
             MembershipPlan.gym_id == current_staff.gym_id,
-            MembershipPlan.is_active.is_(True),
+            col(MembershipPlan.is_active).is_(True),
         )
     ).first()
     if not plan:
@@ -552,18 +554,19 @@ def list_public_membership_plans(
     from app.models import Gym
 
     gym = session.exec(
-        select(Gym).where(Gym.slug == gym_slug.lower(), Gym.is_active.is_(True))
+        select(Gym).where(Gym.slug == gym_slug.lower(), col(Gym.is_active).is_(True))
     ).first()
     if not gym:
         raise HTTPException(
             status_code=404,
             detail={"code": "GYM_NOT_FOUND", "message": "Gym not found", "details": {}},
         )
-    return session.exec(
+    return list(
+        session.exec(
         select(MembershipPlan).where(
-            MembershipPlan.gym_id == gym.id, MembershipPlan.is_active.is_(True)
+            MembershipPlan.gym_id == gym.id, col(MembershipPlan.is_active).is_(True)
         )
-    ).all()
+    ).all())
 
 
 @router.post(
@@ -580,7 +583,7 @@ def enroll_membership(
         select(MembershipPlan).where(
             MembershipPlan.id == payload.membership_plan_id,
             MembershipPlan.gym_id == payload.gym_id,
-            MembershipPlan.is_active.is_(True),
+            col(MembershipPlan.is_active).is_(True),
         )
     ).first()
     if not plan:
@@ -597,7 +600,7 @@ def enroll_membership(
         select(GymMembership).where(
             GymMembership.gym_id == payload.gym_id,
             GymMembership.consumer_id == current_consumer.id,
-            GymMembership.is_active.is_(True),
+            col(GymMembership.is_active).is_(True),
             GymMembership.status == GymMembershipStatus.ACTIVE,
         )
     ).first()
@@ -629,15 +632,29 @@ def enroll_membership(
 def list_consumer_memberships(
     session: SessionDep, current_consumer: CurrentConsumer
 ) -> list[MembershipPublic]:
-    memberships = session.exec(
-        select(GymMembership)
+    from app.models import Gym
+
+    rows = session.exec(
+        select(GymMembership, Gym, MembershipPlan)
+        .join(Gym, col(Gym.id) == col(GymMembership.gym_id))
+        .outerjoin(
+            MembershipPlan,
+            col(MembershipPlan.id) == col(GymMembership.membership_plan_id),
+        )
         .where(
             GymMembership.consumer_id == current_consumer.id,
-            GymMembership.is_active.is_(True),
+            col(GymMembership.is_active).is_(True),
         )
-        .order_by(GymMembership.created_at.desc())
+        .order_by(col(GymMembership.created_at).desc())
     ).all()
-    return [MembershipPublic(**item.model_dump()) for item in memberships]
+    return [
+        MembershipPublic(
+            **membership.model_dump(),
+            gym_name=gym.name,
+            plan_name=plan.name if plan else None,
+        )
+        for membership, gym, plan in rows
+    ]
 
 
 @router.get("/consumer/memberships/{membership_id}/benefits")
@@ -648,7 +665,7 @@ def get_membership_benefits(
         select(GymMembership).where(
             GymMembership.id == membership_id,
             GymMembership.consumer_id == current_consumer.id,
-            GymMembership.is_active.is_(True),
+            col(GymMembership.is_active).is_(True),
         )
     ).first()
     if not membership:
@@ -685,7 +702,7 @@ def change_membership_plan(
         select(GymMembership).where(
             GymMembership.id == membership_id,
             GymMembership.consumer_id == current_consumer.id,
-            GymMembership.is_active.is_(True),
+            col(GymMembership.is_active).is_(True),
         )
     ).first()
     if not membership:
@@ -701,7 +718,7 @@ def change_membership_plan(
         select(MembershipPlan).where(
             MembershipPlan.id == payload.membership_plan_id,
             MembershipPlan.gym_id == membership.gym_id,
-            MembershipPlan.is_active.is_(True),
+            col(MembershipPlan.is_active).is_(True),
         )
     ).first()
     if not plan:
@@ -732,7 +749,7 @@ def accept_digital_waiver(
         select(GymMembership).where(
             GymMembership.id == payload.gym_membership_id,
             GymMembership.consumer_id == current_consumer.id,
-            GymMembership.is_active.is_(True),
+            col(GymMembership.is_active).is_(True),
         )
     ).first()
     if not membership:
@@ -768,13 +785,13 @@ def list_gym_members(
 
     rows = session.exec(
         select(GymMembership, Consumer, MembershipPlan)
-        .join(Consumer, Consumer.id == GymMembership.consumer_id)
+        .join(Consumer, col(Consumer.id) == col(GymMembership.consumer_id))
         .outerjoin(
-            MembershipPlan, MembershipPlan.id == GymMembership.membership_plan_id
+            MembershipPlan, col(MembershipPlan.id) == col(GymMembership.membership_plan_id)
         )
         .where(
             GymMembership.gym_id == current_staff.gym_id,
-            GymMembership.is_active.is_(True),
+            col(GymMembership.is_active).is_(True),
         )
     ).all()
 
@@ -801,7 +818,7 @@ def get_member_detail(
         select(GymMembership).where(
             GymMembership.id == membership_id,
             GymMembership.gym_id == current_staff.gym_id,
-            GymMembership.is_active.is_(True),
+            col(GymMembership.is_active).is_(True),
         )
     ).first()
     if not membership:

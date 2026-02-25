@@ -1,0 +1,428 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+
+const steps = [
+  { title: 'Search classes by location and schedule', icon: '1' },
+  { title: 'Book instantly in-app', icon: '2' },
+  { title: 'Check in with your QR code', icon: '3' },
+];
+
+const categories = [
+  { name: 'Strength', img: '/assets/marketing/workout-types/strength.png' },
+  { name: 'Yoga', img: '/assets/marketing/workout-types/yoga.png' },
+  { name: 'Boxing', img: '/assets/marketing/workout-types/boxing.png' },
+  { name: 'HIIT', img: '/assets/marketing/workout-types/hiit.png' },
+  { name: 'Pilates', img: '/assets/marketing/workout-types/pilates.png' },
+  { name: 'Spin', img: '/assets/marketing/workout-types/cycling.png' },
+  { name: 'CrossFit', img: '/assets/marketing/workout-types/crossfit.png' },
+  { name: 'Swimming', img: '/assets/marketing/workout-types/swimming.png' },
+];
+
+const testimonials = [
+  {
+    quote: "I used to be locked into one gym. Now I do yoga on Mondays in Sea Point and HIIT on Wednesdays in Woodstock. Game changer.",
+    name: 'Thandi M.',
+    detail: 'Cape Town, member since launch',
+    img: '/assets/marketing/headshots/b2c-testimonial-1.png',
+  },
+  {
+    quote: "The QR check-in is so fast. I walk in, scan, and I'm warming up before anyone hits the front desk queue.",
+    name: 'James K.',
+    detail: 'Green Point, 3x/week',
+    img: '/assets/marketing/headshots/b2c-testimonial-2.png',
+  },
+];
+---
+
+<MainLayout
+  title="StudioLoop App | Discover and Book Classes"
+  description="Book classes across Cape Town gyms in one app. Discover workouts, track bookings, and check in fast with QR."
+>
+  <header class="container topbar">
+    <strong>StudioLoop</strong>
+    <nav>
+      <a href="#how">How it works</a>
+      <a href="#cities">Browse</a>
+      <a href="#pricing">Pricing</a>
+      <a class="btn btn-primary" href="#download">Get the App</a>
+    </nav>
+  </header>
+
+  <section class="hero-wrap">
+    <img
+      class="hero-bg"
+      src="/assets/marketing/heroes/b2c-hero.png"
+      alt="Energetic gym scene with people working out"
+      width="1536"
+      height="768"
+      loading="eager"
+      decoding="async"
+    />
+    <div class="hero-overlay"></div>
+    <div class="container hero">
+      <p class="eyebrow">Consumer App</p>
+      <h1>Train where you want, not where your membership is locked.</h1>
+      <p>
+        Discover classes across participating gyms in Cape Town, book in seconds, and keep your
+        routine flexible.
+      </p>
+      <form class="search card">
+        <label>
+          <span>Find classes near</span>
+          <input type="text" placeholder="Sea Point, Woodstock, Observatory" />
+        </label>
+        <button type="button" class="btn btn-primary">Search</button>
+      </form>
+    </div>
+  </section>
+
+  <main class="container">
+    <section id="how" class="section">
+      <h2>How it works</h2>
+      <div class="grid-3">
+        {steps.map((step, idx) => (
+          <article class="card">
+            <p class="eyebrow">Step {idx + 1}</p>
+            <h3>{step.title}</h3>
+          </article>
+        ))}
+      </div>
+      <div class="lifestyle-accent">
+        <img
+          src="/assets/marketing/lifestyle/phone-in-gym.png"
+          alt="Woman booking a class on her phone in a gym"
+          width="1024"
+          height="768"
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+    </section>
+
+    <section id="cities" class="section card browse">
+      <h2>Browse by neighborhood</h2>
+      <p>Start in Cape Town and expand your options as partner gyms come online.</p>
+      <div class="chips">
+        <span>Sea Point</span><span>Woodstock</span><span>Green Point</span><span>Observatory</span>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Workout variety in one place</h2>
+      <div class="grid-workouts">
+        {categories.map((cat) => (
+          <article class="workout-card">
+            <img
+              src={cat.img}
+              alt={cat.name + ' workout class'}
+              width="1024"
+              height="1024"
+              loading="lazy"
+              decoding="async"
+            />
+            <div class="workout-label">
+              <h3>{cat.name}</h3>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>What members are saying</h2>
+      <div class="testimonials">
+        {testimonials.map((t) => (
+          <article class="card testimonial">
+            <img
+              class="testimonial-photo"
+              src={t.img}
+              alt={'Photo of ' + t.name}
+              width="768"
+              height="1024"
+              loading="lazy"
+              decoding="async"
+            />
+            <blockquote>
+              <p>"{t.quote}"</p>
+              <footer>
+                <strong>{t.name}</strong>
+                <span>{t.detail}</span>
+              </footer>
+            </blockquote>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section id="pricing" class="section card pricing">
+      <h2>Simple access options</h2>
+      <p>Choose pay-per-class or marketplace packages as launch expands.</p>
+      <a class="btn btn-secondary" href="#download">See launch pricing</a>
+    </section>
+
+    <section id="download" class="section card download">
+      <h2>Get launch access</h2>
+      <p>Join the early access list and get notified when your area opens.</p>
+      <form>
+        <input type="email" placeholder="you@example.com" />
+        <button type="button" class="btn btn-primary">Join Waitlist</button>
+      </form>
+    </section>
+  </main>
+</MainLayout>
+
+<style>
+  .topbar {
+    padding-block: 1rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+    position: relative;
+    z-index: 10;
+  }
+
+  .topbar nav {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+  }
+
+  .topbar a {
+    text-decoration: none;
+    color: inherit;
+    font-weight: 700;
+  }
+
+  /* Hero with background image */
+  .hero-wrap {
+    position: relative;
+    overflow: hidden;
+    min-height: 480px;
+    display: flex;
+    align-items: center;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0.7) 0%,
+      rgba(0, 0, 0, 0.4) 60%,
+      rgba(0, 0, 0, 0.2) 100%
+    );
+  }
+
+  .hero {
+    position: relative;
+    z-index: 2;
+    padding-block: 3rem 4rem;
+    color: #fff;
+  }
+
+  .hero h1 {
+    font-size: clamp(2rem, 7vw, 3.5rem);
+    max-width: 16ch;
+    color: #fff;
+  }
+
+  .hero > p {
+    max-width: 60ch;
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .hero .eyebrow {
+    color: var(--brand);
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(4px);
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+  }
+
+  .search {
+    margin-top: 1rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.7rem;
+    align-items: end;
+    max-width: 720px;
+    background: var(--surface);
+    color: var(--ink);
+  }
+
+  label {
+    display: grid;
+    gap: 0.35rem;
+    font-weight: 700;
+  }
+
+  .section {
+    padding-block: 1.2rem;
+  }
+
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.8rem;
+  }
+
+  /* Lifestyle image */
+  .lifestyle-accent {
+    margin-top: 1.5rem;
+    border-radius: 1rem;
+    overflow: hidden;
+    max-width: 640px;
+  }
+
+  .lifestyle-accent img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .browse {
+    background: linear-gradient(150deg, #fff7ed, #ffedd5);
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .chips span {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.35rem 0.65rem;
+    background: #fff;
+    font-weight: 700;
+  }
+
+  /* Workout image grid */
+  .grid-workouts {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.8rem;
+  }
+
+  .workout-card {
+    position: relative;
+    border-radius: 1rem;
+    overflow: hidden;
+    aspect-ratio: 1;
+  }
+
+  .workout-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+  }
+
+  .workout-card:hover img {
+    transform: scale(1.05);
+  }
+
+  .workout-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    padding: 1rem;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.65) 0%, transparent 50%);
+  }
+
+  .workout-label h3 {
+    color: #fff;
+    margin: 0;
+    font-size: 1.1rem;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Testimonials */
+  .testimonials {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+  }
+
+  .testimonial {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .testimonial-photo {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: top;
+    flex-shrink: 0;
+  }
+
+  .testimonial blockquote {
+    margin: 0;
+  }
+
+  .testimonial blockquote p {
+    font-style: italic;
+    color: var(--ink);
+    margin: 0 0 0.5rem;
+  }
+
+  .testimonial blockquote footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .testimonial blockquote footer span {
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  .pricing {
+    display: grid;
+    gap: 0.6rem;
+  }
+
+  .download form {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.6rem;
+  }
+
+  input {
+    padding: 0.75rem;
+    border-radius: 0.7rem;
+    border: 1px solid var(--line);
+    font: inherit;
+  }
+
+  @media (max-width: 720px) {
+    .search,
+    .download form {
+      grid-template-columns: 1fr;
+    }
+
+    .testimonial {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+  }
+</style>

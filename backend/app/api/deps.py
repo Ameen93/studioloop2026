@@ -212,7 +212,7 @@ def get_current_active_superuser(current_user: CurrentUser) -> User:
 def get_current_gym(
     gym_id: Annotated[UUID, Path(description="Gym ID (tenant identifier)")],
     session: SessionDep,
-    _current_user: CurrentUser,  # Ensures user is authenticated; used for access validation in future
+    current_staff: CurrentStaff,
 ) -> Gym:
     """Get gym by ID with access validation.
 
@@ -220,7 +220,7 @@ def get_current_gym(
     It validates that:
     1. The gym exists
     2. The gym is active
-    3. The user has access to this gym (TODO: implement role-based access)
+    3. The authenticated staff member has access to this gym
 
     Usage in routes:
         @router.get("/gyms/{gym_id}/spaces")
@@ -231,7 +231,7 @@ def get_current_gym(
     Args:
         gym_id: UUID of the gym from path parameter
         session: Database session
-        current_user: Authenticated user
+        current_staff: Authenticated staff member
 
     Returns:
         Gym model instance
@@ -251,12 +251,11 @@ def get_current_gym(
             detail="Gym not found",  # Don't reveal soft-deleted status
         )
 
-    # TODO: Implement user-gym access validation
-    # This will check if the user has a role (staff, owner) at this gym
-    # For now, all authenticated users can access any active gym
-    # In future: check staff membership or gym ownership
-    # if not has_gym_access(current_user, gym):
-    #     raise HTTPException(status_code=403, detail="Access denied to this gym")
+    if str(current_staff.gym_id) != str(gym.id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied to this gym",
+        )
 
     return gym
 

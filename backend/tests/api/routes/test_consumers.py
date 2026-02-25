@@ -14,12 +14,16 @@ Verifies Story 1.2 acceptance criteria:
 - AC #5: Unverified accounts cannot login with EMAIL_NOT_VERIFIED
 """
 
+from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 from uuid import UUID
 
+import jwt
 from fastapi.testclient import TestClient
+from passlib.context import CryptContext
 from sqlmodel import Session, select
 
+from app.core import security
 from app.core.config import settings
 from app.core.security import verify_password
 from app.models.consumer import Consumer, UserRole
@@ -383,7 +387,7 @@ class TestConsumerLogin:
         """Test successful login returns access_token and refresh_token (AC #1)."""
         email = random_email()
         password = random_lower_string()
-        self._create_verified_consumer(client, db, email, password)
+        consumer = self._create_verified_consumer(client, db, email, password)
 
         response = client.post(
             f"{settings.API_V1_STR}/auth/consumer/login",
@@ -403,6 +407,31 @@ class TestConsumerLogin:
         assert len(result["access_token"]) > 0
         assert isinstance(result["refresh_token"], str)
         assert len(result["refresh_token"]) > 0
+
+        # Verify token claims and expiry windows (AC #1, ARCH-12)
+        access_payload = jwt.decode(
+            result["access_token"],
+            settings.SECRET_KEY,
+            algorithms=[security.ALGORITHM],
+        )
+        refresh_payload = jwt.decode(
+            result["refresh_token"],
+            settings.SECRET_KEY,
+            algorithms=[security.ALGORITHM],
+        )
+        assert access_payload["sub"] == str(consumer.id)
+        assert access_payload["type"] == "access"
+        assert refresh_payload["sub"] == str(consumer.id)
+        assert refresh_payload["type"] == "refresh"
+        # "sub" must remain UUID-safe for downstream auth dependencies
+        assert UUID(access_payload["sub"])
+        assert UUID(refresh_payload["sub"])
+
+        now = datetime.now(UTC)
+        access_expiry = datetime.fromtimestamp(access_payload["exp"], tz=UTC)
+        refresh_expiry = datetime.fromtimestamp(refresh_payload["exp"], tz=UTC)
+        assert access_expiry - now < timedelta(hours=24)
+        assert refresh_expiry - now <= timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
 
     def test_login_invalid_password(self, client: TestClient, db: Session) -> None:
         """Test login with wrong password returns 401 INVALID_CREDENTIALS (AC #4)."""
@@ -496,3 +525,34 @@ class TestConsumerLogin:
         assert response.status_code == 401
         result = response.json()
         assert result["detail"]["code"] == "INVALID_CREDENTIALS"
+
+    def test_login_rehashes_legacy_bcrypt(self, client: TestClient, db: Session) -> None:
+        """Test login upgrades legacy bcrypt hashes to Argon2 (ARCH-11)."""
+        password = random_lower_string()
+        legacy_bcrypt_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
+        consumer = Consumer(
+            email=random_email(),
+            hashed_password=legacy_bcrypt_ctx.hash(password),
+            first_name="Legacy",
+            last_name="User",
+            role=UserRole.CONSUMER,
+            is_email_verified=True,
+            is_active=True,
+        )
+        db.add(consumer)
+        db.commit()
+        db.refresh(consumer)
+
+        legacy_hash = consumer.hashed_password
+        assert legacy_hash.startswith("$2")
+
+        response = client.post(
+            f"{settings.API_V1_STR}/auth/consumer/login",
+            json={"email": consumer.email, "password": password},
+        )
+
+        assert response.status_code == 200
+        db.refresh(consumer)
+        assert consumer.hashed_password != legacy_hash
+        assert consumer.hashed_password.startswith("$argon2")
+        assert verify_password(password, consumer.hashed_password)

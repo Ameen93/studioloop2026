@@ -84,12 +84,13 @@ class StaffLoginRequest(SQLModel):
 class StaffToken(SQLModel):
     """Token response for staff authentication.
 
-    Includes role and gym_id for client-side routing and tenant context.
+    Includes staff_id, role, and gym_id for client-side routing and tenant context.
     """
 
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+    staff_id: str  # Authenticated staff member's ID
     role: str  # Staff role for client-side routing
     gym_id: str  # Gym context for multi-tenancy
 

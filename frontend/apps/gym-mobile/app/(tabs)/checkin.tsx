@@ -1,11 +1,5 @@
 /**
  * Check-in tab - QR scanner + manual search fallback.
- *
- * Provides camera-based QR code scanning for member check-in.
- * Includes manual check-in fallback when QR scanning fails
- * (search by phone number or name).
- *
- * Supports offline check-in via SQLite queue.
  */
 
 import { useState, useEffect } from 'react';
@@ -21,18 +15,17 @@ import {
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
+import {
+  bookingsManualCheckIn,
+  bookingsScanQr,
+  bookingsSearchMembersForCheckIn,
+} from '@sl/api-client';
+import type { SearchResult } from '@sl/api-client';
 import { getGymId } from '../../lib/auth';
+import { getAuthHeaders } from '../../lib/apiAuth';
 import { queueCheckin, getPendingCount } from '../../lib/offline-checkin';
 
 type CheckinMode = 'qr' | 'manual';
-
-interface MemberSearchResult {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  membershipStatus: string;
-}
 
 export default function CheckinTab() {
   const [mode, setMode] = useState<CheckinMode>('qr');
@@ -44,30 +37,43 @@ export default function CheckinTab() {
   const gymId = getGymId();
 
   useEffect(() => {
-    getPendingCount().then(setPendingCount);
+    void getPendingCount().then(setPendingCount);
   }, []);
 
-  // Manual member search
-  const searchResults = useQuery<MemberSearchResult[]>({
+  const searchResults = useQuery({
     queryKey: ['gym', 'members', 'search', searchQuery],
     queryFn: async () => {
-      // TODO: Replace with actual API call
-      // e.g., gymMembersSearch({ path: { gym_id: gymId }, query: { q: searchQuery } })
-      return [];
+      const response = await bookingsSearchMembersForCheckIn({
+        headers: getAuthHeaders(),
+        query: { q: searchQuery },
+      });
+      return response.data ?? [];
     },
     enabled: mode === 'manual' && searchQuery.length >= 2,
   });
 
-  // Check-in mutation
   const checkinMutation = useMutation({
-    mutationFn: async (params: { consumerId: string; method: 'qr' | 'manual' }) => {
+    mutationFn: async (params: { consumerId?: string; method: 'qr' | 'manual'; qrToken?: string }) => {
       try {
-        // TODO: Replace with actual API call
-        // e.g., gymCheckinsCreate({ path: { gym_id: gymId }, body: { consumer_id: params.consumerId } })
-        throw new Error('API not wired');
+        if (params.method === 'qr' && params.qrToken) {
+          await bookingsScanQr({
+            headers: getAuthHeaders(),
+            body: { token: params.qrToken },
+          });
+          return { offline: false };
+        }
+
+        if (!params.consumerId) {
+          throw new Error('Missing consumer id for manual check-in');
+        }
+
+        await bookingsManualCheckIn({
+          headers: getAuthHeaders(),
+          body: { consumer_id: params.consumerId },
+        });
+        return { offline: false };
       } catch {
-        // Offline fallback: queue in SQLite
-        if (gymId) {
+        if (gymId && params.consumerId) {
           await queueCheckin({
             consumerId: params.consumerId,
             gymId,
@@ -81,14 +87,13 @@ export default function CheckinTab() {
       }
     },
     onSuccess: (result) => {
-      const isOffline = (result as { offline?: boolean })?.offline;
       Alert.alert(
-        'Check-in ' + (isOffline ? 'Queued' : 'Successful'),
-        isOffline
+        `Check-in ${result.offline ? 'Queued' : 'Successful'}`,
+        result.offline
           ? 'Check-in saved offline and will sync when connected.'
           : 'Member has been checked in.',
       );
-      queryClient.invalidateQueries({ queryKey: ['gym', 'dashboard'] });
+      void queryClient.invalidateQueries({ queryKey: ['gym', 'dashboard'] });
       setScannedData(null);
     },
     onError: () => {
@@ -97,36 +102,43 @@ export default function CheckinTab() {
   });
 
   const handleQrScanned = (data: string) => {
-    if (scannedData) return; // Prevent duplicate scans
+    if (scannedData) return;
     setScannedData(data);
 
     try {
-      const parsed = JSON.parse(data);
+      const parsed = JSON.parse(data) as { type?: string; consumer_id?: string };
       if (parsed.type === 'studioloop_checkin' && parsed.consumer_id) {
-        checkinMutation.mutate({ consumerId: parsed.consumer_id, method: 'qr' });
+        checkinMutation.mutate({
+          consumerId: parsed.consumer_id,
+          method: 'qr',
+          qrToken: data,
+        });
       } else {
-        Alert.alert('Invalid QR Code', 'This QR code is not a valid StudioLoop check-in code.', [
-          { text: 'OK', onPress: () => setScannedData(null) },
-        ]);
+        checkinMutation.mutate({
+          consumerId: parsed.consumer_id,
+          method: 'qr',
+          qrToken: data,
+        });
       }
     } catch {
-      Alert.alert('Invalid QR Code', 'Could not read this QR code.', [
-        { text: 'OK', onPress: () => setScannedData(null) },
-      ]);
+      checkinMutation.mutate({
+        method: 'qr',
+        qrToken: data,
+      });
     }
   };
 
-  const handleManualCheckin = (member: MemberSearchResult) => {
-    Alert.alert('Confirm Check-in', `Check in ${member.name}?`, [
+  const handleManualCheckin = (member: SearchResult) => {
+    const fullName = `${member.first_name} ${member.last_name}`.trim();
+    Alert.alert('Confirm Check-in', `Check in ${fullName}?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Check In',
-        onPress: () => checkinMutation.mutate({ consumerId: member.id, method: 'manual' }),
+        onPress: () => checkinMutation.mutate({ consumerId: member.consumer_id, method: 'manual' }),
       },
     ]);
   };
 
-  // Camera permission screen
   if (mode === 'qr' && !permission?.granted) {
     return (
       <View className="flex-1 bg-gray-50 items-center justify-center px-6">
@@ -147,7 +159,6 @@ export default function CheckinTab() {
 
   return (
     <View className="flex-1 bg-gray-50">
-      {/* Mode toggle */}
       <View className="flex-row bg-white border-b border-gray-200 px-4 py-2">
         <Pressable
           className={`flex-1 py-2 rounded-lg mr-1 ${mode === 'qr' ? 'bg-emerald-600' : 'bg-gray-100'}`}
@@ -167,7 +178,6 @@ export default function CheckinTab() {
         </Pressable>
       </View>
 
-      {/* Pending offline badge */}
       {pendingCount > 0 && (
         <View className="mx-4 mt-2 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 flex-row items-center">
           <Ionicons name="cloud-offline-outline" size={16} color="#d97706" />
@@ -178,7 +188,6 @@ export default function CheckinTab() {
       )}
 
       {mode === 'qr' ? (
-        /* QR Scanner mode */
         <View className="flex-1">
           <CameraView
             style={{ flex: 1 }}
@@ -189,7 +198,6 @@ export default function CheckinTab() {
             onBarcodeScanned={scannedData ? undefined : (result) => handleQrScanned(result.data)}
           />
 
-          {/* Overlay with scan frame */}
           <View className="absolute inset-0 items-center justify-center">
             <View className="w-64 h-64 border-2 border-white rounded-2xl opacity-60" />
           </View>
@@ -208,7 +216,6 @@ export default function CheckinTab() {
           )}
         </View>
       ) : (
-        /* Manual search mode */
         <View className="flex-1 px-4 pt-4">
           <View className="flex-row items-center bg-white border border-gray-300 rounded-lg px-3">
             <Ionicons name="search" size={20} color="#9ca3af" />
@@ -229,7 +236,7 @@ export default function CheckinTab() {
 
           <FlatList
             data={searchResults.data ?? []}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.consumer_id}
             className="mt-3"
             renderItem={({ item }) => (
               <Pressable
@@ -238,31 +245,17 @@ export default function CheckinTab() {
               >
                 <View className="w-10 h-10 rounded-full bg-emerald-100 items-center justify-center">
                   <Text className="text-emerald-600 font-bold">
-                    {item.name
-                      .split(' ')
-                      .map((n) => n[0])
+                    {[item.first_name, item.last_name]
+                      .map((n) => n[0] ?? '')
                       .join('')
                       .toUpperCase()}
                   </Text>
                 </View>
                 <View className="flex-1 ml-3">
-                  <Text className="text-gray-900 font-semibold">{item.name}</Text>
-                  <Text className="text-gray-500 text-sm">
-                    {item.phone} | {item.email}
+                  <Text className="text-gray-900 font-semibold">
+                    {item.first_name} {item.last_name}
                   </Text>
-                </View>
-                <View
-                  className={`px-2 py-1 rounded-full ${
-                    item.membershipStatus === 'active' ? 'bg-green-100' : 'bg-gray-100'
-                  }`}
-                >
-                  <Text
-                    className={`text-xs font-medium ${
-                      item.membershipStatus === 'active' ? 'text-green-800' : 'text-gray-600'
-                    }`}
-                  >
-                    {item.membershipStatus}
-                  </Text>
+                  <Text className="text-gray-500 text-sm">{item.phone ?? 'No phone'}</Text>
                 </View>
               </Pressable>
             )}
@@ -274,9 +267,7 @@ export default function CheckinTab() {
               ) : searchQuery.length < 2 ? (
                 <View className="items-center py-8">
                   <Ionicons name="search" size={48} color="#d1d5db" />
-                  <Text className="text-gray-400 mt-4">
-                    Type at least 2 characters to search
-                  </Text>
+                  <Text className="text-gray-400 mt-4">Type at least 2 characters to search</Text>
                 </View>
               ) : null
             }

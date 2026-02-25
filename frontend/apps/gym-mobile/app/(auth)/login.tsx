@@ -18,7 +18,8 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useMutation } from '@tanstack/react-query';
-import { setTokens } from '../../lib/auth';
+import { gymsGetMyGymProfile, staffAuthLoginStaff } from '@sl/api-client';
+import { setStaffProfile, setTokens } from '../../lib/auth';
 
 interface FormData {
   email: string;
@@ -40,21 +41,51 @@ export default function StaffLoginScreen() {
 
   const loginMutation = useMutation({
     mutationFn: async (data: { email: string; password: string }) => {
-      // TODO: Replace with actual API call when staff auth endpoint is wired up
-      // e.g., staffAuthLoginStaff({ body: data })
-      // For now, throw to show the form works
-      throw new Error(`Login endpoint not wired: ${data.email}`);
+      const response = await staffAuthLoginStaff({
+        body: data,
+        throwOnError: true,
+      });
+      if (!response.data) {
+        throw new Error('Login failed');
+      }
+
+      const authData = response.data;
+
+      const gymProfile = await gymsGetMyGymProfile({
+        headers: {
+          Authorization: `Bearer ${authData.access_token}`,
+        },
+      });
+
+      return {
+        auth: authData,
+        gymProfile: gymProfile.data ?? null,
+        email: data.email,
+      };
     },
-    onSuccess: (response: { access_token: string; refresh_token: string }) => {
+    onSuccess: (response) => {
       setTokens({
-        access_token: response.access_token,
-        refresh_token: response.refresh_token,
+        access_token: response.auth.access_token,
+        refresh_token: response.auth.refresh_token,
+      });
+
+      setStaffProfile({
+        id: response.email,
+        email: response.email,
+        name: response.email.split('@')[0],
+        role: response.auth.role,
+        gymId: response.auth.gym_id,
+        gymName: response.gymProfile?.name ?? 'StudioLoop Gym',
       });
       router.replace('/(tabs)');
     },
     onError: (error: unknown) => {
-      const err = error as { body?: { detail?: { code?: string; message?: string } } };
-      if (err?.body?.detail?.code === 'INVALID_CREDENTIALS') {
+      const err = error as {
+        body?: { detail?: { code?: string; message?: string } };
+        detail?: { code?: string; message?: string };
+      };
+      const code = err?.body?.detail?.code || err?.detail?.code;
+      if (code === 'INVALID_CREDENTIALS') {
         setErrors({ general: 'Invalid email or password' });
       } else {
         setErrors({ general: 'Login failed. Please try again.' });

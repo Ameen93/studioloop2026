@@ -6,14 +6,73 @@
 
 import { useState } from 'react';
 import { useParams, Link } from 'react-router';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import {
+  marketplaceGetReferralLink,
+  marketplaceShareClassDetails,
+  marketplaceTrackReferralSignup,
+} from '@sl/api-client';
+import { getAuthHeaders } from '../../lib/apiAuth';
 
 export function ShareClass() {
   const { classId } = useParams();
   const [copied, setCopied] = useState(false);
   const [referralEmail, setReferralEmail] = useState('');
   const [referralSent, setReferralSent] = useState(false);
+  const [referralError, setReferralError] = useState<string | null>(null);
 
-  const shareUrl = `${window.location.origin}/discover/${classId}`;
+  const shareClassQuery = useQuery({
+    queryKey: ['share-class-details', classId],
+    queryFn: async () => {
+      if (!classId) {
+        return null;
+      }
+      const response = await marketplaceShareClassDetails({
+        path: { session_id: classId },
+        headers: getAuthHeaders(),
+      });
+      return response.data;
+    },
+    enabled: Boolean(classId),
+  });
+
+  const referralLinkQuery = useQuery({
+    queryKey: ['referral-link'],
+    queryFn: async () => {
+      const response = await marketplaceGetReferralLink({
+        headers: getAuthHeaders(),
+      });
+      return response.data;
+    },
+  });
+
+  const referralMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const referralCode = referralLinkQuery.data?.referral_code;
+      if (!referralCode) {
+        throw new Error('Referral code unavailable');
+      }
+      await marketplaceTrackReferralSignup({
+        headers: getAuthHeaders(),
+        body: {
+          referral_code: referralCode,
+          email,
+        },
+      });
+    },
+    onSuccess: () => {
+      setReferralError(null);
+      setReferralSent(true);
+      setReferralEmail('');
+      setTimeout(() => setReferralSent(false), 3000);
+    },
+    onError: () => {
+      setReferralError('Could not send invite right now. Please try again.');
+    },
+  });
+
+  const shareUrl =
+    shareClassQuery.data?.share_link ?? `${window.location.origin}/discover/${classId}`;
 
   const handleCopyLink = async () => {
     try {
@@ -51,11 +110,7 @@ export function ShareClass() {
     if (!referralEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(referralEmail)) {
       return;
     }
-    // TODO: Wire up to referral API
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    setReferralSent(true);
-    setReferralEmail('');
-    setTimeout(() => setReferralSent(false), 3000);
+    referralMutation.mutate(referralEmail);
   };
 
   return (
@@ -69,6 +124,12 @@ export function ShareClass() {
 
       <h1 className="text-2xl font-bold text-gray-900 mb-2">Share this class</h1>
       <p className="text-gray-600 mb-8">Invite friends to join you at this class.</p>
+
+      {shareClassQuery.error && (
+        <p className="mb-4 text-sm text-red-600">
+          Could not load canonical share details. Using fallback link.
+        </p>
+      )}
 
       {/* Share link section */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
@@ -119,18 +180,19 @@ export function ShareClass() {
           />
           <button
             onClick={handleSendReferral}
-            className="px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+            disabled={referralMutation.isPending}
+            className="px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors disabled:opacity-50"
           >
-            Send
+            {referralMutation.isPending ? 'Sending...' : 'Send'}
           </button>
         </div>
 
         {referralSent && (
           <p className="mt-2 text-sm text-green-600">Invite sent successfully!</p>
         )}
+        {referralError && <p className="mt-2 text-sm text-red-600">{referralError}</p>}
       </div>
 
-      {/* Social share buttons placeholder */}
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <h2 className="text-sm font-semibold text-gray-700 mb-3">Share on social media</h2>
         <div className="flex items-center gap-3">

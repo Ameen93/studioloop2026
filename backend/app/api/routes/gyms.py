@@ -14,7 +14,7 @@ from fastapi import APIRouter, File, HTTPException, UploadFile, status
 from pydantic import EmailStr, HttpUrl, field_validator, model_validator
 from sqlalchemy import func, text
 from sqlalchemy.exc import IntegrityError
-from sqlmodel import Field, SQLModel, select
+from sqlmodel import Field, SQLModel, col, select
 
 from app.api.deps import CurrentStaff, RequireOwnerOrManager, SessionDep
 from app.core.config import settings
@@ -402,16 +402,19 @@ def _get_gym_closures(
     stmt = select(GymClosure).where(GymClosure.gym_id == gym_id)
     if not include_past:
         stmt = stmt.where(GymClosure.closure_date >= date.today())
-    return session.exec(stmt.order_by(GymClosure.closure_date.asc())).all()
+    return list(session.exec(stmt.order_by(col(GymClosure.closure_date).asc())).all())
 
 
 def _get_cancellation_policy(gym: Gym) -> GymCancellationPolicyResponse:
     settings_data = gym.settings or {}
 
     raw_window = settings_data.get("cancellation_window_hours", 24)
-    try:
-        cancellation_window_hours = int(raw_window)
-    except (TypeError, ValueError):
+    if isinstance(raw_window, str | int):
+        try:
+            cancellation_window_hours = int(raw_window)
+        except ValueError:
+            cancellation_window_hours = 24
+    else:
         cancellation_window_hours = 24
     cancellation_window_hours = max(0, min(168, cancellation_window_hours))
 
@@ -956,7 +959,7 @@ def get_my_subscription_details(
         .select_from(GymMembership)
         .where(
             GymMembership.gym_id == gym.id,
-            GymMembership.is_active.is_(True),
+            col(GymMembership.is_active).is_(True),
             GymMembership.status == GymMembershipStatus.ACTIVE,
         )
     ).one()
@@ -965,7 +968,7 @@ def get_my_subscription_details(
         .select_from(Staff)
         .where(
             Staff.gym_id == gym.id,
-            Staff.is_active.is_(True),
+            col(Staff.is_active).is_(True),
         )
     ).one()
 
@@ -1001,9 +1004,9 @@ def list_my_spaces(
         select(Space)
         .where(
             Space.gym_id == current_staff.gym_id,
-            Space.is_active.is_(True),
+            col(Space.is_active).is_(True),
         )
-        .order_by(Space.created_at.asc())
+        .order_by(col(Space.created_at).asc())
     ).all()
     return [_serialize_space(space) for space in spaces]
 
@@ -1046,7 +1049,7 @@ def update_my_space(
         select(Space).where(
             Space.id == space_id,
             Space.gym_id == current_staff.gym_id,
-            Space.is_active.is_(True),
+            col(Space.is_active).is_(True),
         )
     ).first()
     if not space:
@@ -1082,7 +1085,7 @@ def deactivate_my_space(
         select(Space).where(
             Space.id == space_id,
             Space.gym_id == current_staff.gym_id,
-            Space.is_active.is_(True),
+            col(Space.is_active).is_(True),
         )
     ).first()
     if not space:
@@ -1115,7 +1118,7 @@ def update_my_space_amenities(
         select(Space).where(
             Space.id == space_id,
             Space.gym_id == current_staff.gym_id,
-            Space.is_active.is_(True),
+            col(Space.is_active).is_(True),
         )
     ).first()
     if not space:
@@ -1154,7 +1157,7 @@ def create_my_class_session(
         select(Space).where(
             Space.id == payload.space_id,
             Space.gym_id == current_staff.gym_id,
-            Space.is_active.is_(True),
+            col(Space.is_active).is_(True),
         )
     ).first()
     if not space:
@@ -1167,16 +1170,16 @@ def create_my_class_session(
             },
         )
 
-    session.exec(
+    session.execute(
         text("SELECT pg_advisory_xact_lock(hashtext(:space_key))"),
-        params={"space_key": str(payload.space_id)},
+        {"space_key": str(payload.space_id)},
     )
 
     overlap = session.exec(
         select(ClassSession).where(
             ClassSession.gym_id == current_staff.gym_id,
             ClassSession.space_id == payload.space_id,
-            ClassSession.is_active.is_(True),
+            col(ClassSession.is_active).is_(True),
             ClassSession.status != ClassSessionStatus.CANCELLED,
             payload.start_time < ClassSession.end_time,
             payload.end_time > ClassSession.start_time,
@@ -1186,13 +1189,13 @@ def create_my_class_session(
         alternatives = session.exec(
             select(Space).where(
                 Space.gym_id == current_staff.gym_id,
-                Space.is_active.is_(True),
-                Space.is_bookable.is_(True),
+                col(Space.is_active).is_(True),
+                col(Space.is_bookable).is_(True),
                 Space.id != payload.space_id,
-                ~Space.id.in_(
-                    select(ClassSession.space_id).where(
+                ~col(Space.id).in_(
+                    select(col(ClassSession.space_id)).where(
                         ClassSession.gym_id == current_staff.gym_id,
-                        ClassSession.is_active.is_(True),
+                        col(ClassSession.is_active).is_(True),
                         ClassSession.status != ClassSessionStatus.CANCELLED,
                         payload.start_time < ClassSession.end_time,
                         payload.end_time > ClassSession.start_time,
@@ -1248,7 +1251,7 @@ def cancel_my_class_session(
         select(ClassSession).where(
             ClassSession.id == class_session_id,
             ClassSession.gym_id == current_staff.gym_id,
-            ClassSession.is_active.is_(True),
+            col(ClassSession.is_active).is_(True),
         )
     ).first()
     if not class_session:
@@ -1354,7 +1357,7 @@ def confirm_member_import(
                 select(GymMembership).where(
                     GymMembership.gym_id == current_staff.gym_id,
                     GymMembership.consumer_id == existing_consumer.id,
-                    GymMembership.is_active.is_(True),
+                    col(GymMembership.is_active).is_(True),
                 )
             ).first()
             if existing_membership:

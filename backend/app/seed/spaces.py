@@ -121,8 +121,4 @@ def seed_spaces(session: Session, gyms: list[Gym]) -> list[Space]:
 
     session.commit()
 
-    # Refresh to get generated IDs
-    for space in spaces:
-        session.refresh(space)
-
     return spaces

@@ -1,95 +1,67 @@
 /**
- * Memberships tab - view active and past memberships.
- *
- * Displays the consumer's gym memberships with status,
- * expiration dates, and usage information.
+ * Memberships tab - view active gym memberships and marketplace subscription.
  */
 
-import { View, Text, FlatList, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
+import { useState } from 'react';
+import { View, Text, FlatList, ActivityIndicator, RefreshControl, Pressable } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
+import {
+  marketplaceViewMarketplaceSubscriptionStatus,
+  staffMembershipsListConsumerMemberships,
+} from '@sl/api-client';
+import type { MembershipPublic } from '@sl/api-client';
+import { getAuthHeaders } from '../../lib/apiAuth';
 
-// Placeholder type until API client types are generated
-interface Membership {
-  id: string;
-  gymName: string;
-  planName: string;
-  status: 'active' | 'expired' | 'cancelled' | 'pending';
-  startDate: string;
-  endDate: string;
-  priceZar: number;
-  billingCycle: 'monthly' | 'annually' | 'once_off';
-  classesUsed?: number;
-  classesAllowed?: number;
-}
+type TabType = 'gym' | 'marketplace';
 
-const STATUS_STYLES = {
+const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
   active: { bg: 'bg-green-100', text: 'text-green-800' },
-  expired: { bg: 'bg-gray-100', text: 'text-gray-800' },
+  inactive: { bg: 'bg-gray-100', text: 'text-gray-800' },
   cancelled: { bg: 'bg-red-100', text: 'text-red-800' },
-  pending: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
-} as const;
+  paused: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
+};
 
 export default function MembershipsTab() {
-  const membershipsQuery = useQuery<Membership[]>({
+  const [activeTab, setActiveTab] = useState<TabType>('gym');
+
+  const gymMembershipsQuery = useQuery({
     queryKey: ['consumer', 'memberships'],
     queryFn: async () => {
-      // TODO: Replace with actual API call
-      // e.g., consumerMembershipsListMyMemberships()
-      return [];
+      const response = await staffMembershipsListConsumerMemberships({
+        headers: getAuthHeaders(),
+      });
+      return response.data ?? [];
     },
   });
 
-  const formatCurrency = (amount: number) =>
-    `R ${amount.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`;
+  const marketplaceSubscriptionQuery = useQuery({
+    queryKey: ['consumer', 'marketplace-subscription'],
+    queryFn: async () => {
+      const response = await marketplaceViewMarketplaceSubscriptionStatus({
+        headers: getAuthHeaders(),
+      });
+      return response.data ?? null;
+    },
+  });
 
-  const formatDate = (dateStr: string) =>
-    new Date(dateStr).toLocaleDateString('en-ZA', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
-
-  const renderMembership = ({ item }: { item: Membership }) => {
-    const statusStyle = STATUS_STYLES[item.status];
+  const renderMembership = ({ item }: { item: MembershipPublic }) => {
+    const style = STATUS_STYLES[item.status] ?? STATUS_STYLES.inactive;
 
     return (
       <View className="bg-white rounded-lg p-4 mb-3 border border-gray-200">
         <View className="flex-row justify-between items-start">
           <View className="flex-1 mr-3">
-            <Text className="text-lg font-semibold text-gray-900">{item.planName}</Text>
-            <Text className="text-sm text-gray-600 mt-1">{item.gymName}</Text>
+            <Text className="text-lg font-semibold text-gray-900">{item.membership_tier}</Text>
+            <Text className="text-sm text-gray-600 mt-1">Gym ID: {item.gym_id}</Text>
           </View>
-          <View className={`${statusStyle.bg} px-3 py-1 rounded-full`}>
-            <Text className={`${statusStyle.text} text-xs font-medium`}>
-              {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-            </Text>
+          <View className={`${style.bg} px-3 py-1 rounded-full`}>
+            <Text className={`${style.text} text-xs font-medium`}>{item.status}</Text>
           </View>
         </View>
 
         <View className="mt-3 pt-3 border-t border-gray-100">
-          <View className="flex-row justify-between mb-2">
-            <Text className="text-sm text-gray-500">Period</Text>
-            <Text className="text-sm text-gray-700">
-              {formatDate(item.startDate)} - {formatDate(item.endDate)}
-            </Text>
-          </View>
-
-          <View className="flex-row justify-between mb-2">
-            <Text className="text-sm text-gray-500">Price</Text>
-            <Text className="text-sm text-gray-700">
-              {formatCurrency(item.priceZar)} / {item.billingCycle.replace('_', ' ')}
-            </Text>
-          </View>
-
-          {item.classesAllowed && (
-            <View className="flex-row justify-between">
-              <Text className="text-sm text-gray-500">Classes</Text>
-              <Text className="text-sm text-gray-700">
-                {item.classesUsed ?? 0} / {item.classesAllowed} used
-              </Text>
-            </View>
-          )}
+          <Text className="text-sm text-gray-500">Plan: {item.membership_plan_id ?? 'Default plan'}</Text>
         </View>
       </View>
     );
@@ -97,31 +69,70 @@ export default function MembershipsTab() {
 
   return (
     <View className="flex-1 bg-gray-50">
-      <FlatList
-        data={membershipsQuery.data ?? []}
-        renderItem={renderMembership}
-        keyExtractor={(item) => item.id}
-        contentContainerClassName="px-4 pt-4 pb-8"
-        refreshControl={
-          <RefreshControl
-            refreshing={membershipsQuery.isRefetching}
-            onRefresh={() => membershipsQuery.refetch()}
-          />
-        }
-        ListEmptyComponent={
-          membershipsQuery.isLoading ? (
+      <View className="px-4 pt-4 pb-2">
+        <View className="flex-row bg-gray-100 rounded-lg p-1">
+          <Pressable
+            className={`flex-1 py-2 rounded-md ${activeTab === 'gym' ? 'bg-white' : ''}`}
+            onPress={() => setActiveTab('gym')}
+          >
+            <Text className="text-center text-sm font-medium text-gray-900">Gym</Text>
+          </Pressable>
+          <Pressable
+            className={`flex-1 py-2 rounded-md ${activeTab === 'marketplace' ? 'bg-white' : ''}`}
+            onPress={() => setActiveTab('marketplace')}
+          >
+            <Text className="text-center text-sm font-medium text-gray-900">Marketplace</Text>
+          </Pressable>
+        </View>
+      </View>
+
+      {activeTab === 'gym' ? (
+        <FlatList
+          data={gymMembershipsQuery.data ?? []}
+          renderItem={renderMembership}
+          keyExtractor={(item) => item.id}
+          contentContainerClassName="px-4 pb-8"
+          refreshControl={
+            <RefreshControl
+              refreshing={gymMembershipsQuery.isRefetching}
+              onRefresh={() => gymMembershipsQuery.refetch()}
+            />
+          }
+          ListEmptyComponent={
+            gymMembershipsQuery.isLoading ? (
+              <ActivityIndicator size="large" color="#6366f1" className="mt-8" />
+            ) : (
+              <View className="items-center py-12">
+                <Ionicons name="card-outline" size={48} color="#d1d5db" />
+                <Text className="text-gray-500 text-lg mt-4 mb-2">No memberships yet</Text>
+              </View>
+            )
+          }
+        />
+      ) : (
+        <View className="px-4 pt-2">
+          {marketplaceSubscriptionQuery.isLoading ? (
             <ActivityIndicator size="large" color="#6366f1" className="mt-8" />
-          ) : (
+          ) : !marketplaceSubscriptionQuery.data ? (
             <View className="items-center py-12">
-              <Ionicons name="card-outline" size={48} color="#d1d5db" />
-              <Text className="text-gray-500 text-lg mt-4 mb-2">No memberships yet</Text>
-              <Text className="text-gray-400 text-center px-8">
-                Browse the marketplace to find a gym and membership plan that suits you
+              <Ionicons name="layers-outline" size={48} color="#d1d5db" />
+              <Text className="text-gray-500 text-lg mt-4 mb-2">No marketplace subscription</Text>
+            </View>
+          ) : (
+            <View className="bg-white rounded-lg p-4 border border-gray-200">
+              <Text className="text-lg font-semibold text-gray-900 capitalize">
+                {marketplaceSubscriptionQuery.data.plan_tier} plan
+              </Text>
+              <Text className="text-sm text-gray-600 mt-1">
+                Classes: {marketplaceSubscriptionQuery.data.classes_remaining} / {marketplaceSubscriptionQuery.data.classes_total}
+              </Text>
+              <Text className="text-sm text-gray-600 mt-1">
+                Status: {marketplaceSubscriptionQuery.data.status}
               </Text>
             </View>
-          )
-        }
-      />
+          )}
+        </View>
+      )}
     </View>
   );
 }

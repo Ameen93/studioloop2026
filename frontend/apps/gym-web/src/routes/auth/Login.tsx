@@ -4,14 +4,13 @@
  * Allows gym staff to log in with email and password.
  * On success, stores JWT tokens in localStorage and redirects to /dashboard.
  *
- * Note: Uses the staff auth endpoint. Once the API client is regenerated
- * with staff auth routes, replace the manual fetch with the generated SDK call.
+ * Uses generated API client for staff auth endpoints.
  */
 
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router';
+import { staffAuthLoginStaff } from '@sl/api-client';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 const ACCESS_TOKEN_KEY = 'gym_staff_access_token';
 const REFRESH_TOKEN_KEY = 'gym_staff_refresh_token';
 const STAFF_INFO_KEY = 'gym_staff_info';
@@ -59,38 +58,53 @@ export function Login() {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/api/v1/staff/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+      const response = await staffAuthLoginStaff({
+        body: data,
+        throwOnError: true,
       });
-
-      if (!response.ok) {
-        const body = await response.json().catch(() => null);
-        const code = body?.error?.code || body?.detail?.code;
-
-        if (code === 'INVALID_CREDENTIALS') {
-          setErrors({ general: 'Invalid email or password' });
-        } else if (code === 'ACCOUNT_DISABLED') {
-          setErrors({ general: 'Your account has been disabled. Contact your gym owner.' });
-        } else {
-          setErrors({ general: 'Login failed. Please try again.' });
-        }
+      const result = response.data;
+      if (!result) {
+        setErrors({ general: 'Login failed. Please try again.' });
         return;
       }
+      onLoginSuccess(result);
+    } catch (error: unknown) {
+      const err = error as {
+        body?: { detail?: { code?: string } };
+        detail?: { code?: string };
+      };
+      const code = err?.body?.detail?.code || err?.detail?.code;
 
-      const result = await response.json();
-      localStorage.setItem(ACCESS_TOKEN_KEY, result.access_token);
-      localStorage.setItem(REFRESH_TOKEN_KEY, result.refresh_token);
-      if (result.staff) {
-        localStorage.setItem(STAFF_INFO_KEY, JSON.stringify(result.staff));
+      if (code === 'INVALID_CREDENTIALS') {
+        setErrors({ general: 'Invalid email or password' });
+      } else if (code === 'ACCOUNT_DISABLED') {
+        setErrors({ general: 'Your account has been disabled. Contact your gym owner.' });
+      } else {
+        setErrors({ general: 'Login failed. Please try again.' });
       }
-      navigate('/dashboard');
-    } catch {
-      setErrors({ general: 'Network error. Please check your connection.' });
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const onLoginSuccess = (result: {
+    access_token: string;
+    refresh_token: string;
+    staff_id: string;
+    role: string;
+    gym_id: string;
+  }) => {
+    localStorage.setItem(ACCESS_TOKEN_KEY, result.access_token);
+    localStorage.setItem(REFRESH_TOKEN_KEY, result.refresh_token);
+    localStorage.setItem(
+      STAFF_INFO_KEY,
+      JSON.stringify({
+        id: result.staff_id,
+        role: result.role,
+        gym_id: result.gym_id,
+      }),
+    );
+    navigate('/dashboard');
   };
 
   return (
