@@ -138,6 +138,14 @@ class Settings(BaseSettings):
     PAYMENT_PLATFORM_FEE_PERCENT: float = 15.0
     PAYMENT_RECEIPT_VAT_PERCENT: float = 15.0
 
+    # Stitch Payments
+    STITCH_CLIENT_ID: str = ""
+    STITCH_CLIENT_SECRET: str = ""
+    STITCH_API_URL: str = "https://api.stitch.money/graphql"
+    STITCH_TOKEN_URL: str = "https://secure.stitch.money/connect/token"
+    STITCH_REDIRECT_BASE_URL: str = "https://secure.stitch.money/connect/payment-request"
+    STITCH_WEBHOOK_SECRET: str = ""  # Svix signing secret (whsec_...)
+
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":
             message = (

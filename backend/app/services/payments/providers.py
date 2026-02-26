@@ -104,6 +104,10 @@ class PayFastProvider:
 def get_payment_provider(name: PaymentProviderName) -> PaymentProvider:
     if name == PaymentProviderName.PAYFAST:
         return PayFastProvider()
+    if name == PaymentProviderName.STITCH:
+        from app.services.payments.stitch import StitchProvider
+
+        return StitchProvider()  # type: ignore[return-value]
     return OzowProvider()
 
 
@@ -111,6 +115,8 @@ def get_default_payment_provider() -> PaymentProviderName:
     configured = getattr(settings, "PAYMENT_PROVIDER", PaymentProviderName.OZOW.value)
     if configured == PaymentProviderName.PAYFAST.value:
         return PaymentProviderName.PAYFAST
+    if configured == PaymentProviderName.STITCH.value:
+        return PaymentProviderName.STITCH
     return PaymentProviderName.OZOW
 
 

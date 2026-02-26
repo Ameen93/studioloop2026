@@ -171,7 +171,9 @@ def test_story_10_5_staff_performance_report(client: TestClient, db: Session) ->
     assert res.status_code == 200
     body = res.json()
     assert len(body) >= 1
-    assert body[0]["classes_taught"] >= 1
+    instructor_row = next((row for row in body if row["staff_id"] == str(instructor.id)), None)
+    assert instructor_row is not None
+    assert instructor_row["classes_taught"] >= 1
 
 
 def test_story_10_6_consumer_class_history(client: TestClient, db: Session) -> None:

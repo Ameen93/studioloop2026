@@ -156,14 +156,17 @@ def test_create_class_session_with_new_fields(
     gym, space = _get_gym_and_space(db)
     headers, staff = _staff_token_headers(client, db, gym, StaffRole.OWNER)
 
-    start, end = _future_time(100)
+    # Use far-future 3AM slot to avoid seeded closures/session conflicts
+    start_dt = datetime.now(timezone.utc) + timedelta(days=70)
+    start_dt = start_dt.replace(hour=3, minute=0, second=0, microsecond=0)
+    end_dt = start_dt + timedelta(minutes=60)
     payload = {
         "space_id": str(space.id),
         "title": "New Session",
         "description": "A test class",
         "class_type": "yoga",
-        "start_time": start,
-        "end_time": end,
+        "start_time": start_dt.isoformat(),
+        "end_time": end_dt.isoformat(),
         "capacity": 30,
         "price_cents": 5000,
         "waitlist_capacity": 5,

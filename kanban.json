@@ -1,0 +1,158 @@
+{
+  "tasks": [
+    {
+      "title": "Register domain (studioloop.co.za)",
+      "description": "Pick and register the domain",
+      "project": "StudioLoop",
+      "priority": "red",
+      "status": "todo",
+      "agent": "ameen",
+      "id": "6643e400",
+      "createdAt": "2026-02-26T20:38:58.066674",
+      "completedAt": null
+    },
+    {
+      "title": "Choose deployment platform",
+      "description": "Fly.io / Railway / Vercel \u2014 create account, decide",
+      "project": "StudioLoop",
+      "priority": "red",
+      "status": "todo",
+      "agent": "ameen",
+      "id": "c5a89f72",
+      "createdAt": "2026-02-26T20:38:58.066674",
+      "completedAt": null
+    },
+    {
+      "title": "Stitch sandbox credentials",
+      "description": "Sign up at stitch.money developer portal for API testing",
+      "project": "StudioLoop",
+      "priority": "red",
+      "status": "todo",
+      "agent": "ameen",
+      "id": "5d18c4cf",
+      "createdAt": "2026-02-26T20:38:58.066674",
+      "completedAt": null
+    },
+    {
+      "title": "Define pricing tiers",
+      "description": "Free / R499 / R1499 or similar. Transparent ZAR pricing.",
+      "project": "StudioLoop",
+      "priority": "red",
+      "status": "todo",
+      "agent": "ameen",
+      "id": "07583042",
+      "createdAt": "2026-02-26T20:38:58.066674",
+      "completedAt": null
+    },
+    {
+      "title": "Identify 3-5 pilot studios",
+      "description": "Small Pilates/yoga/boxing studios in CPT/JHB/DBN for outreach",
+      "project": "StudioLoop",
+      "priority": "yellow",
+      "status": "todo",
+      "agent": "ameen+luke",
+      "id": "d1446f6e",
+      "createdAt": "2026-02-26T20:38:58.066674",
+      "completedAt": null
+    },
+    {
+      "title": "Mark Epic 5 done in sprint-status.yaml",
+      "description": "Class scheduling merged, update tracking file",
+      "project": "StudioLoop",
+      "priority": "yellow",
+      "status": "todo",
+      "agent": "nick-fury",
+      "id": "55c58fc6",
+      "createdAt": "2026-02-26T20:38:58.066674",
+      "completedAt": null
+    },
+    {
+      "title": "Epic 16: Deployment infrastructure",
+      "description": "Docker, CI/CD, staging env \u2014 blocked on platform choice",
+      "project": "StudioLoop",
+      "priority": "red",
+      "status": "todo",
+      "agent": "nick-fury",
+      "id": "57c1467e",
+      "createdAt": "2026-02-26T20:38:58.066674",
+      "completedAt": null
+    },
+    {
+      "title": "Polish gym marketing site",
+      "description": "marketing-gyms Astro app \u2014 make it sales-ready",
+      "project": "StudioLoop",
+      "priority": "yellow",
+      "status": "todo",
+      "agent": "nick-fury",
+      "id": "acd1ef85",
+      "createdAt": "2026-02-26T20:38:58.066674",
+      "completedAt": null
+    },
+    {
+      "title": "Polish consumer marketing site",
+      "description": "marketing-consumers Astro app \u2014 launch ready",
+      "project": "StudioLoop",
+      "priority": "yellow",
+      "status": "todo",
+      "agent": "nick-fury",
+      "id": "6cf44921",
+      "createdAt": "2026-02-26T20:38:58.066674",
+      "completedAt": null
+    },
+    {
+      "title": "Seed demo data refresh",
+      "description": "Realistic SA studio data for sales demos",
+      "project": "StudioLoop",
+      "priority": "yellow",
+      "status": "todo",
+      "agent": "nick-fury",
+      "id": "d44e1311",
+      "createdAt": "2026-02-26T20:38:58.066674",
+      "completedAt": null
+    },
+    {
+      "title": "Regenerate OpenAPI client",
+      "description": "After Stitch payment routes, regen frontend API client",
+      "project": "StudioLoop",
+      "priority": "yellow",
+      "status": "todo",
+      "agent": "nick-fury",
+      "id": "52361329",
+      "createdAt": "2026-02-26T20:38:58.066674",
+      "completedAt": null
+    },
+    {
+      "title": "Fix FIRST_SUPERUSER_PASSWORD",
+      "description": "Still 'changethis' \u2014 set a real password before staging",
+      "project": "StudioLoop",
+      "priority": "yellow",
+      "status": "todo",
+      "agent": "nick-fury",
+      "id": "93bd54ca",
+      "createdAt": "2026-02-26T20:38:58.066674",
+      "completedAt": null
+    },
+    {
+      "title": "Stitch Payments integration",
+      "description": "OAuth2, Pay By Bank, VRP recurring, webhook verification",
+      "project": "StudioLoop",
+      "priority": "red",
+      "status": "done",
+      "agent": "nick-fury",
+      "id": "17789c52",
+      "createdAt": "2026-02-26T20:38:58.066674",
+      "completedAt": "2026-02-26T20:38:58.066674"
+    },
+    {
+      "title": "Epic 5: Class Scheduling",
+      "description": "Templates, sessions, recurring, approval, cancel, capacity, pricing, calendar UI",
+      "project": "StudioLoop",
+      "priority": "red",
+      "status": "done",
+      "agent": "nick-fury",
+      "id": "b47c4682",
+      "createdAt": "2026-02-26T20:38:58.066674",
+      "completedAt": "2026-02-26T20:38:58.066674"
+    }
+  ]
+}

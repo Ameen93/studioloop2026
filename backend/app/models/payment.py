@@ -24,6 +24,7 @@ class PaymentStatus(StrEnum):
 class PaymentProviderName(StrEnum):
     OZOW = "ozow"
     PAYFAST = "payfast"
+    STITCH = "stitch"
 
 
 class Payment(GymScopedModel, table=True):

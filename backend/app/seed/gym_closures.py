@@ -78,14 +78,19 @@ def seed_gym_closures(session: Session, gyms: list[Gym]) -> int:
         specific = GYM_SPECIFIC_CLOSURES.get(gym.slug, [])
         all_closures.extend(specific)
 
+        # Existing DB closures for this gym
+        existing_dates = {
+            closure_date
+            for closure_date in session.exec(
+                select(GymClosure.closure_date).where(GymClosure.gym_id == gym.id)
+            ).all()
+        }
+
+        # Track dates seen during this run as well (prevents duplicate adds before flush)
+        seen_dates = set(existing_dates)
+
         for closure_date, reason in all_closures:
-            existing = session.exec(
-                select(GymClosure).where(
-                    GymClosure.gym_id == gym.id,
-                    GymClosure.closure_date == closure_date,
-                )
-            ).first()
-            if existing:
+            if closure_date in seen_dates:
                 count += 1
                 continue
 
@@ -95,6 +100,7 @@ def seed_gym_closures(session: Session, gyms: list[Gym]) -> int:
                 reason=reason,
             )
             session.add(closure)
+            seen_dates.add(closure_date)
             count += 1
 
     session.commit()

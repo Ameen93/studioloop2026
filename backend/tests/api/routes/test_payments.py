@@ -45,7 +45,9 @@ class _MockStitchProvider:
         return _Verification()
 
 
-def test_story_8_1_and_8_2_initiate_payment_flow(client: TestClient, db: Session) -> None:
+def test_story_8_1_and_8_2_initiate_payment_flow(
+    client: TestClient, db: Session
+) -> None:
     headers, consumer = _consumer_headers(client, db)
     gym = db.exec(select(Gym)).first()
     assert gym is not None
@@ -76,7 +78,9 @@ def test_story_8_1_and_8_2_initiate_payment_flow(client: TestClient, db: Session
     assert payment.status == PaymentStatus.PENDING
 
 
-def test_story_8_3_webhook_processing_idempotent(client: TestClient, db: Session) -> None:
+def test_story_8_3_webhook_processing_idempotent(
+    client: TestClient, db: Session
+) -> None:
     headers, _consumer = _consumer_headers(client, db)
     gym = db.exec(select(Gym)).first()
     assert gym is not None
@@ -105,10 +109,18 @@ def test_story_8_3_webhook_processing_idempotent(client: TestClient, db: Session
         "status": "completed",
         "provider_reference": "provider-ok-1",
     }
-    first = client.post("/api/v1/payments/webhooks/ozow", json=payload, headers={"X-Signature": signature})
+    first = client.post(
+        "/api/v1/payments/webhooks/ozow",
+        json=payload,
+        headers={"X-Signature": signature},
+    )
     assert first.status_code == 200, first.text
 
-    second = client.post("/api/v1/payments/webhooks/ozow", json=payload, headers={"X-Signature": signature})
+    second = client.post(
+        "/api/v1/payments/webhooks/ozow",
+        json=payload,
+        headers={"X-Signature": signature},
+    )
     assert second.status_code == 200
     assert second.json()["status"] == "already_processed"
 
@@ -138,18 +150,24 @@ def test_story_8_4_dashboard_and_detail(client: TestClient, db: Session) -> None
     assert dashboard.status_code == 200
     assert dashboard.json()["items"]
 
-    detail = client.get(f"/api/v1/payments/gyms/{gym.id}/{payment_id}", headers=staff_headers)
+    detail = client.get(
+        f"/api/v1/payments/gyms/{gym.id}/{payment_id}", headers=staff_headers
+    )
     assert detail.status_code == 200
     assert detail.json()["member_name"] == f"{consumer.first_name} {consumer.last_name}"
 
 
-def test_story_8_5_failed_detection_updates_membership(client: TestClient, db: Session) -> None:
+def test_story_8_5_failed_detection_updates_membership(
+    client: TestClient, db: Session
+) -> None:
     gym = db.exec(select(Gym)).first()
     assert gym is not None
     staff_headers = _staff_headers(client, db, gym, StaffRole.OWNER)
     consumer_headers, consumer = _consumer_headers(client, db)
 
-    membership = GymMembership(gym_id=gym.id, consumer_id=consumer.id, status=GymMembershipStatus.ACTIVE)
+    membership = GymMembership(
+        gym_id=gym.id, consumer_id=consumer.id, status=GymMembershipStatus.ACTIVE
+    )
     db.add(membership)
     db.commit()
     db.refresh(membership)
@@ -189,7 +207,9 @@ def test_story_8_5_failed_detection_updates_membership(client: TestClient, db: S
     db.refresh(refreshed)
     assert refreshed.status == GymMembershipStatus.INACTIVE
 
-    items = client.get(f"/api/v1/payments/gyms/{gym.id}/failed/action-items", headers=staff_headers)
+    items = client.get(
+        f"/api/v1/payments/gyms/{gym.id}/failed/action-items", headers=staff_headers
+    )
     assert items.status_code == 200
     assert any(i["payment_id"] == payment_id for i in items.json())
 
@@ -229,7 +249,9 @@ def test_story_8_6_retry_worker(client: TestClient, db: Session) -> None:
     assert updated.status == PaymentStatus.COMPLETED
 
 
-def test_story_8_7_8_8_8_9_reports_history_receipt(client: TestClient, db: Session) -> None:
+def test_story_8_7_8_8_8_9_reports_history_receipt(
+    client: TestClient, db: Session
+) -> None:
     gym = db.exec(select(Gym)).first()
     assert gym is not None
     staff_headers = _staff_headers(client, db, gym, StaffRole.OWNER)
@@ -258,7 +280,10 @@ def test_story_8_7_8_8_8_9_reports_history_receipt(client: TestClient, db: Sessi
     db.add(payment)
     db.commit()
 
-    report = client.get(f"/api/v1/payments/gyms/{gym.id}/reports/marketplace-payout", headers=staff_headers)
+    report = client.get(
+        f"/api/v1/payments/gyms/{gym.id}/reports/marketplace-payout",
+        headers=staff_headers,
+    )
     assert report.status_code == 200
     assert report.json()["gross_revenue_cents"] >= 22000
 
@@ -266,12 +291,16 @@ def test_story_8_7_8_8_8_9_reports_history_receipt(client: TestClient, db: Sessi
     assert history.status_code == 200
     assert any(item["payment_id"] == payment_id for item in history.json()["items"])
 
-    receipt = client.get(f"/api/v1/payments/me/{payment_id}/receipt", headers=consumer_headers)
+    receipt = client.get(
+        f"/api/v1/payments/me/{payment_id}/receipt", headers=consumer_headers
+    )
     assert receipt.status_code == 200
     assert "VAT" in receipt.json()["rendered_text"]
 
 
-def test_payments_denies_cross_tenant_dashboard_access(client: TestClient, db: Session) -> None:
+def test_payments_denies_cross_tenant_dashboard_access(
+    client: TestClient, db: Session
+) -> None:
     gym_a = db.exec(select(Gym)).first()
     assert gym_a is not None
 
@@ -299,7 +328,9 @@ def test_stitch_initiate_payment_and_get_status_endpoint(
 ) -> None:
     from app.api.routes import payments as payments_route
 
-    monkeypatch.setattr(payments_route, "get_payment_provider", lambda _name: _MockStitchProvider())
+    monkeypatch.setattr(
+        payments_route, "get_payment_provider", lambda _name: _MockStitchProvider()
+    )
 
     headers, consumer = _consumer_headers(client, db)
     gym = db.exec(select(Gym)).first()
@@ -333,7 +364,9 @@ def test_stitch_initiate_payment_and_get_status_endpoint(
     assert payment.consumer_id == consumer.id
 
 
-def test_stitch_webhook_endpoint_with_svix_headers(client: TestClient, db: Session, monkeypatch) -> None:
+def test_stitch_webhook_endpoint_with_svix_headers(
+    client: TestClient, db: Session, monkeypatch
+) -> None:
     from app.api.routes import payments as payments_route
 
     class _RecordingProvider(_MockStitchProvider):
@@ -390,7 +423,9 @@ def test_stitch_webhook_endpoint_with_svix_headers(client: TestClient, db: Sessi
     assert payload["event_id"] in str(provider.captured_payload.get("_raw_body"))
 
 
-def test_stitch_webhook_rejects_invalid_svix_signature(client: TestClient, db: Session, monkeypatch) -> None:
+def test_stitch_webhook_rejects_invalid_svix_signature(
+    client: TestClient, db: Session, monkeypatch
+) -> None:
     from app.api.routes import payments as payments_route
 
     headers, _consumer = _consumer_headers(client, db)
@@ -421,7 +456,9 @@ def test_stitch_webhook_rejects_invalid_svix_signature(client: TestClient, db: S
     }
     body = json.dumps(payload, separators=(",", ":"))
 
-    monkeypatch.setattr(payments_route.settings, "STITCH_WEBHOOK_SECRET", "whsec_dGVzdHNlY3JldA==")
+    monkeypatch.setattr(
+        payments_route.settings, "STITCH_WEBHOOK_SECRET", "whsec_dGVzdHNlY3JldA=="
+    )
 
     webhook = client.post(
         "/api/v1/payments/webhook",
@@ -462,7 +499,9 @@ def test_stitch_webhook_valid_svix_signature_is_idempotent(
     )
     payment_id = init_res.json()["payment_id"]
 
-    monkeypatch.setattr(payments_route.settings, "STITCH_WEBHOOK_SECRET", "whsec_dGVzdHNlY3JldA==")
+    monkeypatch.setattr(
+        payments_route.settings, "STITCH_WEBHOOK_SECRET", "whsec_dGVzdHNlY3JldA=="
+    )
 
     payload = {
         "event_id": f"evt-{uuid4()}",
@@ -475,7 +514,9 @@ def test_stitch_webhook_valid_svix_signature_is_idempotent(
     svix_timestamp = str(int(datetime.now(UTC).timestamp()))
     signed = f"{svix_id}.{svix_timestamp}.{body}"
     signature = base64.b64encode(
-        hmac.new(base64.b64decode("dGVzdHNlY3JldA=="), signed.encode(), hashlib.sha256).digest()
+        hmac.new(
+            base64.b64decode("dGVzdHNlY3JldA=="), signed.encode(), hashlib.sha256
+        ).digest()
     ).decode()
 
     first = client.post(
@@ -510,7 +551,9 @@ def test_stitch_subscription_endpoint_creates_membership_payment(
 ) -> None:
     from app.api.routes import payments as payments_route
 
-    monkeypatch.setattr(payments_route, "get_payment_provider", lambda _name: _MockStitchProvider())
+    monkeypatch.setattr(
+        payments_route, "get_payment_provider", lambda _name: _MockStitchProvider()
+    )
 
     headers, _consumer = _consumer_headers(client, db)
     gym = db.exec(select(Gym)).first()
@@ -539,7 +582,9 @@ def test_stitch_subscription_endpoint_creates_membership_payment(
     assert payment.provider.value == "stitch"
 
 
-def test_payments_root_list_endpoint_is_gym_scoped(client: TestClient, db: Session) -> None:
+def test_payments_root_list_endpoint_is_gym_scoped(
+    client: TestClient, db: Session
+) -> None:
     gym = db.exec(select(Gym)).first()
     assert gym is not None
     staff_headers = _staff_headers(client, db, gym, StaffRole.OWNER)

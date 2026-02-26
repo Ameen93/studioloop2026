@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from sqlmodel import select
 
 from app.api.deps import CurrentConsumer, CurrentStaff, SessionDep, StaffGymDep
+from app.core.config import settings
 from app.models import Consumer, GymMembership, GymMembershipStatus
 from app.models.payment import (
     Payment,
