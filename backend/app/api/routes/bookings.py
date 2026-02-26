@@ -412,10 +412,7 @@ def list_consumer_bookings(
     if status is not None:
         query = query.where(Booking.status == status)
 
-    count_query = (
-        select(Booking.id)
-        .where(Booking.consumer_id == current_consumer.id)
-    )
+    count_query = select(Booking.id).where(Booking.consumer_id == current_consumer.id)
     if status is not None:
         count_query = count_query.where(Booking.status == status)
     total = len(session.exec(count_query).all())

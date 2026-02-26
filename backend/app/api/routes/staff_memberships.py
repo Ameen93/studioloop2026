@@ -195,7 +195,9 @@ def add_staff_member(
         )
 
     existing_global = session.exec(
-        select(Staff).where(Staff.email == payload.email, col(Staff.is_active).is_(True))
+        select(Staff).where(
+            Staff.email == payload.email, col(Staff.is_active).is_(True)
+        )
     ).first()
     if existing_global:
         raise HTTPException(
@@ -563,10 +565,11 @@ def list_public_membership_plans(
         )
     return list(
         session.exec(
-        select(MembershipPlan).where(
-            MembershipPlan.gym_id == gym.id, col(MembershipPlan.is_active).is_(True)
-        )
-    ).all())
+            select(MembershipPlan).where(
+                MembershipPlan.gym_id == gym.id, col(MembershipPlan.is_active).is_(True)
+            )
+        ).all()
+    )
 
 
 @router.post(
@@ -787,7 +790,8 @@ def list_gym_members(
         select(GymMembership, Consumer, MembershipPlan)
         .join(Consumer, col(Consumer.id) == col(GymMembership.consumer_id))
         .outerjoin(
-            MembershipPlan, col(MembershipPlan.id) == col(GymMembership.membership_plan_id)
+            MembershipPlan,
+            col(MembershipPlan.id) == col(GymMembership.membership_plan_id),
         )
         .where(
             GymMembership.gym_id == current_staff.gym_id,

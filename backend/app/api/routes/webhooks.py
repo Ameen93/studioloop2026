@@ -165,7 +165,9 @@ def list_webhook_endpoints(
 
     total = session.exec(select(func.count()).select_from(stmt.subquery())).one()
 
-    endpoints = session.exec(stmt.order_by(col(WebhookEndpoint.created_at).desc())).all()
+    endpoints = session.exec(
+        stmt.order_by(col(WebhookEndpoint.created_at).desc())
+    ).all()
 
     return WebhookEndpointListResponse(
         items=[_serialize_endpoint(ep) for ep in endpoints],

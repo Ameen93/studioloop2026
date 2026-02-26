@@ -366,7 +366,9 @@ def view_marketplace_class_details(
         select(ClassSession, Gym, Space, Staff)
         .join(Gym, col(Gym.id) == col(ClassSession.gym_id))
         .join(Space, col(Space.id) == col(ClassSession.space_id))
-        .join(Staff, col(Staff.id) == col(ClassSession.instructor_staff_id), isouter=True)
+        .join(
+            Staff, col(Staff.id) == col(ClassSession.instructor_staff_id), isouter=True
+        )
         .where(
             ClassSession.id == session_id,
             col(ClassSession.is_active).is_(True),

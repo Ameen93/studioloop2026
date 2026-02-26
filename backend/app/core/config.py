@@ -79,9 +79,7 @@ class Settings(BaseSettings):
     def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
         if self.DATABASE_URL:
             # Neon/external URLs use postgresql:// — ensure psycopg driver
-            url = self.DATABASE_URL.replace(
-                "postgresql://", "postgresql+psycopg://"
-            )
+            url = self.DATABASE_URL.replace("postgresql://", "postgresql+psycopg://")
             return PostgresDsn(url)
         return PostgresDsn.build(
             scheme="postgresql+psycopg",

@@ -905,7 +905,9 @@ def platform_health(
     open_complaints = session.exec(
         select(func.count())
         .select_from(Complaint)
-        .where(col(Complaint.status).in_([ComplaintStatus.OPEN, ComplaintStatus.ASSIGNED]))
+        .where(
+            col(Complaint.status).in_([ComplaintStatus.OPEN, ComplaintStatus.ASSIGNED])
+        )
     ).one()
 
     completed_payments = session.exec(
