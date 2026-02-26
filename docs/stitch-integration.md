@@ -43,6 +43,39 @@ The returned `url` is where the user is redirected to complete payment in Stitch
 5. Stitch sends webhook to our `/api/v1/payments/webhooks/stitch` endpoint
 6. Webhook updates payment status, activates membership if applicable
 
+## E2E Happy Path (Sandbox Callback Verified)
+
+This is the end-to-end path we validate in tests (`test_stitch_sandbox_callback_signature_is_accepted`):
+
+1. **Initiate payment**
+   - `POST /api/v1/payments/initiate` with `provider: "stitch"` (or default provider set to stitch)
+   - API responds with `payment_id`, `provider_reference`, and `redirect_url`
+2. **Consumer authorizes payment in Stitch hosted UI**
+3. **Sandbox webhook callback arrives** at `POST /api/v1/payments/webhook` with Svix headers:
+   - `svix-id: msg_sandbox_123`
+   - `svix-timestamp: <unix_ts>`
+   - `svix-signature: v1,<sigA> v1,<sigB>` (multiple signatures can be present)
+4. **Signature verification**
+   - Backend computes HMAC over: `{svix_id}.{svix_timestamp}.{raw_body}`
+   - Uses base64-decoded `STITCH_WEBHOOK_SECRET` (without `whsec_` prefix)
+   - Accepts callback if any `v1` signature matches and timestamp is within 5 minutes
+5. **Payment state transition**
+   - Callback payload status `completed` sets payment to `COMPLETED`
+   - Event is stored in `payment_webhook_events`
+   - Duplicate event IDs are idempotent (`already_processed`)
+
+Minimal callback body example:
+
+```json
+{
+  "event_id": "evt_123",
+  "event_type": "payment.completed",
+  "payment_id": "<uuid>",
+  "status": "completed",
+  "provider_reference": "pir_sandbox_123"
+}
+```
+
 ### Webhook Verification
 
 Stitch webhooks are delivered via **Svix**. Verification uses HMAC-SHA256:

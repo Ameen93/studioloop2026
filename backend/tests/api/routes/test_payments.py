@@ -546,6 +546,68 @@ def test_stitch_webhook_valid_svix_signature_is_idempotent(
     assert second.json()["status"] == "already_processed"
 
 
+def test_stitch_sandbox_callback_signature_is_accepted(
+    client: TestClient, db: Session, monkeypatch
+) -> None:
+    """Validate signature handling against a Stitch sandbox-style callback."""
+    from app.api.routes import payments as payments_route
+
+    headers, _consumer = _consumer_headers(client, db)
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+
+    init_res = client.post(
+        "/api/v1/payments/initiate",
+        json={
+            "gym_id": str(gym.id),
+            "payment_type": "class_booking",
+            "amount_cents": 8000,
+            "description": "Sandbox callback verification",
+            "return_url": "https://app.test/return",
+            "cancel_url": "https://app.test/cancel",
+            "webhook_url": "https://api.test/webhook",
+            "provider": "ozow",
+        },
+        headers=headers,
+    )
+    payment_id = init_res.json()["payment_id"]
+
+    monkeypatch.setattr(
+        payments_route.settings, "STITCH_WEBHOOK_SECRET", "whsec_dGVzdHNlY3JldA=="
+    )
+
+    payload = {
+        "event_id": f"evt-{uuid4()}",
+        "event_type": "payment.completed",
+        "payment_id": payment_id,
+        "status": "completed",
+        "provider_reference": "pir_sandbox_123",
+    }
+    body = json.dumps(payload, separators=(",", ":"))
+    svix_id = "msg_sandbox_123"
+    svix_timestamp = str(int(datetime.now(UTC).timestamp()))
+    signed = f"{svix_id}.{svix_timestamp}.{body}"
+    good_signature = base64.b64encode(
+        hmac.new(
+            base64.b64decode("dGVzdHNlY3JldA=="), signed.encode(), hashlib.sha256
+        ).digest()
+    ).decode()
+
+    # Stitch/Svix can include multiple signatures in one header value.
+    webhook = client.post(
+        "/api/v1/payments/webhook",
+        content=body,
+        headers={
+            "content-type": "application/json",
+            "svix-id": svix_id,
+            "svix-timestamp": svix_timestamp,
+            "svix-signature": f"v1,invalidsig v1,{good_signature}",
+        },
+    )
+    assert webhook.status_code == 200, webhook.text
+    assert webhook.json()["status"] == "processed"
+
+
 def test_stitch_subscription_endpoint_creates_membership_payment(
     client: TestClient, db: Session, monkeypatch
 ) -> None:
