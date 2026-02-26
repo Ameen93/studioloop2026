@@ -1,6 +1,6 @@
 # Story 1.9: Google Social Login
 
-Status: review
+Status: done
 
 ## Story
 

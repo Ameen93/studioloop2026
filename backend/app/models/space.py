@@ -7,6 +7,7 @@ the multi-tenancy pattern.
 
 from uuid import UUID
 
+from sqlalchemy import JSON, Column
 from sqlmodel import Field, SQLModel
 
 from app.models.base import GymScopedSoftDeleteModel
@@ -66,6 +67,18 @@ class Space(GymScopedSoftDeleteModel, SpaceBase, table=True):
     has_mirrors: bool = Field(default=False)
     has_sound_system: bool = Field(default=False)
     has_air_conditioning: bool = Field(default=False)
+    amenities: list[str] = Field(
+        default_factory=list, sa_column=Column(JSON, nullable=False)
+    )
+    equipment: list[str] = Field(
+        default_factory=list, sa_column=Column(JSON, nullable=False)
+    )
+    custom_amenities: list[str] = Field(
+        default_factory=list, sa_column=Column(JSON, nullable=False)
+    )
+    custom_equipment: list[str] = Field(
+        default_factory=list, sa_column=Column(JSON, nullable=False)
+    )
 
     # Availability
     is_bookable: bool = Field(
@@ -83,6 +96,10 @@ class SpaceCreate(SpaceBase):
     has_mirrors: bool = False
     has_sound_system: bool = False
     has_air_conditioning: bool = False
+    amenities: list[str] = Field(default_factory=list)
+    equipment: list[str] = Field(default_factory=list)
+    custom_amenities: list[str] = Field(default_factory=list)
+    custom_equipment: list[str] = Field(default_factory=list)
     is_bookable: bool = True
 
 
@@ -96,6 +113,10 @@ class SpaceUpdate(SQLModel):
     has_mirrors: bool | None = None
     has_sound_system: bool | None = None
     has_air_conditioning: bool | None = None
+    amenities: list[str] | None = None
+    equipment: list[str] | None = None
+    custom_amenities: list[str] | None = None
+    custom_equipment: list[str] | None = None
     is_bookable: bool | None = None
 
 
@@ -108,5 +129,9 @@ class SpacePublic(SpaceBase):
     has_mirrors: bool
     has_sound_system: bool
     has_air_conditioning: bool
+    amenities: list[str]
+    equipment: list[str]
+    custom_amenities: list[str]
+    custom_equipment: list[str]
     is_bookable: bool
     is_active: bool

@@ -1,28 +1,17 @@
-import { Text, View, StyleSheet } from 'react-native';
+/**
+ * Index screen - redirects based on staff authentication state.
+ *
+ * Checks MMKV for stored tokens and redirects to either
+ * the main dashboard tabs or the staff login screen.
+ */
 
-export default function HomeScreen() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>StudioLoop Gym</Text>
-      <Text style={styles.subtitle}>Welcome to the Gym Management App</Text>
-    </View>
-  );
+import { Redirect } from 'expo-router';
+import { isAuthenticated } from '../lib/auth';
+
+export default function IndexScreen() {
+  if (isAuthenticated()) {
+    return <Redirect href="/(tabs)" />;
+  }
+
+  return <Redirect href="/(auth)/login" />;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-  },
-});

@@ -1,6 +1,6 @@
 # Story 1.1: Consumer Email Registration
 
-Status: dev-complete
+Status: done
 
 ## Story
 

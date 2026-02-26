@@ -31,8 +31,8 @@ export const TEST_GYMS = {
 export const API = {
   baseUrl: process.env.API_BASE_URL || "http://localhost:8000",
   auth: {
-    login: "/api/v1/auth/login",
-    register: "/api/v1/auth/register",
-    me: "/api/v1/auth/me",
+    consumerLogin: "/api/v1/auth/consumer/login",
+    consumerRegister: "/api/v1/auth/consumer/register",
+    staffLogin: "/api/v1/auth/staff/login",
   },
 } as const;

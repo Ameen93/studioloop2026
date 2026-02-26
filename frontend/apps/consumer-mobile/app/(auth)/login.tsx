@@ -2,7 +2,7 @@
  * Consumer login screen for mobile.
  *
  * Allows consumers to login with email and password.
- * Stores tokens in MMKV (NOT AsyncStorage per architecture).
+ * Stores tokens in MMKV via centralized auth library.
  */
 
 import { useState } from 'react';
@@ -18,12 +18,9 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useMutation } from '@tanstack/react-query';
-import { createMMKV } from 'react-native-mmkv';
-import { consumerAuthLoginConsumer } from '@sl/api-client';
+import { consumerAuthGetCurrentConsumerProfile, consumerAuthLoginConsumer } from '@sl/api-client';
 import type { ConsumerLoginRequest } from '@sl/api-client';
-
-// MMKV storage instance for auth tokens (AC #2 - MMKV, NOT AsyncStorage)
-const storage = createMMKV({ id: 'auth-storage' });
+import { setConsumerProfile, setTokens } from '../../lib/auth';
 
 interface FormData {
   email: string;
@@ -44,26 +41,57 @@ export default function LoginScreen() {
   const [errors, setErrors] = useState<FormErrors>({});
 
   const loginMutation = useMutation({
-    mutationFn: (data: ConsumerLoginRequest) =>
-      consumerAuthLoginConsumer({
+    mutationFn: async (data: ConsumerLoginRequest) => {
+      const loginResponse = await consumerAuthLoginConsumer({
         body: data,
-      }),
-    onSuccess: (response) => {
-      // Store tokens in MMKV (AC #2 - NOT AsyncStorage!)
-      if (response.data) {
-        storage.set('access_token', response.data.access_token);
-        storage.set('refresh_token', response.data.refresh_token);
+        throwOnError: true,
+      });
+
+      if (!loginResponse.data) {
+        throw new Error('Login failed');
       }
-      // Navigate to home screen (AC #3)
-      router.replace('/');
+
+      const token = loginResponse.data.access_token;
+      const profileResponse = await consumerAuthGetCurrentConsumerProfile({
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return {
+        login: loginResponse.data,
+        profile: profileResponse.data ?? null,
+      };
+    },
+    onSuccess: (response) => {
+      // Store tokens via centralized auth library (MMKV)
+      setTokens({
+        access_token: response.login.access_token,
+        refresh_token: response.login.refresh_token,
+      });
+
+      if (response.profile) {
+        setConsumerProfile({
+          id: response.profile.id,
+          email: response.profile.email,
+          name: `${response.profile.first_name} ${response.profile.last_name}`.trim(),
+        });
+      }
+      // Navigate to main app tabs
+      router.replace('/(tabs)');
     },
     onError: (error: unknown) => {
-      const err = error as { body?: { detail?: { code?: string; message?: string } } };
-      if (err?.body?.detail?.code === 'EMAIL_NOT_VERIFIED') {
+      const err = error as {
+        body?: { detail?: { code?: string; message?: string } };
+        detail?: { code?: string; message?: string };
+      };
+      const code = err?.body?.detail?.code || err?.detail?.code;
+
+      if (code === 'EMAIL_NOT_VERIFIED') {
         setErrors({
           general: 'Please verify your email before logging in. Check your inbox for the verification link.',
         });
-      } else if (err?.body?.detail?.code === 'INVALID_CREDENTIALS') {
+      } else if (code === 'INVALID_CREDENTIALS') {
         setErrors({ general: 'Invalid email or password' });
       } else {
         setErrors({ general: 'Login failed. Please try again.' });

@@ -125,8 +125,4 @@ def seed_gyms(session: Session) -> list[Gym]:
 
     session.commit()
 
-    # Refresh to get generated IDs
-    for gym in gyms:
-        session.refresh(gym)
-
     return gyms

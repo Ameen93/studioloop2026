@@ -1,0 +1,137 @@
+ID,Category,Asset Name,Description,Dimensions / Format,App / Surface,Priority,ComfyUI Notes
+,,,,,,,"Priority: P0=blocks launch, P1=UX critical, P2=content, P3=marketing, P4=future"
+,,,BRAND & LOGO,,,,"Theme: Premium Luxe — Black #0a0a0a, Gold #d4a855, Charcoal #1a1a1a"
+L01,Logo,Primary wordmark,"'Studio' thin weight + 'Loop' bold weight, gold accent",SVG + PNG 1x/2x/3x,All,P0,Text-to-image or manual design — wordmark with luxury feel
+L02,Logo,Icon mark / monogram,"Standalone 'SL' monogram or abstract fitness loop shape — favicons, app icons, avatars",SVG + PNG,All,P0,Abstract logo generation — loop/infinity shape with gold
+L03,Logo,Light variant (on dark bg),"Full wordmark — gold + white text on dark/black",SVG + PNG,All,P0,Variant of L01
+L04,Logo,Dark variant (on light bg),"Full wordmark — dark text on light/cream",SVG + PNG,All,P0,Variant of L01
+L05,Logo,Horizontal layout,"Icon beside text — for sidebars, nav bars",SVG + PNG,All,P0,Layout variant of L01+L02
+L06,Logo,Stacked layout,"Icon above text — splash screens, app stores",SVG + PNG,All,P0,Layout variant of L01+L02
+L07,Logo,Monochrome white,Single-colour white — for dark overlays,SVG + PNG,All,P0,
+L08,Logo,Monochrome black,Single-colour dark — for print / light backgrounds,SVG + PNG,All,P0,
+,,,CONSUMER MOBILE APP,,,,
+A01,App Icon,Consumer app icon,Branded icon with SL monogram — gym/fitness feel,1024×1024px PNG (no alpha),Consumer Mobile,P0,Generate icon mark on dark bg with gold accent
+A02,App Icon,Consumer adaptive icon (Android),Foreground layer with safe zone for Android adaptive icon,1024×1024px PNG,Consumer Mobile,P0,Same mark as A01 with padding for safe zone
+A03,App Icon,Consumer splash screen,StudioLoop logo centered on black (#0a0a0a) background,PNG — device resolution,Consumer Mobile,P0,Logo on solid dark bg
+A04,App Icon,Consumer favicon (PWA),Small icon for browser tab / PWA,196×196px PNG,Consumer Mobile,P0,Scaled version of A01
+A05,App Store,Consumer iOS App Store icon,Exact Apple spec icon,1024×1024px PNG,Consumer Mobile,P3,Same as A01 with Apple guidelines
+A06,App Store,Consumer Google Play icon,Google Play store icon,512×512px PNG,Consumer Mobile,P3,Scaled A01
+A07,App Store,Consumer App Store feature graphic,Google Play banner,1024×500px PNG,Consumer Mobile,P3,"Banner with logo, tagline 'Discover fitness classes in Cape Town', gym imagery"
+A08,App Store,"Consumer iOS screenshots (×5–8)",App screens in device frames — Home / Discover / Class Detail / Booking / QR / Profile,"6.7"" + 6.5"" + 5.5"" frames",Consumer Mobile,P3,Screenshot + device frame compositing
+A09,App Store,"Consumer Android screenshots (×5–8)",Same screens for Google Play,9:16 portrait,Consumer Mobile,P3,Screenshot + device frame compositing
+,,,CONSUMER ONBOARDING (3–4 slides),,,,
+O01,Onboarding,Slide 1 — Discover classes,"Cape Town cityscape silhouette or gym scene — 'Discover classes across Cape Town'",Full screen illustration,Consumer Mobile,P1,"Cape Town landmarks (Table Mountain, Sea Point) + fitness elements"
+O02,Onboarding,Slide 2 — Book instantly,"Phone mockup with booking UI or abstract tap gesture — 'Book in seconds'",Full screen illustration,Consumer Mobile,P1,Phone/hand illustration with booking concept
+O03,Onboarding,Slide 3 — QR check-in,"Person showing phone at front desk — 'Check in with your QR code'",Full screen illustration,Consumer Mobile,P1,Person at gym entrance scanning QR
+O04,Onboarding,Slide 4 — One membership (optional),"Multi-gym concept — 'Your membership, one app'",Full screen illustration,Consumer Mobile,P1,Multiple gym logos/buildings converging to one app
+,,,CLASS TYPE PHOTOS,,,,
+C01,Class Photo,Yoga class,Woman in yoga pose — studio setting with SA feel,16:9 landscape + 3:4 card crop,All apps,P2,"Studio lighting, diverse SA model, clean mat/studio"
+C02,Class Photo,Spin / cycling class,Indoor cycling studio with riders in action,16:9 + 3:4,All apps,P2,"Dark moody lighting, energy, group vibe"
+C03,Class Photo,Boxing / box-fit class,Boxing class action shot — gloves and bags,16:9 + 3:4,All apps,P2,"Punching bag, wraps, high energy"
+C04,Class Photo,HIIT class,Group HIIT workout — burpees / kettlebells,16:9 + 3:4,All apps,P2,"Intense movement, sweat, group energy"
+C05,Class Photo,Pilates / reformer class,Reformer pilates studio — clean and bright,16:9 + 3:4,All apps,P2,"Bright studio, reformer machines, controlled movement"
+C06,Class Photo,Strength training,Weight training area — dumbbells / squat rack,16:9 + 3:4,All apps,P2,"Gym floor, weights, mirrors"
+C07,Class Photo,Dance class,Dance studio class — group movement,16:9 + 3:4,All apps,P2,"Mirrors, wooden floor, expressive movement"
+C08,Class Photo,Swimming,Pool lane swimming,16:9 + 3:4,All apps,P2,"Blue water, lanes, overhead or underwater angle"
+C09,Class Photo,Generic fitness,Catchall for 'Other' class types — general workout,16:9 + 3:4,All apps,P2,"Mixed equipment, versatile gym scene"
+,,,GYM / VENUE PHOTOS,,,,
+G01,Gym Photo,Boutique fitness studio,Small premium studio interior — warm lighting,16:9 + 3:4,All apps,P2,"Wooden floor, mirrors, minimal equipment, premium feel"
+G02,Gym Photo,CrossFit box,Raw industrial gym — rigs and barbells,16:9 + 3:4,All apps,P2,"Concrete, pull-up rigs, chalk, raw aesthetic"
+G03,Gym Photo,Standard commercial gym,Large gym floor — machines and free weights,16:9 + 3:4,All apps,P2,"Rows of machines, open floor, well-lit"
+G04,Gym Photo,Yoga / wellness studio,Dedicated yoga space — plants and natural light,16:9 + 3:4,All apps,P2,"Plants, natural light, wood, calm atmosphere"
+G05,Gym Photo,Outdoor training area,Outdoor bootcamp / calisthenics park — Cape Town backdrop,16:9 + 3:4,All apps,P2,"Sea Point promenade or Green Point park, outdoor workout"
+,,,PEOPLE / INSTRUCTOR PHOTOS,,,,
+P01,People,Instructor portrait 1,"Female fitness instructor — diverse, SA context",Square 1:1 + circle crop,All apps,P2,"Confident pose, gym attire, warm smile"
+P02,People,Instructor portrait 2,"Male fitness instructor — diverse, SA context",Square 1:1 + circle crop,All apps,P2,"Athletic build, professional, approachable"
+P03,People,Instructor portrait 3,"Non-binary / additional instructor — diverse, SA context",Square 1:1 + circle crop,All apps,P2,Diversity representation
+,,,AVATAR PLACEHOLDERS,,,,
+AV01,Placeholder,Default user avatar,"Gender-neutral silhouette — consumer profiles",Square PNG + SVG,All apps,P1,Simple silhouette on dark/neutral bg
+AV02,Placeholder,Default gym avatar,"Building/dumbbell icon — gym profiles without logo",Square PNG + SVG,All apps,P1,Gym building or dumbbell silhouette
+AV03,Placeholder,Default staff avatar,"Person with badge — staff profiles",Square PNG + SVG,Gym Mobile + Web,P1,Person silhouette with professional feel
+,,,EMPTY STATE ILLUSTRATIONS,,,,
+E01,Empty State,No upcoming bookings,"Consumer home — 'Browse classes' prompt",~300×200px illustration,Consumer apps,P1,"Calendar with no items, gold accent, inviting"
+E02,Empty State,No classes found,"Discover screen — filters returned nothing",~300×200px illustration,Consumer apps,P1,"Search icon with empty result, encouraging tone"
+E03,Empty State,Waitlist joined,"Booking confirmation — waitlist state",~300×200px illustration,Consumer apps,P1,"Clock/queue concept, 'you're on the list'"
+E04,Empty State,Booking confirmed,"Success screen after booking",~300×200px illustration,Consumer apps,P1,"Check mark, celebration, gold accent"
+E05,Empty State,Payment failed,"Membership payment failure alert",~300×200px illustration,Consumer apps,P1,"Card with X, warning but not scary"
+E06,Empty State,Class cancelled,"When a booked class gets cancelled",~300×200px illustration,Consumer apps,P1,"Calendar item with X, sympathetic tone"
+E07,Empty State,No members yet,"Gym dashboard — new gym with zero members",~300×200px illustration,Gym Web,P1,"Empty people list, 'invite your first member'"
+E08,Empty State,No classes scheduled,"Gym dashboard — empty class schedule",~300×200px illustration,Gym Web,P1,"Empty calendar, 'create your first class'"
+E09,Empty State,QR code error / offline,QR screen when generation fails,~300×200px illustration,Consumer Mobile,P1,"Broken QR, retry prompt"
+,,,GYM MOBILE — SCANNER ASSETS,,,,
+S01,Scanner,QR viewfinder overlay,"Corner brackets / frame graphic for camera overlay",SVG overlay,Gym Mobile,P1,Clean corner brackets with gold accent on transparent
+S02,Scanner,Scan success animation/graphic,"Green checkmark — membership valid",PNG or Lottie,Gym Mobile,P1,"Green check, member name confirmed"
+S03,Scanner,Scan error graphic,"Red X — membership invalid/expired",PNG or Lottie,Gym Mobile,P1,"Red/orange warning, clear error state"
+S04,Scanner,Flashlight toggle icon,Torch on/off icon for scanner,SVG icon,Gym Mobile,P1,Simple flashlight icon
+,,,GYM MOBILE — APP ICONS,,,,
+GA01,App Icon,Gym staff app icon,"Distinct from consumer — darker/more professional variant",1024×1024px PNG,Gym Mobile,P0,"Similar to A01 but with 'pro' or 'manage' visual distinction"
+GA02,App Icon,Gym adaptive icon (Android),Android adaptive foreground,1024×1024px PNG,Gym Mobile,P0,Same as GA01 with safe zone
+GA03,App Icon,Gym splash screen,Logo on dark background,PNG — device resolution,Gym Mobile,P0,Logo variant on dark bg
+GA04,App Icon,Gym favicon (PWA),Browser tab icon,196×196px PNG,Gym Mobile,P0,Scaled GA01
+GA05,App Store,Gym iOS screenshots (×3–5),"Dashboard, QR Scanner, Member lookup in device frames","6.7"" + 6.5"" frames",Gym Mobile,P3,Screenshots + device frames
+GA06,App Store,Gym Android screenshots (×3–5),Same screens for Google Play,9:16 portrait,Gym Mobile,P3,Screenshots + device frames
+,,,GYM WEB APP (manage.studioloop.co.za),,,,
+W01,Web,Gym web favicon,"Favicon for management dashboard",ICO + PNG 32×32 + 196×196,Gym Web,P0,"Use logo icon mark, blue or gold tint"
+W02,Web,Gym web OG image,"Open Graph social preview card",1200×630px PNG,Gym Web,P3,"'StudioLoop — Gym Management' with dashboard preview"
+W03,Web,Login page large logo,"Full wordmark for desktop login brand panel (~80px)",SVG,Gym Web,P0,Use L05 horizontal wordmark
+W04,Web,Login feature icons (×3),"Small icons for features listed on login panel (dashboard, members, check-in)",SVG icons,Gym Web,P1,Simple line icons — chart/people/QR
+W05,Web,Cover photo upload placeholder,"Dashed border + upload icon — shown before gym uploads cover photo",SVG + CSS,Gym Web,P1,Upload icon with dashed border frame
+W06,Web,Logo upload placeholder,"Small square placeholder for gym logo upload",SVG + CSS,Gym Web,P1,Camera/upload icon in square frame
+W07,Web,CSV import illustration,"Spreadsheet-to-system migration concept for member import (Story 2.11)",~300×200px illustration,Gym Web,P2,"Spreadsheet icon → arrow → app icon"
+,,,CONSUMER WEB APP (app.studioloop.co.za),,,,
+CW01,Web,Consumer web favicon,Favicon for consumer web app,ICO + PNG 32×32 + 196×196,Consumer Web,P0,"Use logo icon mark, gold tint"
+CW02,Web,Consumer web OG image,Open Graph social preview,1200×630px PNG,Consumer Web,P3,"'Discover fitness classes in Cape Town' with app preview"
+CW03,Web,Consumer web navbar logo,Horizontal wordmark for top navigation,SVG,Consumer Web,P0,Use L05
+,,,CONSUMER MARKETING SITE,,,,
+M01,Marketing,Consumer hero background,"Cape Town fitness scene — spin class, Camps Bay yoga, or collage",1920×1080px+ hero image,Marketing (Consumer),P3,"Cape Town backdrop, diverse SA fitness, warm lighting"
+M02,Marketing,Consumer hero app mockup,"Phone device frame showing consumer app home screen",Device mockup PNG,Marketing (Consumer),P3,"iPhone/Android frame, screenshot of home screen"
+M03,Marketing,How-it-works icon 1 — Search,"'Search classes' concept icon/illustration",~200×200px,Marketing (Consumer),P3,"Magnifying glass + gym, clean line art or flat"
+M04,Marketing,How-it-works icon 2 — Book,"'Book instantly' concept icon/illustration",~200×200px,Marketing (Consumer),P3,"Calendar + checkmark, one-tap concept"
+M05,Marketing,How-it-works icon 3 — Check in,"'Check in with QR' concept icon/illustration",~200×200px,Marketing (Consumer),P3,"QR code + phone, door entry concept"
+M06,Marketing,Class category icon — Yoga,Category chip or card icon,~100×100px,Marketing (Consumer),P3,Yoga pose silhouette
+M07,Marketing,Class category icon — Boxing,Category chip or card icon,~100×100px,Marketing (Consumer),P3,Boxing glove silhouette
+M08,Marketing,Class category icon — HIIT,Category chip or card icon,~100×100px,Marketing (Consumer),P3,Running figure / kettlebell
+M09,Marketing,Class category icon — Pilates,Category chip or card icon,~100×100px,Marketing (Consumer),P3,Pilates reformer silhouette
+M10,Marketing,Class category icon — Spin,Category chip or card icon,~100×100px,Marketing (Consumer),P3,Cycling silhouette
+M11,Marketing,Class category icon — Strength,Category chip or card icon,~100×100px,Marketing (Consumer),P3,Dumbbell silhouette
+M12,Marketing,Consumer testimonial photo 1,"Headshot — Lerato-type consumer persona, SA diverse",Square 1:1,Marketing (Consumer),P4,Portrait — young professional Cape Town woman
+M13,Marketing,Consumer testimonial photo 2,"Headshot — second consumer persona, SA diverse",Square 1:1,Marketing (Consumer),P4,Portrait — different demographic
+M14,Marketing,Consumer OG image,Social sharing preview,1200×630px PNG,Marketing (Consumer),P3,"Tagline + app preview + Cape Town vibe"
+M15,Marketing,Consumer Apple Touch Icon,iOS home screen bookmark icon,180×180px PNG,Marketing (Consumer),P3,Brand icon
+M16,Marketing,Consumer Twitter card image,Twitter/X sharing image,1200×600px PNG,Marketing (Consumer),P3,Similar to M14
+,,,GYM MARKETING SITE,,,,
+GM01,Marketing,Gym marketing hero background,"Gym owner at desk, or empty gym before opening — professional SA context",1920×1080px+ hero image,Marketing (Gym),P3,"Professional, aspirational gym ownership"
+GM02,Marketing,Gym marketing dashboard mockup,"Screenshot or designed mockup of the gym web dashboard",Device mockup PNG,Marketing (Gym),P3,"Desktop browser frame, dashboard screenshot"
+GM03,Marketing,Feature screenshot — Member management,Cropped mockup of member list UI,~800×500px,Marketing (Gym),P3,Dashboard member list screen
+GM04,Marketing,Feature screenshot — Payment alerts,Cropped mockup of payment alert UI,~800×500px,Marketing (Gym),P3,Dashboard payment alerts screen
+GM05,Marketing,Feature graphic — Marketplace fill rate,"Before/after chart showing off-peak class fill improvement",~800×400px,Marketing (Gym),P3,"Bar chart or graph, gold accent"
+GM06,Marketing,Gym owner testimonial photo 1,"Headshot — Thabo-type gym owner persona, SA diverse",Square 1:1,Marketing (Gym),P4,Portrait — gym owner demographic
+GM07,Marketing,Gym owner testimonial photo 2,"Second gym owner persona headshot",Square 1:1,Marketing (Gym),P4,Different gym type owner
+GM08,Marketing,Gym marketing OG image,Social sharing preview,1200×630px PNG,Marketing (Gym),P3,"'Gym management software for Cape Town'"
+GM09,Marketing,Gym Apple Touch Icon,iOS home screen bookmark icon,180×180px PNG,Marketing (Gym),P3,Brand icon — blue tint variant
+,,,EMAIL TEMPLATE ASSETS,,,,
+EM01,Email,Email header logo,"Horizontal wordmark ~200px wide, works on white bg",PNG,Email,P4,Light variant wordmark
+EM02,Email,Booking confirmation graphic,Class type icon or checkmark graphic for booking emails,~100×100px PNG,Email,P4,Simple confirmation icon
+EM03,Email,Payment failed graphic,Alert icon for payment failure emails,~100×100px PNG,Email,P4,Warning/card error icon
+EM04,Email,Welcome email illustration,Onboarding welcome image for new user emails,~400×200px PNG,Email,P4,"Welcoming fitness illustration, brand colors"
+,,,PUSH NOTIFICATION ICONS,,,,
+N01,Notification,Android notification icon,Small monochrome white icon for system tray,96×96px PNG (white on transparent),Both Mobile,P0,Simplified logo mark — single color
+,,,UI ICON SET,,,,
+I01,Icons,Bottom nav — Home,Home tab icon,24×24 SVG,Consumer Mobile,P1,House / home outline
+I02,Icons,Bottom nav — Discover,Search/discover tab icon,24×24 SVG,Consumer Mobile,P1,Compass or magnifying glass
+I03,Icons,Bottom nav — Schedule,Calendar/schedule tab icon,24×24 SVG,Consumer Mobile,P1,Calendar outline
+I04,Icons,Bottom nav — Profile,Profile tab icon,24×24 SVG,Consumer Mobile,P1,Person silhouette
+I05,Icons,Class type — Yoga chip,Small class type indicator,20×20 SVG,All apps,P1,Yoga pose mini icon
+I06,Icons,Class type — Spin chip,Small class type indicator,20×20 SVG,All apps,P1,Bicycle mini icon
+I07,Icons,Class type — Boxing chip,Small class type indicator,20×20 SVG,All apps,P1,Glove mini icon
+I08,Icons,Class type — HIIT chip,Small class type indicator,20×20 SVG,All apps,P1,Lightning bolt mini icon
+I09,Icons,Class type — Pilates chip,Small class type indicator,20×20 SVG,All apps,P1,Reformer mini icon
+I10,Icons,Class type — Strength chip,Small class type indicator,20×20 SVG,All apps,P1,Dumbbell mini icon
+I11,Icons,Class type — Dance chip,Small class type indicator,20×20 SVG,All apps,P1,Dance figure mini icon
+I12,Icons,Class type — Swimming chip,Small class type indicator,20×20 SVG,All apps,P1,Wave/swimmer mini icon
+I13,Icons,Amenity — Showers,Gym amenity icon,20×20 SVG,All apps,P2,Shower head
+I14,Icons,Amenity — Lockers,Gym amenity icon,20×20 SVG,All apps,P2,Locker door
+I15,Icons,Amenity — Parking,Gym amenity icon,20×20 SVG,All apps,P2,P sign
+I16,Icons,Amenity — Air conditioning,Gym amenity icon,20×20 SVG,All apps,P2,Snowflake / AC
+I17,Icons,Amenity — Wi-Fi,Gym amenity icon,20×20 SVG,All apps,P2,Wi-Fi signal
+I18,Icons,Amenity — Mats available,Gym amenity icon,20×20 SVG,All apps,P2,Rolled mat

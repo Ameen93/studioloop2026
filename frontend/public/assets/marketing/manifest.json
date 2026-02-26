@@ -1,0 +1,792 @@
+{
+  "assets": {
+    "heroes/b2b-hero.png": {
+      "asset_id": 1,
+      "asset_key": "heroes/b2b-hero.png",
+      "attempt": 1,
+      "seed": 4257951807,
+      "prompt": "Confident gym owner standing in premium modern gym lobby holding a tablet, reviewing business analytics, sleek minimalist gym reception area with dark walls and ambient lighting, dramatic golden side lighting from large windows, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1536,
+      "height": 768,
+      "loras": [
+        "schnell-realism_v2.3.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/heroes/b2b-hero.png",
+      "status": "pass"
+    },
+    "features/b2b-problem.png": {
+      "asset_id": 2,
+      "asset_key": "features/b2b-problem.png",
+      "attempt": 1,
+      "seed": 894054375,
+      "prompt": "Messy desk covered in scattered paper spreadsheets and sticky notes, stressed gym owner with head in hands, small cramped office behind a gym reception desk, harsh fluorescent overhead lighting, dull atmosphere, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 768,
+      "loras": [
+        "schnell-realism_v2.3.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/features/b2b-problem.png",
+      "status": "pass"
+    },
+    "features/b2b-member-management.png": {
+      "asset_id": 3,
+      "asset_key": "features/b2b-member-management.png",
+      "attempt": 1,
+      "seed": 1195109610,
+      "prompt": "Happy diverse group of gym members checking in at a modern fitness center front desk, receptionist smiling, clean modern gym entrance with digital check-in kiosk, warm welcoming ambient lighting, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 768,
+      "loras": [
+        "schnell-realism_v2.3.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/features/b2b-member-management.png",
+      "status": "pass"
+    },
+    "features/b2b-class-scheduling.png": {
+      "asset_id": 4,
+      "asset_key": "features/b2b-class-scheduling.png",
+      "attempt": 1,
+      "seed": 2847518063,
+      "prompt": "Energetic fitness instructor leading a packed group exercise class, participants in sync doing high knees, large bright studio with mirrors and wooden floor, dynamic bright studio lighting with golden tones, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 768,
+      "loras": [
+        "schnell-realism_v2.3.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/features/b2b-class-scheduling.png",
+      "status": "pass"
+    },
+    "features/b2b-billing.png": {
+      "asset_id": 5,
+      "asset_key": "features/b2b-billing.png",
+      "attempt": 1,
+      "seed": 2262511693,
+      "prompt": "Professional modern gym reception area with sleek payment terminal on marble counter, upscale fitness club lobby with plants and dark accent wall, soft warm ambient lighting, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 768,
+      "loras": [
+        "schnell-realism_v2.3.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/features/b2b-billing.png",
+      "status": "pass"
+    },
+    "features/b2b-community.png": {
+      "asset_id": 6,
+      "asset_key": "features/b2b-community.png",
+      "attempt": 1,
+      "seed": 3882782241,
+      "prompt": "Diverse group of six gym members laughing and high-fiving after workout, wearing matching gym t-shirts, open gym floor with equipment in background, warm natural golden hour light streaming through windows, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 768,
+      "loras": [
+        "schnell-realism_v2.3.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/features/b2b-community.png",
+      "status": "pass"
+    },
+    "headshots/b2b-testimonial-1.png": {
+      "asset_id": 7,
+      "asset_key": "headshots/b2b-testimonial-1.png",
+      "attempt": 1,
+      "seed": 1924192704,
+      "prompt": "Professional headshot of confident 40 year old male gym owner, short dark hair, subtle smile, wearing black polo shirt, blurred dark gym interior background, soft portrait lighting with rim light, 85mm portrait lens f/1.8, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 768,
+      "height": 1024,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-FaceRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/headshots/b2b-testimonial-1.png",
+      "status": "pass"
+    },
+    "headshots/b2b-testimonial-2.png": {
+      "asset_id": 8,
+      "asset_key": "headshots/b2b-testimonial-2.png",
+      "attempt": 1,
+      "seed": 753143847,
+      "prompt": "Professional headshot of friendly 35 year old female boutique studio owner, warm smile, wearing dark athletic top, blurred modern studio background with soft bokeh, soft natural window light with fill, 85mm portrait lens f/1.8, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 768,
+      "height": 1024,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-FaceRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/headshots/b2b-testimonial-2.png",
+      "status": "pass"
+    },
+    "headshots/b2b-testimonial-3.png": {
+      "asset_id": 9,
+      "asset_key": "headshots/b2b-testimonial-3.png",
+      "attempt": 1,
+      "seed": 4164440303,
+      "prompt": "Professional headshot of energetic 30 year old male CrossFit box owner, athletic build, confident grin, wearing black fitted shirt, blurred industrial gym background, dramatic side lighting with golden accent, 85mm portrait lens f/1.8, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 768,
+      "height": 1024,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-FaceRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/headshots/b2b-testimonial-3.png",
+      "status": "pass"
+    },
+    "heroes/b2c-hero.png": {
+      "asset_id": 10,
+      "asset_key": "heroes/b2c-hero.png",
+      "attempt": 1,
+      "seed": 3887908710,
+      "prompt": "Dramatic wide angle shot of energetic gym scene, multiple people working out with dumbbells and machines, motion blur on moving athletes, large premium gym with dark walls and golden accent lighting, floor to ceiling windows, dramatic volumetric lighting with golden rays and dark shadows, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1536,
+      "height": 768,
+      "loras": [
+        "schnell-realism_v2.3.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/heroes/b2c-hero.png",
+      "status": "pass"
+    },
+    "workout-types/hiit.png": {
+      "asset_id": 11,
+      "asset_key": "workout-types/hiit.png",
+      "attempt": 1,
+      "seed": 4155461088,
+      "prompt": "High intensity interval training class, athletic people doing burpees mid-air, sweat visible, pure energy and movement, dark modern gym studio with colored accent lighting, dramatic colored lighting with red and orange tones, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 1024,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-UltraRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/workout-types/hiit.png",
+      "status": "pass"
+    },
+    "workout-types/yoga.png": {
+      "asset_id": 12,
+      "asset_key": "workout-types/yoga.png",
+      "attempt": 1,
+      "seed": 988527102,
+      "prompt": "Serene yoga class, graceful instructor in warrior pose, students following in perfect alignment, bright airy yoga studio with natural wood floor and plants, soft natural sunlight streaming through large windows, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 1024,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-UltraRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/workout-types/yoga.png",
+      "status": "pass"
+    },
+    "workout-types/strength.png": {
+      "asset_id": 13,
+      "asset_key": "workout-types/strength.png",
+      "attempt": 1,
+      "seed": 3228460891,
+      "prompt": "Focused female athlete doing heavy deadlift, chalk on hands, intense concentration, muscular physique, industrial style weight room with heavy dumbbells rack in background, dramatic overhead spot lighting with dark surroundings, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 1024,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-UltraRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/workout-types/strength.png",
+      "status": "pass"
+    },
+    "workout-types/cycling.png": {
+      "asset_id": 14,
+      "asset_key": "workout-types/cycling.png",
+      "attempt": 1,
+      "seed": 2017977758,
+      "prompt": "Indoor spin class in full intensity, riders standing on pedals, instructor motivating from front bike, dark cycling studio with neon colored lights on walls, dramatic purple and blue colored lighting, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 1024,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-UltraRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/workout-types/cycling.png",
+      "status": "pass"
+    },
+    "workout-types/boxing.png": {
+      "asset_id": 15,
+      "asset_key": "workout-types/boxing.png",
+      "attempt": 1,
+      "seed": 4185759565,
+      "prompt": "Intense boxing class, woman throwing powerful punch at heavy bag, gloves on, determined expression, dark boxing gym with heavy bags in a row, dramatic side lighting with warm golden tones, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 1024,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-UltraRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/workout-types/boxing.png",
+      "status": "pass"
+    },
+    "workout-types/pilates.png": {
+      "asset_id": 16,
+      "asset_key": "workout-types/pilates.png",
+      "attempt": 1,
+      "seed": 1801964445,
+      "prompt": "Graceful pilates reformer class, instructor demonstrating perfect form on carriage, clean lines, bright pristine white pilates studio with reformer machines, clean bright even studio lighting, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 1024,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-UltraRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/workout-types/pilates.png",
+      "status": "pass"
+    },
+    "workout-types/crossfit.png": {
+      "asset_id": 17,
+      "asset_key": "workout-types/crossfit.png",
+      "attempt": 1,
+      "seed": 263062432,
+      "prompt": "Athletic man doing box jump in mid-air, explosive power, CrossFit open style competition feel, industrial CrossFit box with pull-up rigs and rope climbs visible, harsh overhead lighting with dramatic shadows, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 1024,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-UltraRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/workout-types/crossfit.png",
+      "status": "pass"
+    },
+    "workout-types/swimming.png": {
+      "asset_id": 18,
+      "asset_key": "workout-types/swimming.png",
+      "attempt": 1,
+      "seed": 3073863949,
+      "prompt": "Swimmer doing freestyle stroke in crystal clear pool lane, powerful splash, cap and goggles on, Olympic style indoor pool with lane dividers, blue water, underwater and overhead mixed lighting, turquoise reflections, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 1024,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-UltraRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/workout-types/swimming.png",
+      "status": "pass"
+    },
+    "headshots/b2c-testimonial-1.png": {
+      "asset_id": 19,
+      "asset_key": "headshots/b2c-testimonial-1.png",
+      "attempt": 1,
+      "seed": 1336843825,
+      "prompt": "Bright cheerful headshot of fit 28 year old woman, glowing skin, post-workout glow, wearing colorful sports bra, blurred bright gym background with natural light, soft natural daylight with subtle fill, 85mm portrait lens f/1.8, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 768,
+      "height": 1024,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-FaceRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/headshots/b2c-testimonial-1.png",
+      "status": "pass"
+    },
+    "headshots/b2c-testimonial-2.png": {
+      "asset_id": 20,
+      "asset_key": "headshots/b2c-testimonial-2.png",
+      "attempt": 1,
+      "seed": 103359552,
+      "prompt": "Friendly headshot of athletic 32 year old man, short beard, warm genuine smile, wearing dark tank top, blurred gym entrance with morning light, warm golden hour side light, 85mm portrait lens f/1.8, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 768,
+      "height": 1024,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-FaceRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/headshots/b2c-testimonial-2.png",
+      "status": "pass"
+    },
+    "backgrounds/mobile-bg.png": {
+      "asset_id": 21,
+      "asset_key": "backgrounds/mobile-bg.png",
+      "attempt": 1,
+      "seed": 532703665,
+      "prompt": "Out of focus blurred gym interior bokeh, warm golden light points on dark background, abstract, soft warm ambient golden bokeh lights, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 768,
+      "height": 1536,
+      "loras": [
+        "schnell-realism_v2.3.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/backgrounds/mobile-bg.png",
+      "status": "pass"
+    },
+    "backgrounds/desktop-bg.png": {
+      "asset_id": 22,
+      "asset_key": "backgrounds/desktop-bg.png",
+      "attempt": 1,
+      "seed": 1853067853,
+      "prompt": "Ultra wide blurred panoramic gym interior, soft out of focus equipment silhouettes, warm dark tones, soft ambient warm lighting with golden bokeh, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1920,
+      "height": 1080,
+      "loras": [
+        "schnell-realism_v2.3.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/backgrounds/desktop-bg.png",
+      "status": "pass"
+    },
+    "gym-interiors/boutique-studio.png": {
+      "asset_id": 23,
+      "asset_key": "gym-interiors/boutique-studio.png",
+      "attempt": 1,
+      "seed": 2945713101,
+      "prompt": "Luxurious boutique fitness studio interior, minimalist design, dark walls with gold accents, premium equipment, small exclusive studio with hardwood floors, curated equipment, ambient lighting, warm moody ambient lighting with golden accents, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1536,
+      "height": 768,
+      "loras": [
+        "schnell-realism_v2.3.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/gym-interiors/boutique-studio.png",
+      "status": "pass"
+    },
+    "gym-interiors/crossfit-box.png": {
+      "asset_id": 24,
+      "asset_key": "gym-interiors/crossfit-box.png",
+      "attempt": 1,
+      "seed": 1952657132,
+      "prompt": "Industrial CrossFit box interior, raw concrete walls, pull-up rigs, bumper plates stacked, chalk on floor, large open warehouse style gym with high ceilings and exposed beams, harsh industrial overhead lighting, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1536,
+      "height": 768,
+      "loras": [
+        "schnell-realism_v2.3.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/gym-interiors/crossfit-box.png",
+      "status": "pass"
+    },
+    "gym-interiors/traditional-gym.png": {
+      "asset_id": 25,
+      "asset_key": "gym-interiors/traditional-gym.png",
+      "attempt": 1,
+      "seed": 1826144948,
+      "prompt": "Large traditional commercial gym interior, rows of treadmills and weight machines, spacious and clean, big open gym floor with cardio section and free weights area, floor to ceiling mirrors, bright even commercial fluorescent mixed with natural window light, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1536,
+      "height": 768,
+      "loras": [
+        "schnell-realism_v2.3.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/gym-interiors/traditional-gym.png",
+      "status": "pass"
+    },
+    "lifestyle/friends-leaving-gym.png": {
+      "asset_id": 26,
+      "asset_key": "lifestyle/friends-leaving-gym.png",
+      "attempt": 1,
+      "seed": 1877184856,
+      "prompt": "Three friends walking out of gym together laughing, carrying gym bags, post-workout happiness, modern gym entrance exterior with glass doors and dark signage, warm late afternoon golden sunlight, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 768,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-UltraRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/lifestyle/friends-leaving-gym.png",
+      "status": "pass"
+    },
+    "lifestyle/phone-in-gym.png": {
+      "asset_id": 27,
+      "asset_key": "lifestyle/phone-in-gym.png",
+      "attempt": 1,
+      "seed": 824821038,
+      "prompt": "Young woman in gym sitting on bench looking at smartphone app, booking a class, premium phone visible, modern gym floor with blurred equipment in background, warm ambient gym lighting with phone screen glow on face, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 768,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-UltraRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/lifestyle/phone-in-gym.png",
+      "status": "pass"
+    }
+  },
+  "generation_log": [
+    {
+      "asset_id": 1,
+      "asset_key": "heroes/b2b-hero.png",
+      "attempt": 1,
+      "seed": 4257951807,
+      "prompt": "Confident gym owner standing in premium modern gym lobby holding a tablet, reviewing business analytics, sleek minimalist gym reception area with dark walls and ambient lighting, dramatic golden side lighting from large windows, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1536,
+      "height": 768,
+      "loras": [
+        "schnell-realism_v2.3.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/heroes/b2b-hero.png",
+      "status": "pass"
+    },
+    {
+      "asset_id": 2,
+      "asset_key": "features/b2b-problem.png",
+      "attempt": 1,
+      "seed": 894054375,
+      "prompt": "Messy desk covered in scattered paper spreadsheets and sticky notes, stressed gym owner with head in hands, small cramped office behind a gym reception desk, harsh fluorescent overhead lighting, dull atmosphere, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 768,
+      "loras": [
+        "schnell-realism_v2.3.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/features/b2b-problem.png",
+      "status": "pass"
+    },
+    {
+      "asset_id": 3,
+      "asset_key": "features/b2b-member-management.png",
+      "attempt": 1,
+      "seed": 1195109610,
+      "prompt": "Happy diverse group of gym members checking in at a modern fitness center front desk, receptionist smiling, clean modern gym entrance with digital check-in kiosk, warm welcoming ambient lighting, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 768,
+      "loras": [
+        "schnell-realism_v2.3.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/features/b2b-member-management.png",
+      "status": "pass"
+    },
+    {
+      "asset_id": 4,
+      "asset_key": "features/b2b-class-scheduling.png",
+      "attempt": 1,
+      "seed": 2847518063,
+      "prompt": "Energetic fitness instructor leading a packed group exercise class, participants in sync doing high knees, large bright studio with mirrors and wooden floor, dynamic bright studio lighting with golden tones, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 768,
+      "loras": [
+        "schnell-realism_v2.3.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/features/b2b-class-scheduling.png",
+      "status": "pass"
+    },
+    {
+      "asset_id": 5,
+      "asset_key": "features/b2b-billing.png",
+      "attempt": 1,
+      "seed": 2262511693,
+      "prompt": "Professional modern gym reception area with sleek payment terminal on marble counter, upscale fitness club lobby with plants and dark accent wall, soft warm ambient lighting, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 768,
+      "loras": [
+        "schnell-realism_v2.3.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/features/b2b-billing.png",
+      "status": "pass"
+    },
+    {
+      "asset_id": 6,
+      "asset_key": "features/b2b-community.png",
+      "attempt": 1,
+      "seed": 3882782241,
+      "prompt": "Diverse group of six gym members laughing and high-fiving after workout, wearing matching gym t-shirts, open gym floor with equipment in background, warm natural golden hour light streaming through windows, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 768,
+      "loras": [
+        "schnell-realism_v2.3.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/features/b2b-community.png",
+      "status": "pass"
+    },
+    {
+      "asset_id": 7,
+      "asset_key": "headshots/b2b-testimonial-1.png",
+      "attempt": 1,
+      "seed": 1924192704,
+      "prompt": "Professional headshot of confident 40 year old male gym owner, short dark hair, subtle smile, wearing black polo shirt, blurred dark gym interior background, soft portrait lighting with rim light, 85mm portrait lens f/1.8, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 768,
+      "height": 1024,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-FaceRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/headshots/b2b-testimonial-1.png",
+      "status": "pass"
+    },
+    {
+      "asset_id": 8,
+      "asset_key": "headshots/b2b-testimonial-2.png",
+      "attempt": 1,
+      "seed": 753143847,
+      "prompt": "Professional headshot of friendly 35 year old female boutique studio owner, warm smile, wearing dark athletic top, blurred modern studio background with soft bokeh, soft natural window light with fill, 85mm portrait lens f/1.8, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 768,
+      "height": 1024,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-FaceRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/headshots/b2b-testimonial-2.png",
+      "status": "pass"
+    },
+    {
+      "asset_id": 9,
+      "asset_key": "headshots/b2b-testimonial-3.png",
+      "attempt": 1,
+      "seed": 4164440303,
+      "prompt": "Professional headshot of energetic 30 year old male CrossFit box owner, athletic build, confident grin, wearing black fitted shirt, blurred industrial gym background, dramatic side lighting with golden accent, 85mm portrait lens f/1.8, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 768,
+      "height": 1024,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-FaceRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/headshots/b2b-testimonial-3.png",
+      "status": "pass"
+    },
+    {
+      "asset_id": 10,
+      "asset_key": "heroes/b2c-hero.png",
+      "attempt": 1,
+      "seed": 3887908710,
+      "prompt": "Dramatic wide angle shot of energetic gym scene, multiple people working out with dumbbells and machines, motion blur on moving athletes, large premium gym with dark walls and golden accent lighting, floor to ceiling windows, dramatic volumetric lighting with golden rays and dark shadows, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1536,
+      "height": 768,
+      "loras": [
+        "schnell-realism_v2.3.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/heroes/b2c-hero.png",
+      "status": "pass"
+    },
+    {
+      "asset_id": 11,
+      "asset_key": "workout-types/hiit.png",
+      "attempt": 1,
+      "seed": 4155461088,
+      "prompt": "High intensity interval training class, athletic people doing burpees mid-air, sweat visible, pure energy and movement, dark modern gym studio with colored accent lighting, dramatic colored lighting with red and orange tones, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 1024,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-UltraRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/workout-types/hiit.png",
+      "status": "pass"
+    },
+    {
+      "asset_id": 12,
+      "asset_key": "workout-types/yoga.png",
+      "attempt": 1,
+      "seed": 988527102,
+      "prompt": "Serene yoga class, graceful instructor in warrior pose, students following in perfect alignment, bright airy yoga studio with natural wood floor and plants, soft natural sunlight streaming through large windows, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 1024,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-UltraRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/workout-types/yoga.png",
+      "status": "pass"
+    },
+    {
+      "asset_id": 13,
+      "asset_key": "workout-types/strength.png",
+      "attempt": 1,
+      "seed": 3228460891,
+      "prompt": "Focused female athlete doing heavy deadlift, chalk on hands, intense concentration, muscular physique, industrial style weight room with heavy dumbbells rack in background, dramatic overhead spot lighting with dark surroundings, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 1024,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-UltraRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/workout-types/strength.png",
+      "status": "pass"
+    },
+    {
+      "asset_id": 14,
+      "asset_key": "workout-types/cycling.png",
+      "attempt": 1,
+      "seed": 2017977758,
+      "prompt": "Indoor spin class in full intensity, riders standing on pedals, instructor motivating from front bike, dark cycling studio with neon colored lights on walls, dramatic purple and blue colored lighting, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 1024,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-UltraRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/workout-types/cycling.png",
+      "status": "pass"
+    },
+    {
+      "asset_id": 15,
+      "asset_key": "workout-types/boxing.png",
+      "attempt": 1,
+      "seed": 4185759565,
+      "prompt": "Intense boxing class, woman throwing powerful punch at heavy bag, gloves on, determined expression, dark boxing gym with heavy bags in a row, dramatic side lighting with warm golden tones, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 1024,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-UltraRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/workout-types/boxing.png",
+      "status": "pass"
+    },
+    {
+      "asset_id": 16,
+      "asset_key": "workout-types/pilates.png",
+      "attempt": 1,
+      "seed": 1801964445,
+      "prompt": "Graceful pilates reformer class, instructor demonstrating perfect form on carriage, clean lines, bright pristine white pilates studio with reformer machines, clean bright even studio lighting, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 1024,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-UltraRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/workout-types/pilates.png",
+      "status": "pass"
+    },
+    {
+      "asset_id": 17,
+      "asset_key": "workout-types/crossfit.png",
+      "attempt": 1,
+      "seed": 263062432,
+      "prompt": "Athletic man doing box jump in mid-air, explosive power, CrossFit open style competition feel, industrial CrossFit box with pull-up rigs and rope climbs visible, harsh overhead lighting with dramatic shadows, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 1024,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-UltraRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/workout-types/crossfit.png",
+      "status": "pass"
+    },
+    {
+      "asset_id": 18,
+      "asset_key": "workout-types/swimming.png",
+      "attempt": 1,
+      "seed": 3073863949,
+      "prompt": "Swimmer doing freestyle stroke in crystal clear pool lane, powerful splash, cap and goggles on, Olympic style indoor pool with lane dividers, blue water, underwater and overhead mixed lighting, turquoise reflections, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 1024,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-UltraRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/workout-types/swimming.png",
+      "status": "pass"
+    },
+    {
+      "asset_id": 19,
+      "asset_key": "headshots/b2c-testimonial-1.png",
+      "attempt": 1,
+      "seed": 1336843825,
+      "prompt": "Bright cheerful headshot of fit 28 year old woman, glowing skin, post-workout glow, wearing colorful sports bra, blurred bright gym background with natural light, soft natural daylight with subtle fill, 85mm portrait lens f/1.8, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 768,
+      "height": 1024,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-FaceRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/headshots/b2c-testimonial-1.png",
+      "status": "pass"
+    },
+    {
+      "asset_id": 20,
+      "asset_key": "headshots/b2c-testimonial-2.png",
+      "attempt": 1,
+      "seed": 103359552,
+      "prompt": "Friendly headshot of athletic 32 year old man, short beard, warm genuine smile, wearing dark tank top, blurred gym entrance with morning light, warm golden hour side light, 85mm portrait lens f/1.8, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 768,
+      "height": 1024,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-FaceRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/headshots/b2c-testimonial-2.png",
+      "status": "pass"
+    },
+    {
+      "asset_id": 21,
+      "asset_key": "backgrounds/mobile-bg.png",
+      "attempt": 1,
+      "seed": 532703665,
+      "prompt": "Out of focus blurred gym interior bokeh, warm golden light points on dark background, abstract, soft warm ambient golden bokeh lights, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 768,
+      "height": 1536,
+      "loras": [
+        "schnell-realism_v2.3.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/backgrounds/mobile-bg.png",
+      "status": "pass"
+    },
+    {
+      "asset_id": 22,
+      "asset_key": "backgrounds/desktop-bg.png",
+      "attempt": 1,
+      "seed": 1853067853,
+      "prompt": "Ultra wide blurred panoramic gym interior, soft out of focus equipment silhouettes, warm dark tones, soft ambient warm lighting with golden bokeh, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1920,
+      "height": 1080,
+      "loras": [
+        "schnell-realism_v2.3.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/backgrounds/desktop-bg.png",
+      "status": "pass"
+    },
+    {
+      "asset_id": 23,
+      "asset_key": "gym-interiors/boutique-studio.png",
+      "attempt": 1,
+      "seed": 2945713101,
+      "prompt": "Luxurious boutique fitness studio interior, minimalist design, dark walls with gold accents, premium equipment, small exclusive studio with hardwood floors, curated equipment, ambient lighting, warm moody ambient lighting with golden accents, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1536,
+      "height": 768,
+      "loras": [
+        "schnell-realism_v2.3.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/gym-interiors/boutique-studio.png",
+      "status": "pass"
+    },
+    {
+      "asset_id": 24,
+      "asset_key": "gym-interiors/crossfit-box.png",
+      "attempt": 1,
+      "seed": 1952657132,
+      "prompt": "Industrial CrossFit box interior, raw concrete walls, pull-up rigs, bumper plates stacked, chalk on floor, large open warehouse style gym with high ceilings and exposed beams, harsh industrial overhead lighting, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1536,
+      "height": 768,
+      "loras": [
+        "schnell-realism_v2.3.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/gym-interiors/crossfit-box.png",
+      "status": "pass"
+    },
+    {
+      "asset_id": 25,
+      "asset_key": "gym-interiors/traditional-gym.png",
+      "attempt": 1,
+      "seed": 1826144948,
+      "prompt": "Large traditional commercial gym interior, rows of treadmills and weight machines, spacious and clean, big open gym floor with cardio section and free weights area, floor to ceiling mirrors, bright even commercial fluorescent mixed with natural window light, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1536,
+      "height": 768,
+      "loras": [
+        "schnell-realism_v2.3.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/gym-interiors/traditional-gym.png",
+      "status": "pass"
+    },
+    {
+      "asset_id": 26,
+      "asset_key": "lifestyle/friends-leaving-gym.png",
+      "attempt": 1,
+      "seed": 1877184856,
+      "prompt": "Three friends walking out of gym together laughing, carrying gym bags, post-workout happiness, modern gym entrance exterior with glass doors and dark signage, warm late afternoon golden sunlight, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 768,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-UltraRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/lifestyle/friends-leaving-gym.png",
+      "status": "pass"
+    },
+    {
+      "asset_id": 27,
+      "asset_key": "lifestyle/phone-in-gym.png",
+      "attempt": 1,
+      "seed": 824821038,
+      "prompt": "Young woman in gym sitting on bench looking at smartphone app, booking a class, premium phone visible, modern gym floor with blurred equipment in background, warm ambient gym lighting with phone screen glow on face, Canon EOS R5, 4K commercial photography, sharp focus, high resolution, professional lighting, premium luxurious modern atmosphere, dark moody tones with warm golden accent lighting",
+      "width": 1024,
+      "height": 768,
+      "loras": [
+        "schnell-realism_v2.3.safetensors",
+        "Canopus-LoRA-Flux-UltraRealism.safetensors"
+      ],
+      "output_path": "/home/ameen/projects/studioloop2026/frontend/public/assets/marketing/lifestyle/phone-in-gym.png",
+      "status": "pass"
+    }
+  ]
+}

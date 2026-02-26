@@ -1,6 +1,6 @@
 # Story 1.5: Password Reset via Email
 
-Status: review
+Status: done
 
 ## Story
 

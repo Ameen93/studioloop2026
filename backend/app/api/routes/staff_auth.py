@@ -123,6 +123,7 @@ def login_staff(
         access_token=access_token,
         refresh_token=refresh_token,
         token_type="bearer",
+        staff_id=str(staff.id),
         role=staff.role.value,
         gym_id=str(staff.gym_id),
     )
@@ -227,6 +228,7 @@ def refresh_staff_token(
         access_token=access_token,
         refresh_token=refresh_token,
         token_type="bearer",
+        staff_id=str(staff.id),
         role=staff.role.value,
         gym_id=str(staff.gym_id),
     )

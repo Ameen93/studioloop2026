@@ -1,14 +1,17 @@
 /**
- * Index screen - redirects to appropriate initial screen.
+ * Index screen - redirects based on authentication state.
  *
- * For now, redirects to registration. In the future, this
- * will check auth state and redirect accordingly.
+ * Checks MMKV for stored tokens and redirects to either
+ * the main app tabs or the login screen.
  */
 
 import { Redirect } from 'expo-router';
+import { isAuthenticated } from '../lib/auth';
 
 export default function IndexScreen() {
-  // TODO: Check if user is authenticated and redirect to main app
-  // For now, redirect to login
+  if (isAuthenticated()) {
+    return <Redirect href="/(tabs)" />;
+  }
+
   return <Redirect href="/(auth)/login" />;
 }

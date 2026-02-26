@@ -1,114 +1,169 @@
 """Seed data for ClassTemplate entities.
 
-DEFERRED: ClassTemplate model will be created in Epic 5 (Class Scheduling System).
-
-This module is a placeholder that documents the planned class template
-seed data structure for when the model becomes available.
-
-Planned Class Templates:
-- Yoga: 60 min, capacity 20, calm intensity
-- Spin: 45 min, capacity 15, high intensity
-- HIIT: 30 min, capacity 25, very high intensity
-- CrossFit: 60 min, capacity 12, very high intensity
-- Pilates: 55 min, capacity 18, moderate intensity
-- Boxing: 45 min, capacity 16, high intensity
-- Zumba: 50 min, capacity 30, moderate intensity
+Creates realistic class templates for each gym with varied class types,
+colors, and default configurations.
 """
 
 from typing import TYPE_CHECKING
 
-from sqlmodel import Session
+from sqlmodel import Session, select
+
+from app.models import ClassTemplate, Space, Staff
+from app.models.class_template import ClassType
+from app.models.staff import StaffRole
 
 if TYPE_CHECKING:
     from app.models import Gym
 
-
-# Documented for future implementation
-PLANNED_CLASS_TEMPLATES = [
+TEMPLATE_DEFS: list[dict] = [
     {
-        "name": "Yoga",
-        "description": "Mindful movement combining breathwork, flexibility, and strength poses.",
-        "duration_minutes": 60,
-        "default_capacity": 20,
-        "intensity_level": "low",
-        "equipment_needed": ["Yoga mat", "Blocks (optional)", "Strap (optional)"],
-        "calories_estimate": 200,
-    },
-    {
-        "name": "Spin",
-        "description": "High-energy indoor cycling with music-driven intervals.",
-        "duration_minutes": 45,
-        "default_capacity": 15,
-        "intensity_level": "high",
-        "equipment_needed": ["Spin bike (provided)", "Heart rate monitor (optional)"],
-        "calories_estimate": 500,
-    },
-    {
-        "name": "HIIT",
-        "description": "High-Intensity Interval Training for maximum calorie burn.",
-        "duration_minutes": 30,
+        "name": "Morning HIIT Blast",
+        "class_type": ClassType.HIIT,
+        "default_duration_minutes": 30,
         "default_capacity": 25,
-        "intensity_level": "very_high",
-        "equipment_needed": ["Mat", "Dumbbells (optional)"],
-        "calories_estimate": 400,
+        "default_price_cents": 0,
+        "color": "#EF4444",
+        "space_name": "Main Studio",
     },
     {
-        "name": "CrossFit",
-        "description": "Functional fitness combining weightlifting, cardio, and gymnastics.",
-        "duration_minutes": 60,
-        "default_capacity": 12,
-        "intensity_level": "very_high",
-        "equipment_needed": ["Barbell", "Kettlebells", "Pull-up bar"],
-        "calories_estimate": 600,
-    },
-    {
-        "name": "Pilates",
-        "description": "Core-focused workout improving posture, flexibility, and body awareness.",
-        "duration_minutes": 55,
-        "default_capacity": 18,
-        "intensity_level": "moderate",
-        "equipment_needed": ["Mat", "Reformer (if available)"],
-        "calories_estimate": 250,
-    },
-    {
-        "name": "Boxing",
-        "description": "Full-body cardio workout with boxing techniques and bag work.",
-        "duration_minutes": 45,
-        "default_capacity": 16,
-        "intensity_level": "high",
-        "equipment_needed": ["Boxing gloves", "Hand wraps"],
-        "calories_estimate": 450,
-    },
-    {
-        "name": "Zumba",
-        "description": "Dance fitness party with Latin and international music.",
-        "duration_minutes": 50,
+        "name": "Zumba Party",
+        "class_type": ClassType.DANCE,
+        "default_duration_minutes": 50,
         "default_capacity": 30,
-        "intensity_level": "moderate",
-        "equipment_needed": [],
-        "calories_estimate": 350,
+        "default_price_cents": 0,
+        "color": "#F59E0B",
+        "space_name": "Main Studio",
+    },
+    {
+        "name": "Body Pump",
+        "class_type": ClassType.STRENGTH,
+        "default_duration_minutes": 45,
+        "default_capacity": 25,
+        "default_price_cents": 0,
+        "color": "#8B5CF6",
+        "space_name": "Main Studio",
+    },
+    {
+        "name": "Spin Express",
+        "class_type": ClassType.CYCLING,
+        "default_duration_minutes": 30,
+        "default_capacity": 20,
+        "default_price_cents": 0,
+        "color": "#06B6D4",
+        "space_name": "Spin Room",
+    },
+    {
+        "name": "Endurance Ride",
+        "class_type": ClassType.CYCLING,
+        "default_duration_minutes": 45,
+        "default_capacity": 20,
+        "default_price_cents": 0,
+        "color": "#0EA5E9",
+        "space_name": "Spin Room",
+    },
+    {
+        "name": "Sunrise Yoga",
+        "class_type": ClassType.YOGA,
+        "default_duration_minutes": 60,
+        "default_capacity": 25,
+        "default_price_cents": 0,
+        "color": "#10B981",
+        "space_name": "Yoga Studio",
+    },
+    {
+        "name": "Power Yoga",
+        "class_type": ClassType.YOGA,
+        "default_duration_minutes": 60,
+        "default_capacity": 25,
+        "default_price_cents": 0,
+        "color": "#34D399",
+        "space_name": "Yoga Studio",
+    },
+    {
+        "name": "CrossFit WOD",
+        "class_type": ClassType.CROSSFIT,
+        "default_duration_minutes": 60,
+        "default_capacity": 15,
+        "default_price_cents": 7500,
+        "color": "#F97316",
+        "space_name": "CrossFit Box",
+    },
+    {
+        "name": "Boxing Fundamentals",
+        "class_type": ClassType.BOXING,
+        "default_duration_minutes": 45,
+        "default_capacity": 12,
+        "default_price_cents": 5000,
+        "color": "#DC2626",
+        "space_name": "HIIT Zone",
+    },
+    {
+        "name": "Pilates Core",
+        "class_type": ClassType.PILATES,
+        "default_duration_minutes": 50,
+        "default_capacity": 20,
+        "default_price_cents": 0,
+        "color": "#EC4899",
+        "space_name": "Yoga Studio",
     },
 ]
 
 
-def seed_class_templates(_session: Session, _gyms: list["Gym"]) -> int:
-    """Seed class templates for each gym.
-
-    DEFERRED: Returns 0 until ClassTemplate model is created in Epic 5.
-
-    Planned implementation:
-    - Create standard templates for common class types
-    - Associate templates with gyms based on their facilities
-    - Set default pricing for marketplace gyms
-
-    Args:
-        session: SQLModel database session
-        gyms: List of Gym objects to create templates for
+def seed_class_templates(session: Session, gyms: list["Gym"]) -> int:
+    """Seed class templates for all gyms.
 
     Returns:
-        Number of templates created (currently 0)
+        Number of templates created/found
     """
-    # TODO: Implement when ClassTemplate model is created in Epic 5
-    # See Epic 5: Class Scheduling System for model definition
+    existing = session.exec(select(ClassTemplate.id)).all()
+    if len(existing) > 0:
+        return len(existing)
 
-    return 0
+    all_spaces = session.exec(select(Space)).all()
+    all_staff = session.exec(
+        select(Staff).where(Staff.role == StaffRole.INSTRUCTOR)
+    ).all()
+
+    spaces_by_gym: dict[str, dict[str, Space]] = {}
+    for space in all_spaces:
+        spaces_by_gym.setdefault(str(space.gym_id), {})[space.name] = space
+
+    instructors_by_gym: dict[str, list[Staff]] = {}
+    for staff in all_staff:
+        instructors_by_gym.setdefault(str(staff.gym_id), []).append(staff)
+
+    count = 0
+    for gym in gyms:
+        gym_spaces = spaces_by_gym.get(str(gym.id), {})
+        gym_instructors = instructors_by_gym.get(str(gym.id), [])
+        instructor_idx = 0
+
+        for tdef in TEMPLATE_DEFS:
+            space = gym_spaces.get(tdef["space_name"])
+            if not space:
+                continue
+
+            instructor_id = None
+            if gym_instructors:
+                instructor_id = gym_instructors[
+                    instructor_idx % len(gym_instructors)
+                ].id
+                instructor_idx += 1
+
+            template = ClassTemplate(
+                gym_id=gym.id,
+                name=tdef["name"],
+                class_type=tdef["class_type"],
+                default_duration_minutes=tdef["default_duration_minutes"],
+                default_capacity=tdef["default_capacity"],
+                default_price_cents=tdef["default_price_cents"],
+                color=tdef["color"],
+                default_space_id=space.id,
+                default_instructor_staff_id=instructor_id,
+                waitlist_enabled=True,
+            )
+            session.add(template)
+            count += 1
+
+    session.commit()
+    return count

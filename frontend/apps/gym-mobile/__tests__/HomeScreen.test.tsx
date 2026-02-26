@@ -1,14 +1,48 @@
-import { render, screen } from '@testing-library/react-native'
+import { render } from '@testing-library/react-native'
+
+jest.mock('react-native-mmkv', () => ({
+  createMMKV: () => ({
+    getString: jest.fn(),
+    set: jest.fn(),
+    remove: jest.fn(),
+    getBoolean: jest.fn(),
+    getNumber: jest.fn(),
+  }),
+}))
+
+const mockRedirect = jest.fn((_props: { href: string }) => null)
+
+jest.mock('expo-router', () => ({
+  Redirect: (props: { href: string }) => mockRedirect(props),
+}))
+
+const mockIsAuthenticated = jest.fn()
+
+jest.mock('../lib/auth', () => ({
+  isAuthenticated: () => mockIsAuthenticated(),
+}))
+
 import HomeScreen from '../app/index'
 
 describe('HomeScreen', () => {
-  it('renders the main title', () => {
-    render(<HomeScreen />)
-    expect(screen.getByText('StudioLoop Gym')).toBeTruthy()
+  beforeEach(() => {
+    mockRedirect.mockClear()
+    mockIsAuthenticated.mockReset()
   })
 
-  it('renders the welcome message', () => {
+  it('redirects unauthenticated staff to login', () => {
+    mockIsAuthenticated.mockReturnValue(false)
+
     render(<HomeScreen />)
-    expect(screen.getByText('Welcome to the Gym Management App')).toBeTruthy()
+
+    expect(mockRedirect).toHaveBeenCalledWith({ href: '/(auth)/login' })
+  })
+
+  it('redirects authenticated staff to tabs', () => {
+    mockIsAuthenticated.mockReturnValue(true)
+
+    render(<HomeScreen />)
+
+    expect(mockRedirect).toHaveBeenCalledWith({ href: '/(tabs)' })
   })
 })

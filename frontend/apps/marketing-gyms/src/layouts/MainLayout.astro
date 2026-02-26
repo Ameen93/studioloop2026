@@ -1,0 +1,92 @@
+---
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Space+Grotesk:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    --bg: #f8fbff;
+    --surface: #ffffff;
+    --ink: #0f172a;
+    --muted: #475569;
+    --line: #bfdbfe;
+    --brand: #1d4ed8;
+    --brand-2: #0f766e;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    color: var(--ink);
+    font-family: Manrope, sans-serif;
+    background: radial-gradient(circle at top left, #dbeafe, #f8fbff 38%);
+  }
+
+  .container {
+    width: min(1120px, calc(100% - 2rem));
+    margin-inline: auto;
+  }
+
+  h1, h2, h3 {
+    font-family: Space Grotesk, sans-serif;
+    margin-top: 0;
+    line-height: 1.1;
+  }
+
+  .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.75rem;
+    color: var(--brand);
+    font-weight: 800;
+  }
+
+  .card {
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    background: color-mix(in srgb, var(--surface), #f0f9ff 15%);
+    padding: 1rem;
+  }
+
+  .btn {
+    display: inline-block;
+    text-decoration: none;
+    padding: 0.75rem 1.1rem;
+    border-radius: 0.75rem;
+    font-weight: 800;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--brand), var(--brand-2));
+    color: #fff;
+  }
+
+  .btn-secondary {
+    border: 1px solid var(--line);
+    color: var(--ink);
+  }
+</style>

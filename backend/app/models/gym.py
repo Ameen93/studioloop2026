@@ -5,15 +5,24 @@ architecture. All gym-scoped data (spaces, staff, classes, etc.) is isolated
 by gym_id.
 """
 
+from enum import StrEnum
 from typing import TYPE_CHECKING
 from uuid import UUID
 
+from sqlalchemy import JSON, Column
 from sqlmodel import Field, Relationship, SQLModel
 
 from app.models.base import BaseModel, SoftDeleteMixin
 
 if TYPE_CHECKING:
+    from app.models.gym_closure import GymClosure
     from app.models.staff import Staff
+
+
+class GymSubscriptionTier(StrEnum):
+    STARTER = "starter"
+    GROWTH = "growth"
+    PRO = "pro"
 
 
 class GymBase(SQLModel):
@@ -36,9 +45,34 @@ class GymBase(SQLModel):
         max_length=2000,
         description="Gym description for marketplace listing",
     )
+    tagline: str | None = Field(
+        default=None,
+        max_length=180,
+        description="Short public tagline shown in gym profile",
+    )
+    logo_url: str | None = Field(
+        default=None,
+        max_length=2048,
+        description="CDN URL for gym logo image",
+    )
+    cover_photo_urls: list[str] = Field(
+        default_factory=list,
+        sa_column=Column(JSON, nullable=False),
+        description="Gallery of gym cover photos hosted on CDN",
+    )
+    business_hours: dict[str, dict[str, str | bool | None]] = Field(
+        default_factory=dict,
+        sa_column=Column(JSON, nullable=False),
+        description="Operating hours keyed by weekday",
+    )
     is_marketplace_enabled: bool = Field(
         default=False,
         description="Whether gym participates in StudioLoop marketplace",
+    )
+    subscription_tier: GymSubscriptionTier = Field(
+        default=GymSubscriptionTier.STARTER,
+        max_length=20,
+        description="Current SaaS plan tier",
     )
 
 
@@ -58,6 +92,13 @@ class Gym(SoftDeleteMixin, BaseModel, GymBase, table=True):
 
     # Relationships
     staff: list["Staff"] = Relationship(back_populates="gym")
+    closures: list["GymClosure"] = Relationship(back_populates="gym")
+
+    settings: dict[str, str | int | bool | None] = Field(
+        default_factory=dict,
+        sa_column=Column(JSON, nullable=False),
+        description="Gym-level configuration settings",
+    )
 
     # Contact information
     email: str | None = Field(
@@ -97,6 +138,10 @@ class GymUpdate(SQLModel):
     name: str | None = Field(default=None, max_length=255)
     slug: str | None = Field(default=None, max_length=100)
     description: str | None = Field(default=None, max_length=2000)
+    tagline: str | None = Field(default=None, max_length=180)
+    logo_url: str | None = Field(default=None, max_length=2048)
+    cover_photo_urls: list[str] | None = None
+    business_hours: dict[str, dict[str, str | bool | None]] | None = None
     is_marketplace_enabled: bool | None = None
     email: str | None = Field(default=None, max_length=255)
     phone: str | None = Field(default=None, max_length=50)

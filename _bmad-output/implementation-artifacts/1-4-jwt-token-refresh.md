@@ -1,6 +1,6 @@
 # Story 1.4: JWT Token Refresh
 
-Status: review
+Status: done
 
 ## Story
 

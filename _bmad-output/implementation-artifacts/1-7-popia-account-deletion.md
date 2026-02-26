@@ -1,6 +1,6 @@
 # Story 1.7: POPIA Account Deletion
 
-Status: review
+Status: done
 
 ## Story
 

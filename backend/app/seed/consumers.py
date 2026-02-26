@@ -232,8 +232,4 @@ def seed_consumers(session: Session) -> list[Consumer]:
 
     session.commit()
 
-    # Refresh to get generated IDs
-    for consumer in consumers:
-        session.refresh(consumer)
-
     return consumers

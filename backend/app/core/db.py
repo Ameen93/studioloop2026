@@ -4,7 +4,12 @@ from app import crud
 from app.core.config import settings
 from app.models import User, UserCreate
 
-engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
+_db_url = str(settings.SQLALCHEMY_DATABASE_URI)
+_engine_kwargs: dict = {"pool_pre_ping": True}
+if "neon.tech" in _db_url:
+    _engine_kwargs["connect_args"] = {"sslmode": "require"}
+
+engine = create_engine(_db_url, **_engine_kwargs)
 
 
 # make sure all SQLModel models are imported (app.models) before initializing DB

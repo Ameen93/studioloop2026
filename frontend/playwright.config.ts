@@ -31,7 +31,7 @@ export default defineConfig({
 
   // Shared settings for all projects
   use: {
-    // Base URL for navigation - Vite dev server
+    // Base URL for navigation (overridden per project as needed)
     baseURL: process.env.BASE_URL || "http://localhost:5173",
 
     // Collect trace when retrying the failed test
@@ -56,8 +56,28 @@ export default defineConfig({
   // Configure projects for major browsers
   projects: [
     {
-      name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      name: "web-chromium",
+      testMatch: /.*(auth|smoke)\.spec\.ts/,
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: process.env.WEB_BASE_URL || "http://localhost:5173",
+      },
+    },
+    {
+      name: "consumer-web-chromium",
+      testMatch: /.*consumer-(journey|profile)\.spec\.ts/,
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: process.env.CONSUMER_WEB_BASE_URL || "http://localhost:5175",
+      },
+    },
+    {
+      name: "gym-web-chromium",
+      testMatch: /.*gym-(journey|payments)\.spec\.ts/,
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: process.env.GYM_WEB_BASE_URL || "http://localhost:5174",
+      },
     },
     // Uncomment to add more browsers
     // {
@@ -71,17 +91,32 @@ export default defineConfig({
   ],
 
   // Web server configuration - starts the web app dev server before tests
-  webServer: {
-    command: "pnpm --filter @sl/web dev",
-    url: "http://localhost:5173",
-    // Reuse existing server when running locally
-    reuseExistingServer: !process.env.CI,
-    // Timeout for server to start
-    timeout: 120000,
-    // Don't show server output unless error
-    stdout: "ignore",
-    stderr: "pipe",
-  },
+  webServer: [
+    {
+      command: "pnpm --filter @sl/web dev -- --strictPort",
+      url: "http://localhost:5173",
+      reuseExistingServer: !process.env.CI,
+      timeout: 120000,
+      stdout: "ignore",
+      stderr: "pipe",
+    },
+    {
+      command: "pnpm --filter @sl/consumer-web dev -- --strictPort",
+      url: "http://localhost:5175",
+      reuseExistingServer: !process.env.CI,
+      timeout: 120000,
+      stdout: "ignore",
+      stderr: "pipe",
+    },
+    {
+      command: "pnpm --filter @sl/gym-web dev -- --strictPort",
+      url: "http://localhost:5174",
+      reuseExistingServer: !process.env.CI,
+      timeout: 120000,
+      stdout: "ignore",
+      stderr: "pipe",
+    },
+  ],
 
   // Output directory for test artifacts
   outputDir: "test-results",
