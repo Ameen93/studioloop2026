@@ -129,6 +129,10 @@ def _staff_token_headers(
 ) -> dict[str, str]:
     email = f"{role.value}-{uuid4().hex[:8]}@example.com"
     password = "S3curePass!123"
+    if not gym.is_active:
+        gym.is_active = True
+        db.add(gym)
+        db.commit()
     staff = Staff(
         gym_id=gym.id,
         email=email,
@@ -215,7 +219,7 @@ def test_get_public_gym_profile(client: TestClient, db: Session) -> None:
 def test_update_my_gym_profile_rejects_invalid_phone(
     client: TestClient, db: Session
 ) -> None:
-    gym = db.exec(select(Gym)).first()
+    gym = db.exec(select(Gym).where(Gym.is_active.is_(True))).first()
     assert gym is not None
 
     headers = _staff_token_headers(client, db, gym, StaffRole.OWNER)

@@ -47,10 +47,17 @@ def _staff_token_headers(
 def _get_gym_and_space(db: Session) -> tuple[Gym, Space]:
     gym = db.exec(select(Gym)).first()
     assert gym is not None
-    space = db.exec(
-        select(Space).where(Space.gym_id == gym.id, Space.is_active.is_(True))
-    ).first()
-    assert space is not None
+
+    # Use a dedicated test space to avoid collisions with seeded class sessions.
+    space = Space(
+        gym_id=gym.id,
+        name=f"Test Space {uuid4().hex[:8]}",
+        capacity=40,
+        is_active=True,
+    )
+    db.add(space)
+    db.commit()
+    db.refresh(space)
     return gym, space
 
 
@@ -156,9 +163,22 @@ def test_create_class_session_with_new_fields(
     gym, space = _get_gym_and_space(db)
     headers, staff = _staff_token_headers(client, db, gym, StaffRole.OWNER)
 
-    # Use far-future 3AM slot to avoid seeded closures/session conflicts
-    start_dt = datetime.now(timezone.utc) + timedelta(days=70)
+    # Pick a future slot that is not already occupied in this seeded DB.
+    start_dt = datetime.now(timezone.utc) + timedelta(days=60)
     start_dt = start_dt.replace(hour=3, minute=0, second=0, microsecond=0)
+    for _ in range(30):
+        end_dt = start_dt + timedelta(minutes=60)
+        conflict = db.exec(
+            select(ClassSession.id).where(
+                ClassSession.gym_id == gym.id,
+                ClassSession.space_id == space.id,
+                start_dt < ClassSession.end_time,
+                end_dt > ClassSession.start_time,
+            )
+        ).first()
+        if conflict is None:
+            break
+        start_dt += timedelta(days=1)
     end_dt = start_dt + timedelta(minutes=60)
     payload = {
         "space_id": str(space.id),
@@ -327,21 +347,21 @@ def test_assign_instructor_conflict(client: TestClient, db: Session) -> None:
     )
     assert s1.status_code == 201
 
-    # Get a different space for the second session
-    spaces = db.exec(
-        select(Space).where(
-            Space.gym_id == gym.id,
-            Space.is_active.is_(True),
-            Space.id != space.id,
-        )
-    ).all()
-    if not spaces:
-        return  # Skip if only one space
+    # Use another dedicated space for the second session.
+    other_space = Space(
+        gym_id=gym.id,
+        name=f"Test Space {uuid4().hex[:8]}",
+        capacity=40,
+        is_active=True,
+    )
+    db.add(other_space)
+    db.commit()
+    db.refresh(other_space)
 
     s2 = client.post(
         f"{API}/class_sessions",
         json={
-            "space_id": str(spaces[0].id),
+            "space_id": str(other_space.id),
             "title": "Session 2",
             "start_time": start,
             "end_time": end,
