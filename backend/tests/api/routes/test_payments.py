@@ -1,3 +1,7 @@
+import base64
+import hashlib
+import hmac
+import json
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
@@ -14,6 +18,31 @@ from app.models import (
 )
 from app.services.payments.providers import build_webhook_signature
 from tests.api.routes.test_staff_memberships import _consumer_headers, _staff_headers
+
+
+class _MockStitchProvider:
+    def initiate(self, payment: Payment):
+        class _Result:
+            provider_reference = "stitch-pir-123"
+            redirect_url = "https://secure.stitch.money/checkout/abc"
+
+        return _Result()
+
+    def verify(self, payload, signature=None):
+        class _Verification:
+            is_valid = True
+            provider_reference = payload.get("provider_reference")
+            failure_reason = None
+
+        return _Verification()
+
+    def refund(self, payment: Payment, amount_cents: int | None = None):
+        class _Verification:
+            is_valid = True
+            provider_reference = f"stitch-refund-{payment.id}"
+            failure_reason = None
+
+        return _Verification()
 
 
 def test_story_8_1_and_8_2_initiate_payment_flow(client: TestClient, db: Session) -> None:
@@ -263,3 +292,259 @@ def test_payments_denies_cross_tenant_dashboard_access(client: TestClient, db: S
     body = response.json()
     assert body["detail"]["code"] == "FORBIDDEN"
     assert "Access denied to this gym" in body["detail"]["message"]
+
+
+def test_stitch_initiate_payment_and_get_status_endpoint(
+    client: TestClient, db: Session, monkeypatch
+) -> None:
+    from app.api.routes import payments as payments_route
+
+    monkeypatch.setattr(payments_route, "get_payment_provider", lambda _name: _MockStitchProvider())
+
+    headers, consumer = _consumer_headers(client, db)
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+
+    res = client.post(
+        "/api/v1/payments/initiate",
+        json={
+            "gym_id": str(gym.id),
+            "payment_type": "class_booking",
+            "amount_cents": 12500,
+            "description": "Stitch Pay By Bank",
+            "return_url": "https://app.test/return",
+            "cancel_url": "https://app.test/cancel",
+            "webhook_url": "https://api.test/webhook",
+            "provider": "stitch",
+        },
+        headers=headers,
+    )
+    assert res.status_code == 200, res.text
+    body = res.json()
+    assert body["provider"] == "stitch"
+    assert body["provider_reference"] == "stitch-pir-123"
+
+    status_res = client.get(f"/api/v1/payments/{body['payment_id']}", headers=headers)
+    assert status_res.status_code == 200
+    assert status_res.json()["payment_id"] == body["payment_id"]
+
+    payment = db.get(Payment, body["payment_id"])
+    assert payment is not None
+    assert payment.consumer_id == consumer.id
+
+
+def test_stitch_webhook_endpoint_with_svix_headers(client: TestClient, db: Session, monkeypatch) -> None:
+    from app.api.routes import payments as payments_route
+
+    class _RecordingProvider(_MockStitchProvider):
+        captured_payload = None
+
+        def verify(self, payload, signature=None):
+            self.captured_payload = payload
+            return super().verify(payload, signature)
+
+    provider = _RecordingProvider()
+    monkeypatch.setattr(payments_route, "get_payment_provider", lambda _name: provider)
+
+    headers, _consumer = _consumer_headers(client, db)
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+
+    init_res = client.post(
+        "/api/v1/payments/initiate",
+        json={
+            "gym_id": str(gym.id),
+            "payment_type": "class_booking",
+            "amount_cents": 8000,
+            "description": "Webhook target",
+            "return_url": "https://app.test/return",
+            "cancel_url": "https://app.test/cancel",
+            "webhook_url": "https://api.test/webhook",
+            "provider": "stitch",
+        },
+        headers=headers,
+    )
+    payment_id = init_res.json()["payment_id"]
+
+    payload = {
+        "event_id": f"evt-{uuid4()}",
+        "payment_id": payment_id,
+        "status": "completed",
+        "provider_reference": "stitch-pir-123",
+    }
+    webhook = client.post(
+        "/api/v1/payments/webhook",
+        json=payload,
+        headers={
+            "svix-id": "msg_123",
+            "svix-timestamp": "1700000000",
+            "svix-signature": "v1,abc",
+        },
+    )
+    assert webhook.status_code == 200, webhook.text
+    assert webhook.json()["status"] == "processed"
+    assert provider.captured_payload is not None
+    assert provider.captured_payload.get("_svix_id") == "msg_123"
+    assert provider.captured_payload.get("_svix_signature") == "v1,abc"
+    assert provider.captured_payload.get("_raw_body")
+    assert payload["event_id"] in str(provider.captured_payload.get("_raw_body"))
+
+
+def test_stitch_webhook_rejects_invalid_svix_signature(client: TestClient, db: Session, monkeypatch) -> None:
+    from app.api.routes import payments as payments_route
+
+    headers, _consumer = _consumer_headers(client, db)
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+
+    init_res = client.post(
+        "/api/v1/payments/initiate",
+        json={
+            "gym_id": str(gym.id),
+            "payment_type": "class_booking",
+            "amount_cents": 8000,
+            "description": "Webhook signature negative",
+            "return_url": "https://app.test/return",
+            "cancel_url": "https://app.test/cancel",
+            "webhook_url": "https://api.test/webhook",
+            "provider": "ozow",
+        },
+        headers=headers,
+    )
+    payment_id = init_res.json()["payment_id"]
+
+    payload = {
+        "event_id": f"evt-{uuid4()}",
+        "payment_id": payment_id,
+        "status": "completed",
+        "provider_reference": "stitch-pir-123",
+    }
+    body = json.dumps(payload, separators=(",", ":"))
+
+    monkeypatch.setattr(payments_route.settings, "STITCH_WEBHOOK_SECRET", "whsec_dGVzdHNlY3JldA==")
+
+    webhook = client.post(
+        "/api/v1/payments/webhook",
+        content=body,
+        headers={
+            "content-type": "application/json",
+            "svix-id": "msg_123",
+            "svix-timestamp": str(int(datetime.now(UTC).timestamp())),
+            "svix-signature": "v1,invalidsig",
+        },
+    )
+    assert webhook.status_code == 400
+    assert webhook.json()["detail"] == "Invalid webhook signature"
+
+
+def test_stitch_webhook_valid_svix_signature_is_idempotent(
+    client: TestClient, db: Session, monkeypatch
+) -> None:
+    from app.api.routes import payments as payments_route
+
+    headers, _consumer = _consumer_headers(client, db)
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+
+    init_res = client.post(
+        "/api/v1/payments/initiate",
+        json={
+            "gym_id": str(gym.id),
+            "payment_type": "class_booking",
+            "amount_cents": 8000,
+            "description": "Webhook signature positive",
+            "return_url": "https://app.test/return",
+            "cancel_url": "https://app.test/cancel",
+            "webhook_url": "https://api.test/webhook",
+            "provider": "ozow",
+        },
+        headers=headers,
+    )
+    payment_id = init_res.json()["payment_id"]
+
+    monkeypatch.setattr(payments_route.settings, "STITCH_WEBHOOK_SECRET", "whsec_dGVzdHNlY3JldA==")
+
+    payload = {
+        "event_id": f"evt-{uuid4()}",
+        "payment_id": payment_id,
+        "status": "completed",
+        "provider_reference": "stitch-pir-123",
+    }
+    body = json.dumps(payload, separators=(",", ":"))
+    svix_id = "msg_123"
+    svix_timestamp = str(int(datetime.now(UTC).timestamp()))
+    signed = f"{svix_id}.{svix_timestamp}.{body}"
+    signature = base64.b64encode(
+        hmac.new(base64.b64decode("dGVzdHNlY3JldA=="), signed.encode(), hashlib.sha256).digest()
+    ).decode()
+
+    first = client.post(
+        "/api/v1/payments/webhook",
+        content=body,
+        headers={
+            "content-type": "application/json",
+            "svix-id": svix_id,
+            "svix-timestamp": svix_timestamp,
+            "svix-signature": f"v1,{signature}",
+        },
+    )
+    assert first.status_code == 200, first.text
+    assert first.json()["status"] == "processed"
+
+    second = client.post(
+        "/api/v1/payments/webhook",
+        content=body,
+        headers={
+            "content-type": "application/json",
+            "svix-id": svix_id,
+            "svix-timestamp": svix_timestamp,
+            "svix-signature": f"v1,{signature}",
+        },
+    )
+    assert second.status_code == 200
+    assert second.json()["status"] == "already_processed"
+
+
+def test_stitch_subscription_endpoint_creates_membership_payment(
+    client: TestClient, db: Session, monkeypatch
+) -> None:
+    from app.api.routes import payments as payments_route
+
+    monkeypatch.setattr(payments_route, "get_payment_provider", lambda _name: _MockStitchProvider())
+
+    headers, _consumer = _consumer_headers(client, db)
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+
+    res = client.post(
+        "/api/v1/payments/subscriptions",
+        json={
+            "gym_id": str(gym.id),
+            "amount_cents": 35900,
+            "description": "VRP monthly membership",
+            "return_url": "https://app.test/return",
+            "cancel_url": "https://app.test/cancel",
+            "webhook_url": "https://api.test/webhook",
+            "provider": "stitch",
+        },
+        headers=headers,
+    )
+    assert res.status_code == 200, res.text
+    body = res.json()
+    assert body["provider"] == "stitch"
+
+    payment = db.get(Payment, body["payment_id"])
+    assert payment is not None
+    assert payment.payment_type.value == "membership"
+    assert payment.provider.value == "stitch"
+
+
+def test_payments_root_list_endpoint_is_gym_scoped(client: TestClient, db: Session) -> None:
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+    staff_headers = _staff_headers(client, db, gym, StaffRole.OWNER)
+
+    ok = client.get(f"/api/v1/payments/?gym_id={gym.id}", headers=staff_headers)
+    assert ok.status_code == 200, ok.text
+    assert "summary" in ok.json()
+    assert "items" in ok.json()

@@ -2,11 +2,11 @@ from datetime import UTC, datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 from uuid import UUID
 
-from fastapi import APIRouter, Header, HTTPException, Query
+from fastapi import APIRouter, Header, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from sqlmodel import select
 
-from app.api.deps import CurrentConsumer, SessionDep, StaffGymDep
+from app.api.deps import CurrentConsumer, CurrentStaff, SessionDep, StaffGymDep
 from app.models import Consumer, GymMembership, GymMembershipStatus
 from app.models.payment import (
     Payment,
@@ -120,6 +120,39 @@ class MarketplacePayoutReport(BaseModel):
     class_breakdown: list[MarketplacePayoutClassBreakdown]
 
 
+class CreateSubscriptionRequest(BaseModel):
+    gym_id: UUID
+    amount_cents: int = Field(ge=0)
+    description: str = Field(min_length=1, max_length=255)
+    return_url: str = Field(min_length=1, max_length=500)
+    cancel_url: str = Field(min_length=1, max_length=500)
+    webhook_url: str = Field(min_length=1, max_length=500)
+    provider: PaymentProviderName = PaymentProviderName.STITCH
+    related_entity_id: UUID | None = None
+
+
+class CreateSubscriptionResponse(BaseModel):
+    payment_id: UUID
+    status: PaymentStatus
+    provider: PaymentProviderName
+    provider_reference: str
+    redirect_url: str
+
+
+class PaymentStatusResponse(BaseModel):
+    payment_id: UUID
+    status: PaymentStatus
+    provider: PaymentProviderName
+    provider_reference: str | None
+    amount_cents: int
+    currency: str
+    description: str
+    created_at: datetime
+    completed_at: datetime | None
+    failed_at: datetime | None
+    failure_reason: str | None
+
+
 class ConsumerPaymentHistoryItem(BaseModel):
     payment_id: UUID
     description: str
@@ -222,12 +255,149 @@ def initiate_payment_flow(
     )
 
 
+@router.post("/subscriptions", response_model=CreateSubscriptionResponse)
+def create_subscription(
+    payload: CreateSubscriptionRequest,
+    current_consumer: CurrentConsumer,
+    session: SessionDep,
+) -> CreateSubscriptionResponse:
+    provider_name = payload.provider
+    if provider_name != PaymentProviderName.STITCH:
+        raise HTTPException(status_code=400, detail="Subscriptions are only supported via Stitch")
+
+    payment = Payment(
+        gym_id=payload.gym_id,
+        consumer_id=current_consumer.id,
+        amount_cents=payload.amount_cents,
+        currency="ZAR",
+        payment_type=PaymentType.MEMBERSHIP,
+        status=PaymentStatus.PENDING,
+        provider=provider_name,
+        description=payload.description,
+        return_url=payload.return_url,
+        cancel_url=payload.cancel_url,
+        webhook_url=payload.webhook_url,
+        related_entity_id=payload.related_entity_id,
+    )
+    provider = get_payment_provider(provider_name)
+    initiation = provider.initiate(payment)
+    payment.provider_reference = initiation.provider_reference
+    session.add(payment)
+    session.commit()
+    session.refresh(payment)
+
+    return CreateSubscriptionResponse(
+        payment_id=payment.id,
+        status=payment.status,
+        provider=payment.provider,
+        provider_reference=payment.provider_reference or "",
+        redirect_url=initiation.redirect_url,
+    )
+
+
+@router.get("/{payment_id:uuid}", response_model=PaymentStatusResponse)
+def get_payment_status(
+    payment_id: UUID,
+    current_consumer: CurrentConsumer,
+    session: SessionDep,
+) -> PaymentStatusResponse:
+    payment = session.get(Payment, payment_id)
+    if not payment or payment.consumer_id != current_consumer.id:
+        raise HTTPException(status_code=404, detail="Payment not found")
+
+    return PaymentStatusResponse(
+        payment_id=payment.id,
+        status=payment.status,
+        provider=payment.provider,
+        provider_reference=payment.provider_reference,
+        amount_cents=payment.amount_cents,
+        currency=payment.currency,
+        description=payment.description,
+        created_at=payment.created_at,
+        completed_at=payment.completed_at,
+        failed_at=payment.failed_at,
+        failure_reason=payment.failure_reason,
+    )
+
+
+@router.get("/", response_model=GymPaymentsListResponse)
+def list_payments_for_gym(
+    current_staff: CurrentStaff,
+    session: SessionDep,
+    gym_id: UUID = Query(...),
+    start_date: datetime | None = Query(default=None),
+    end_date: datetime | None = Query(default=None),
+    payment_type: PaymentType | None = Query(default=None),
+    status: PaymentStatus | None = Query(default=None),
+) -> GymPaymentsListResponse:
+    if str(current_staff.gym_id) != str(gym_id):
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "code": "FORBIDDEN",
+                "message": "Access denied to this gym",
+                "details": {},
+            },
+        )
+
+    query = select(Payment).where(Payment.gym_id == gym_id)
+    if start_date:
+        query = query.where(Payment.created_at >= start_date)
+    if end_date:
+        query = query.where(Payment.created_at <= end_date)
+    if payment_type:
+        query = query.where(Payment.payment_type == payment_type)
+    if status:
+        query = query.where(Payment.status == status)
+
+    payments = list(session.exec(query).all())
+    payments.sort(key=lambda p: p.created_at, reverse=True)
+    consumer_ids = list({p.consumer_id for p in payments})
+    names: dict[UUID, str] = {}
+    for consumer_id in consumer_ids:
+        consumer = session.get(Consumer, consumer_id)
+        if consumer is not None:
+            names[consumer.id] = f"{consumer.first_name} {consumer.last_name}".strip()
+
+    summary = GymPaymentsSummary(
+        total_received_cents=sum(
+            p.amount_cents for p in payments if p.status == PaymentStatus.COMPLETED
+        ),
+        total_pending_cents=sum(
+            p.amount_cents for p in payments if p.status == PaymentStatus.PENDING
+        ),
+        total_failed_cents=sum(
+            p.amount_cents
+            for p in payments
+            if p.status in {PaymentStatus.FAILED, PaymentStatus.FAILED_PERMANENT}
+        ),
+    )
+    items = [
+        PaymentItem(
+            payment_id=p.id,
+            member_name=names.get(p.consumer_id, "Unknown Member"),
+            amount_cents=p.amount_cents,
+            currency=p.currency,
+            payment_type=p.payment_type,
+            status=p.status,
+            created_at=p.created_at,
+        )
+        for p in payments
+    ]
+    return GymPaymentsListResponse(summary=summary, items=items)
+
+
 @router.post("/webhooks/{provider}")
-def process_payment_webhook(
-    provider: PaymentProviderName,
+@router.post("/webhook")
+async def process_payment_webhook(
     payload: PaymentWebhookRequest,
     session: SessionDep,
+    request: Request,
+    provider: PaymentProviderName = PaymentProviderName.STITCH,
     x_signature: str | None = Header(default=None, alias="X-Signature"),
+    svix_id: str | None = Header(default=None, alias="svix-id"),
+    svix_timestamp: str | None = Header(default=None, alias="svix-timestamp"),
+    svix_signature: str | None = Header(default=None, alias="svix-signature"),
 ) -> dict[str, str]:
     existing = session.exec(
         select(PaymentWebhookEvent).where(
@@ -242,8 +412,16 @@ def process_payment_webhook(
         raise HTTPException(status_code=404, detail="Payment not found")
 
     verifier = get_payment_provider(provider)
+    verification_payload = payload.model_dump(mode="json", exclude_none=True)
+    if provider == PaymentProviderName.STITCH:
+        verification_payload["_svix_id"] = svix_id
+        verification_payload["_svix_timestamp"] = svix_timestamp
+        verification_payload["_svix_signature"] = svix_signature
+        verification_payload["_raw_body"] = (await request.body()).decode()
+
     verification = verifier.verify(
-        payload.model_dump(mode="json", exclude_none=True), signature=x_signature
+        verification_payload,
+        signature=svix_signature if provider == PaymentProviderName.STITCH else x_signature,
     )
     if not verification.is_valid:
         event = PaymentWebhookEvent(
