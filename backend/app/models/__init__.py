@@ -47,10 +47,18 @@ from app.models.check_in_record import CheckInRecord, CheckInSource
 
 # Domain models
 from app.models.class_session import (
+    ApprovalStatus,
     ClassSession,
     ClassSessionCreate,
     ClassSessionPublic,
     ClassSessionStatus,
+)
+from app.models.class_template import (
+    ClassTemplate,
+    ClassTemplateCreate,
+    ClassTemplatePublic,
+    ClassTemplateUpdate,
+    ClassType,
 )
 from app.models.consumer import (
     AccountDeletionRequest,
@@ -156,10 +164,16 @@ __all__ = [
     "SpaceCreate",
     "SpaceUpdate",
     "SpacePublic",
+    "ApprovalStatus",
     "ClassSession",
     "ClassSessionCreate",
     "ClassSessionPublic",
     "ClassSessionStatus",
+    "ClassTemplate",
+    "ClassTemplateCreate",
+    "ClassTemplatePublic",
+    "ClassTemplateUpdate",
+    "ClassType",
     "Booking",
     "BookingType",
     "BookingStatus",

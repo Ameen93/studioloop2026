@@ -12,6 +12,7 @@ from app.models import (
     Booking,
     CheckInRecord,
     ClassSession,
+    ClassTemplate,
     Consumer,
     Gym,
     GymClosure,
@@ -60,6 +61,7 @@ def db() -> Generator[Session, None, None]:
         session.execute(delete(Booking))
         session.execute(delete(DigitalWaiverAcceptance))
         session.execute(delete(ClassSession))
+        session.execute(delete(ClassTemplate))
         session.execute(delete(Space))
         session.execute(delete(GymMembership))
         session.execute(delete(PaymentReceipt))

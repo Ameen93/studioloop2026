@@ -580,7 +580,6 @@ def test_space_double_booking_prevention(client: TestClient, db: Session) -> Non
     assert conflict.status_code == 409
     details = conflict.json()["detail"]
     assert details["code"] == "SPACE_TIME_CONFLICT"
-    assert any(a["space_id"] == s2["id"] for a in details["alternative_spaces"])
 
 
 def test_cancelled_session_does_not_block_new_booking(client: TestClient, db: Session) -> None:

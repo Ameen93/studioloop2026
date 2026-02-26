@@ -6,6 +6,7 @@ from app.api.routes import (
     admin,
     analytics,
     bookings,
+    class_scheduling,
     consumers,
     gyms,
     items,
@@ -28,6 +29,7 @@ api_router = APIRouter()
 api_router.include_router(login.router)
 api_router.include_router(consumers.router)
 api_router.include_router(gyms.router)
+api_router.include_router(class_scheduling.router)
 api_router.include_router(staff_auth.router)
 api_router.include_router(staff_memberships.router)
 api_router.include_router(bookings.router)

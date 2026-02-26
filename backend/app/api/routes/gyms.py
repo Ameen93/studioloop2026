@@ -12,7 +12,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
 from pydantic import EmailStr, HttpUrl, field_validator, model_validator
-from sqlalchemy import func, text
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Field, SQLModel, col, select
 
@@ -20,8 +20,6 @@ from app.api.deps import CurrentStaff, RequireOwnerOrManager, SessionDep
 from app.core.config import settings
 from app.core.security import get_password_hash
 from app.models import (
-    ClassSession,
-    ClassSessionStatus,
     Consumer,
     Gym,
     GymClosure,
@@ -1140,144 +1138,6 @@ def update_my_space_amenities(
     session.commit()
     session.refresh(space)
     return _serialize_space(space)
-
-
-@router.post(
-    "/me/class_sessions",
-    response_model=ClassSessionResponse,
-    status_code=status.HTTP_201_CREATED,
-    dependencies=[RequireOwnerOrManager],
-)
-def create_my_class_session(
-    session: SessionDep,
-    current_staff: CurrentStaff,
-    payload: ClassSessionCreateRequest,
-) -> ClassSessionResponse:
-    space = session.exec(
-        select(Space).where(
-            Space.id == payload.space_id,
-            Space.gym_id == current_staff.gym_id,
-            col(Space.is_active).is_(True),
-        )
-    ).first()
-    if not space:
-        raise HTTPException(
-            status_code=404,
-            detail={
-                "code": "SPACE_NOT_FOUND",
-                "message": "Space not found",
-                "details": {},
-            },
-        )
-
-    session.execute(
-        text("SELECT pg_advisory_xact_lock(hashtext(:space_key))"),
-        {"space_key": str(payload.space_id)},
-    )
-
-    overlap = session.exec(
-        select(ClassSession).where(
-            ClassSession.gym_id == current_staff.gym_id,
-            ClassSession.space_id == payload.space_id,
-            col(ClassSession.is_active).is_(True),
-            ClassSession.status != ClassSessionStatus.CANCELLED,
-            payload.start_time < ClassSession.end_time,
-            payload.end_time > ClassSession.start_time,
-        )
-    ).first()
-    if overlap:
-        alternatives = session.exec(
-            select(Space).where(
-                Space.gym_id == current_staff.gym_id,
-                col(Space.is_active).is_(True),
-                col(Space.is_bookable).is_(True),
-                Space.id != payload.space_id,
-                ~col(Space.id).in_(
-                    select(col(ClassSession.space_id)).where(
-                        ClassSession.gym_id == current_staff.gym_id,
-                        col(ClassSession.is_active).is_(True),
-                        ClassSession.status != ClassSessionStatus.CANCELLED,
-                        payload.start_time < ClassSession.end_time,
-                        payload.end_time > ClassSession.start_time,
-                    )
-                ),
-            )
-        ).all()
-        raise HTTPException(
-            status_code=409,
-            detail=ClassSessionConflictResponse(
-                code="SPACE_TIME_CONFLICT",
-                message="The selected space is already booked for the requested time.",
-                alternative_spaces=[
-                    AlternativeSpaceOption(space_id=s.id, space_name=s.name)
-                    for s in alternatives
-                ],
-            ).model_dump(mode="json"),
-        )
-
-    class_session = ClassSession(
-        gym_id=current_staff.gym_id,
-        space_id=payload.space_id,
-        title=payload.title,
-        start_time=payload.start_time,
-        end_time=payload.end_time,
-    )
-    session.add(class_session)
-    session.commit()
-    session.refresh(class_session)
-
-    return ClassSessionResponse(
-        id=class_session.id,
-        gym_id=class_session.gym_id,
-        space_id=class_session.space_id,
-        title=class_session.title,
-        start_time=class_session.start_time,
-        end_time=class_session.end_time,
-        status=class_session.status.value,
-    )
-
-
-@router.post(
-    "/me/class_sessions/{class_session_id}/cancel",
-    response_model=ClassSessionResponse,
-    dependencies=[RequireOwnerOrManager],
-)
-def cancel_my_class_session(
-    session: SessionDep,
-    current_staff: CurrentStaff,
-    class_session_id: UUID,
-) -> ClassSessionResponse:
-    class_session = session.exec(
-        select(ClassSession).where(
-            ClassSession.id == class_session_id,
-            ClassSession.gym_id == current_staff.gym_id,
-            col(ClassSession.is_active).is_(True),
-        )
-    ).first()
-    if not class_session:
-        raise HTTPException(
-            status_code=404,
-            detail={
-                "code": "CLASS_SESSION_NOT_FOUND",
-                "message": "Class session not found",
-                "details": {},
-            },
-        )
-
-    class_session.status = ClassSessionStatus.CANCELLED
-    session.add(class_session)
-    session.commit()
-    session.refresh(class_session)
-
-    return ClassSessionResponse(
-        id=class_session.id,
-        gym_id=class_session.gym_id,
-        space_id=class_session.space_id,
-        title=class_session.title,
-        start_time=class_session.start_time,
-        end_time=class_session.end_time,
-        status=class_session.status.value,
-    )
 
 
 @router.post(
