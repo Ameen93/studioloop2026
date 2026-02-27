@@ -1,10 +1,5 @@
 [build]
-dockerfilePath = "backend/Dockerfile"
-dockerContext = "backend"
-watchPatterns = ["backend/**"]
-
-[build.builder]
-type = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
 
 [deploy]
 healthcheckPath = "/api/v1/utils/health-check"
