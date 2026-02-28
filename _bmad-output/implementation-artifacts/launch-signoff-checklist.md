@@ -24,19 +24,13 @@ Fixes completed to reach green:
 
 ## 2) Data + Migration Sanity Gate
 
-Status: ✅ PASS (with drift note)
+Status: ✅ PASS
 
 Completed:
 - Clean DB bootstrap from zero + `alembic upgrade head`: PASS
 - Seed validation (`tests/seed/test_seed.py`): PASS
 - Local backup/restore drill (`pg_dump`/`pg_restore`): PASS
-
-Drift check:
-- `alembic check` reports schema drift (new/changed models/types/indexes not fully represented in migrations).
-- Impact: Not blocking local execution today, but **blocking strict migration parity signoff** for production-style promotion.
-
-Action required:
-- Create/normalize migrations for detected deltas, then rerun `alembic check` until no-op.
+- `alembic check`: PASS — No drift detected (verified 2026-02-28)
 
 ## 3) Manual / Secrets-Gated Integrations
 
@@ -101,10 +95,10 @@ Completed in this run:
 ### Still required before hard launch
 1. Secrets-gated integrations (Section 3)
 2. Human UAT signoff (Section 4)
-3. Migration drift closure (`alembic check` clean)
 
 ## Go/No-Go Recommendation
 
 Recommendation: **CONDITIONAL GO (local/staging)**
 - GO for continued local/staging execution and demo readiness.
-- NO-GO for production-like launch until Sections 3 + 4 are signed and migration drift is resolved.
+- NO-GO for production-like launch until Sections 3 + 4 are signed.
+- ~~Migration drift~~ — resolved 2026-02-28 (`alembic check` clean).

@@ -85,7 +85,7 @@ export function QRCode() {
     <div className="max-w-md mx-auto px-4 py-8 flex flex-col items-center">
       <Link
         to="/"
-        className="self-start mb-6 text-sm text-indigo-600 hover:text-indigo-500 font-medium"
+        className="self-start mb-6 text-sm text-coral-600 hover:text-coral-500 font-medium"
       >
         &larr; Back to home
       </Link>

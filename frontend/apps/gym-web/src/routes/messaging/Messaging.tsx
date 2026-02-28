@@ -10,7 +10,7 @@ type ComposeChannel = 'in_app' | 'email' | 'push' | 'whatsapp';
 
 const channelStyles: Record<string, string> = {
   in_app: 'bg-gray-100 text-gray-800',
-  email: 'bg-blue-100 text-blue-800',
+  email: 'bg-gold-100 text-gold-800',
   push: 'bg-purple-100 text-purple-800',
   whatsapp: 'bg-green-100 text-green-800',
 };
@@ -80,7 +80,7 @@ export function Messaging() {
         <h1 className="text-2xl font-bold text-gray-900">Messaging</h1>
         <button
           onClick={() => setShowCompose((v) => !v)}
-          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+          className="px-4 py-2 bg-gold-600 text-white text-sm font-medium rounded-md hover:bg-gold-700 transition-colors"
         >
           {showCompose ? 'Cancel' : 'Compose Message'}
         </button>
@@ -92,7 +92,7 @@ export function Messaging() {
         </div>
       )}
 
-      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+      <div className="rounded-lg border border-gold-200 bg-gold-50 p-4 text-sm text-gold-800">
         Server-side message history endpoint is not available yet. This screen shows
         messages sent in the current session.
       </div>
@@ -117,7 +117,7 @@ export function Messaging() {
                     onClick={() => setChannel(ch)}
                     className={`px-4 py-2 text-sm font-medium rounded-md border capitalize transition-colors ${
                       channel === ch
-                        ? 'bg-blue-600 text-white border-blue-600'
+                        ? 'bg-gold-600 text-white border-gold-600'
                         : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                     }`}
                   >
@@ -146,7 +146,7 @@ export function Messaging() {
               <input
                 name="subject"
                 type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gold-500 focus:border-gold-500 sm:text-sm"
                 placeholder="Message subject"
                 required
               />
@@ -156,7 +156,7 @@ export function Messaging() {
               <textarea
                 name="body"
                 rows={5}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gold-500 focus:border-gold-500 sm:text-sm"
                 placeholder="Type your message..."
                 required
               />
@@ -165,7 +165,7 @@ export function Messaging() {
               <button
                 type="submit"
                 disabled={sendMessageMutation.isPending}
-                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50"
+                className="px-4 py-2 bg-gold-600 text-white text-sm font-medium rounded-md hover:bg-gold-700 disabled:opacity-50"
               >
                 {sendMessageMutation.isPending ? 'Sending...' : 'Send Message'}
               </button>

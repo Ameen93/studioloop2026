@@ -4,20 +4,33 @@
  * @type {import('tailwindcss').Config}
  */
 module.exports = {
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        primary: {
-          50: '#f0f5ff',
-          100: '#e0ebff',
-          200: '#c7d7fe',
-          300: '#a4bbfc',
-          400: '#7c96f8',
-          500: '#5b6ff2',
-          600: '#4650e6',
-          700: '#3a3fd3',
-          800: '#3235ab',
-          900: '#2d3288',
+        coral: {
+          50: '#fff5f2',
+          100: '#ffe8e1',
+          200: '#ffc9b8',
+          300: '#ffa48a',
+          400: '#ff8767',
+          500: '#FF6B4A',
+          600: '#e55535',
+          700: '#c44025',
+          800: '#a3301a',
+          900: '#7a2414',
+        },
+        gold: {
+          50: '#fdf8eb',
+          100: '#f9edd0',
+          200: '#f1d99e',
+          300: '#e8c36c',
+          400: '#dead47',
+          500: '#d4a855',
+          600: '#b88d3a',
+          700: '#96702d',
+          800: '#755724',
+          900: '#5a431c',
         },
         gray: {
           50: '#f9fafb',
@@ -30,6 +43,33 @@ module.exports = {
           700: '#374151',
           800: '#1f2937',
           900: '#111827',
+        },
+        surface: {
+          0: '#0a0a0a',
+          1: '#1a1a1a',
+          2: '#2a2a2a',
+          3: '#3a3a3a',
+        },
+        // Semantic tokens for dark-first mobile apps
+        text: {
+          primary: '#f9fafb',
+          secondary: '#d1d5db',
+          muted: '#6b7280',
+        },
+        border: {
+          default: '#3a3a3a',
+        },
+        accent: {
+          50: '#fff5f2',
+          100: '#ffe8e1',
+          200: '#ffc9b8',
+          300: '#ffa48a',
+          400: '#ff8767',
+          500: '#FF6B4A',
+          600: '#e55535',
+          700: '#c44025',
+          800: '#a3301a',
+          900: '#7a2414',
         },
         success: {
           light: '#86efac',
@@ -49,6 +89,7 @@ module.exports = {
       },
       fontFamily: {
         sans: [
+          "'Outfit'",
           'ui-sans-serif',
           'system-ui',
           '-apple-system',
@@ -60,7 +101,7 @@ module.exports = {
           'sans-serif',
         ],
         display: [
-          '"Inter"',
+          "'Outfit'",
           'ui-sans-serif',
           'system-ui',
           '-apple-system',

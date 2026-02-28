@@ -101,12 +101,12 @@ export function CheckIn() {
             placeholder="Search by name or phone number..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="flex-1 px-4 py-3 text-lg border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            className="flex-1 px-4 py-3 text-lg border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-gold-500 focus:border-gold-500"
             autoFocus
           />
           <button
             type="submit"
-            className="px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+            className="px-6 py-3 bg-gold-600 text-white font-medium rounded-md hover:bg-gold-700 transition-colors disabled:opacity-50"
             disabled={searchMutation.isPending}
           >
             {searchMutation.isPending ? 'Searching...' : 'Search'}

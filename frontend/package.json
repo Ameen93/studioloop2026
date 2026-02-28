@@ -13,7 +13,13 @@
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:reset-db": "./scripts/reset-test-db.sh"
+    "test:e2e:reset-db": "./scripts/reset-test-db.sh",
+    "build:consumer:dev": "pnpm --filter @sl/consumer-mobile build:dev",
+    "build:consumer:preview": "pnpm --filter @sl/consumer-mobile build:preview",
+    "build:consumer:prod": "pnpm --filter @sl/consumer-mobile build:prod",
+    "build:gym:dev": "pnpm --filter @sl/gym-mobile build:dev",
+    "build:gym:preview": "pnpm --filter @sl/gym-mobile build:preview",
+    "build:gym:prod": "pnpm --filter @sl/gym-mobile build:prod"
   },
   "keywords": [],
   "author": "",

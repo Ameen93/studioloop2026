@@ -71,7 +71,7 @@ export function Discover() {
           placeholder="Search classes, studios, or location..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full px-4 py-2.5 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+          className="w-full px-4 py-2.5 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-coral-500 focus:border-coral-500 text-sm"
         />
       </div>
 
@@ -82,7 +82,7 @@ export function Discover() {
             onClick={() => setSelectedType(type)}
             className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
               selectedType === type
-                ? 'bg-indigo-600 text-white'
+                ? 'bg-coral-600 text-white'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
@@ -117,10 +117,10 @@ export function Discover() {
                 to={`/discover/${cls.session_id}`}
                 className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
               >
-                <div className="h-2 bg-indigo-500" />
+                <div className="h-2 bg-coral-500" />
                 <div className="p-4">
                   <div className="flex items-start justify-between mb-2">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-coral-50 text-coral-700">
                       Class
                     </span>
                     <span className="text-sm font-semibold text-gray-900">
@@ -154,7 +154,7 @@ export function Discover() {
                     >
                       {spotsRemaining === 0 ? 'Full' : `${spotsRemaining} spots left`}
                     </span>
-                    <span className="text-xs text-indigo-600 font-medium">View details &rarr;</span>
+                    <span className="text-xs text-coral-600 font-medium">View details &rarr;</span>
                   </div>
                 </div>
               </Link>

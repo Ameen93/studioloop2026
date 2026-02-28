@@ -4,6 +4,7 @@ import './lib/configureApiClient';
 import { Login } from './routes/auth/Login';
 import { Register } from './routes/auth/Register';
 import { ForgotPassword } from './routes/auth/ForgotPassword';
+import { OAuthCallback } from './routes/auth/OAuthCallback';
 import { Home } from './routes/Home';
 import { QRCode } from './routes/QRCode';
 import { Discover } from './routes/discover/Discover';
@@ -33,6 +34,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/auth/oauth-callback" element={<OAuthCallback />} />
 
           {/* Protected routes with app shell layout */}
           <Route

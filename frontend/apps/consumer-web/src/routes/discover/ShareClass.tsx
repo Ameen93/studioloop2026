@@ -117,7 +117,7 @@ export function ShareClass() {
     <div className="max-w-lg mx-auto px-4 py-6">
       <Link
         to={`/discover/${classId}`}
-        className="inline-flex items-center text-sm text-indigo-600 hover:text-indigo-500 font-medium mb-6"
+        className="inline-flex items-center text-sm text-coral-600 hover:text-coral-500 font-medium mb-6"
       >
         &larr; Back to class
       </Link>
@@ -146,7 +146,7 @@ export function ShareClass() {
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
               copied
                 ? 'bg-green-100 text-green-700'
-                : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                : 'bg-coral-600 text-white hover:bg-coral-700'
             }`}
           >
             {copied ? 'Copied!' : 'Copy'}
@@ -176,12 +176,12 @@ export function ShareClass() {
             value={referralEmail}
             onChange={(e) => setReferralEmail(e.target.value)}
             placeholder="friend@example.com"
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-coral-500 focus:border-coral-500"
           />
           <button
             onClick={handleSendReferral}
             disabled={referralMutation.isPending}
-            className="px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium rounded-lg bg-coral-600 text-white hover:bg-coral-700 transition-colors disabled:opacity-50"
           >
             {referralMutation.isPending ? 'Sending...' : 'Send'}
           </button>

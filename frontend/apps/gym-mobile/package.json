@@ -10,13 +10,17 @@
     "web": "expo start --web",
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
-    "test": "jest"
+    "test": "jest",
+    "build:dev": "eas build --profile development --platform android",
+    "build:preview": "eas build --profile preview --platform android",
+    "build:prod": "eas build --profile production --platform android"
   },
   "dependencies": {
     "@sl/api-client": "workspace:*",
     "@sl/ui": "workspace:*",
     "@sl/utils": "workspace:*",
     "@tanstack/react-query": "^5.90.19",
+    "expo-dev-client": "~5.0.22",
     "expo": "~54.0.31",
     "expo-camera": "~16.1.6",
     "expo-constants": "~18.0.5",
@@ -25,6 +29,7 @@
     "expo-router": "~6.0.22",
     "expo-sqlite": "~16.0.4",
     "expo-status-bar": "~3.0.9",
+    "expo-web-browser": "~14.0.1",
     "nativewind": "^4.2.1",
     "react": "19.1.0",
     "react-native": "0.81.5",

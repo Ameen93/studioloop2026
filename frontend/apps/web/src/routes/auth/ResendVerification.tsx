@@ -66,7 +66,7 @@ export function ResendVerification() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm"
               placeholder="you@example.com"
             />
           </div>
@@ -74,13 +74,13 @@ export function ResendVerification() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full flex justify-center py-2.5 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex justify-center py-2.5 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gray-700 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? 'Sending...' : 'Resend verification'}
           </button>
 
           <div className="text-center">
-            <Link to="/auth/login" className="text-sm font-medium text-primary-600 hover:text-primary-500">
+            <Link to="/auth/login" className="text-sm font-medium text-gray-700 hover:text-gray-500">
               Back to sign in
             </Link>
           </div>

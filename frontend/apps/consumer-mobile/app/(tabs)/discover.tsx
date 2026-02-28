@@ -58,15 +58,15 @@ export default function DiscoverTab() {
 
     return (
       <Pressable
-        className="bg-white rounded-lg p-4 mb-3 border border-gray-200"
+        className="bg-[#1a1a1a] rounded-lg p-4 mb-3 border border-[#2a2a2a]"
         onPress={() => router.push(`/class/${item.session_id}`)}
       >
         <View className="flex-row justify-between items-start">
           <View className="flex-1 mr-3">
-            <Text className="text-lg font-semibold text-gray-900">{item.title}</Text>
+            <Text className="text-lg font-semibold text-gray-50">{item.title}</Text>
             <Text className="text-sm text-gray-600 mt-1">{item.gym_name}</Text>
           </View>
-          <Text className="text-sm font-semibold text-gray-900">{formatCurrency(item.price_cents)}</Text>
+          <Text className="text-sm font-semibold text-gray-50">{formatCurrency(item.price_cents)}</Text>
         </View>
 
         <View className="flex-row justify-between items-center mt-3 pt-3 border-t border-gray-100">
@@ -94,12 +94,12 @@ export default function DiscoverTab() {
   };
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-[#0a0a0a]">
       <View className="px-4 pt-4 pb-2">
-        <View className="flex-row items-center bg-white border border-gray-300 rounded-lg px-3">
+        <View className="flex-row items-center bg-[#1a1a1a] border border-gray-300 rounded-lg px-3">
           <Ionicons name="search" size={20} color="#9ca3af" />
           <TextInput
-            className="flex-1 py-3 px-2 text-gray-900"
+            className="flex-1 py-3 px-2 text-gray-50"
             placeholder="Search classes, gyms, instructors..."
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -127,7 +127,7 @@ export default function DiscoverTab() {
         }
         ListEmptyComponent={
           classesQuery.isLoading ? (
-            <ActivityIndicator size="large" color="#6366f1" className="mt-8" />
+            <ActivityIndicator size="large" color="#FF6B4A" className="mt-8" />
           ) : (
             <View className="items-center py-12">
               <Ionicons name="search" size={48} color="#d1d5db" />

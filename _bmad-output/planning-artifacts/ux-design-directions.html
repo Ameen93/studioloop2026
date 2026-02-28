@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudioLoop — UX Design Direction Showcase</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  /* ===== RESET & BASE ===== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; font-size: 16px; }
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: #0d0d0d;
+    color: #f0f0f0;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ===== DESIGN TOKENS ===== */
+  :root {
+    --dark-bg: #0a0a0a;
+    --dark-card: #1a1a1a;
+    --dark-elevated: #2a2a2a;
+    --dark-border: #3a3a3a;
+    --light-bg: #f8f8fa;
+    --light-card: #ffffff;
+    --light-elevated: #f0f0f2;
+    --light-border: #e0e0e3;
+    --coral: #FF6B4A;
+    --coral-hover: #ff8266;
+    --gold: #d4a855;
+    --gold-hover: #e0ba6e;
+    --indigo: #6366f1;
+    --text-dark-primary: #f0f0f0;
+    --text-dark-secondary: #8a8a8a;
+    --text-light-primary: #1a1a1e;
+    --text-light-secondary: #6b6b73;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --error: #ef4444;
+    --info: #3b82f6;
+    --radius-btn: 8px;
+    --radius-input: 12px;
+    --radius-card: 16px;
+    --radius-card-mobile: 20px;
+    --radius-pill: 100px;
+  }
+
+  /* ===== STICKY NAV ===== */
+  .sticky-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: rgba(10,10,10,0.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--dark-border);
+    padding: 0 24px;
+  }
+  .sticky-nav-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 56px;
+    overflow-x: auto;
+  }
+  .sticky-nav-inner::-webkit-scrollbar { height: 0; }
+  .sticky-nav .nav-logo {
+    font-size: 14px;
+    font-weight: 300;
+    letter-spacing: 2px;
+    white-space: nowrap;
+    margin-right: 16px;
+    color: #fff;
+  }
+  .sticky-nav .nav-logo strong { font-weight: 700; color: var(--gold); }
+  .sticky-nav a {
+    color: var(--text-dark-secondary);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 400;
+    white-space: nowrap;
+    padding: 6px 12px;
+    border-radius: var(--radius-pill);
+    transition: all 0.2s;
+  }
+  .sticky-nav a:hover {
+    color: #fff;
+    background: var(--dark-elevated);
+  }
+
+  /* ===== SHOWCASE CONTAINER ===== */
+  .showcase { max-width: 1400px; margin: 0 auto; padding: 80px 24px 120px; }
+
+  /* ===== TITLE HERO ===== */
+  .hero-title {
+    text-align: center;
+    padding: 80px 0 60px;
+  }
+  .hero-title h1 {
+    font-size: 48px;
+    font-weight: 200;
+    letter-spacing: -1px;
+    margin-bottom: 12px;
+  }
+  .hero-title h1 span { font-weight: 700; color: var(--gold); }
+  .hero-title p {
+    font-size: 18px;
+    color: var(--text-dark-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+    font-weight: 300;
+  }
+
+  /* ===== SECTION HEADERS ===== */
+  .section-block { margin-bottom: 100px; }
+  .section-header {
+    margin-bottom: 40px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--dark-border);
+  }
+  .section-header .section-number {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--coral);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .section-header .section-number.gold { color: var(--gold); }
+  .section-header h2 {
+    font-size: 32px;
+    font-weight: 300;
+    letter-spacing: -0.5px;
+  }
+  .section-header h2 strong { font-weight: 600; }
+  .section-header p {
+    font-size: 15px;
+    color: var(--text-dark-secondary);
+    margin-top: 8px;
+    max-width: 640px;
+  }
+
+  /* ===== PHONE FRAME ===== */
+  .phone-frame-wrapper {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+  .phone-frame {
+    width: 375px;
+    min-height: 780px;
+    background: var(--dark-bg);
+    border-radius: 40px;
+    border: 3px solid var(--dark-border);
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
+  }
+  .phone-frame .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 24px 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-dark-primary);
+  }
+  .phone-frame .status-bar .notch {
+    width: 120px;
+    height: 28px;
+    background: #000;
+    border-radius: 0 0 20px 20px;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .phone-content { padding: 0 20px 100px; }
+
+  /* ===== BOTTOM TAB BAR ===== */
+  .tab-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(10,10,10,0.95);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--dark-border);
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0 28px;
+  }
+  .tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: var(--text-dark-secondary);
+  }
+  .tab-item.active { color: var(--coral); }
+  .tab-icon { font-size: 20px; }
+
+  /* ===== DESKTOP FRAME ===== */
+  .desktop-frame {
+    width: 100%;
+    background: var(--light-bg);
+    border-radius: 16px;
+    border: 2px solid var(--dark-border);
+    overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.4);
+  }
+  .desktop-frame.dark {
+    background: var(--dark-bg);
+  }
+  .desktop-top-bar {
+    height: 36px;
+    background: #1e1e1e;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 8px;
+  }
+  .desktop-top-bar .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+  .desktop-top-bar .dot.red { background: #ff5f57; }
+  .desktop-top-bar .dot.yellow { background: #febc2e; }
+  .desktop-top-bar .dot.green { background: #28c840; }
+  .desktop-top-bar .url-bar {
+    flex: 1;
+    text-align: center;
+    font-size: 12px;
+    color: #888;
+    background: #2a2a2a;
+    border-radius: 6px;
+    padding: 4px 12px;
+    margin: 0 60px;
+  }
+
+  /* ===== DESIGN TOKENS SECTION ===== */
+  .tokens-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 32px;
+  }
+  .token-group h3 {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    color: var(--text-dark-secondary);
+  }
+  .color-swatches { display: flex; flex-direction: column; gap: 8px; }
+  .swatch-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .swatch {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.08);
+    flex-shrink: 0;
+  }
+  .swatch-label {
+    font-size: 13px;
+    color: var(--text-dark-secondary);
+  }
+  .swatch-label code {
+    color: var(--text-dark-primary);
+    font-family: 'Outfit', monospace;
+    font-weight: 500;
+  }
+  .type-scale { display: flex; flex-direction: column; gap: 12px; }
+  .type-sample {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+  }
+  .type-sample .label {
+    font-size: 11px;
+    color: var(--text-dark-secondary);
+    width: 80px;
+    flex-shrink: 0;
+  }
+  .spacing-samples { display: flex; flex-wrap: wrap; gap: 12px; }
+  .spacing-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .spacing-box .block {
+    background: var(--coral);
+    opacity: 0.5;
+    border-radius: 4px;
+  }
+  .spacing-box .sp-label { font-size: 11px; color: var(--text-dark-secondary); }
+  .radii-samples { display: flex; flex-wrap: wrap; gap: 16px; }
+  .radius-demo {
+    width: 80px;
+    height: 56px;
+    border: 2px solid var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--text-dark-secondary);
+  }
+
+  /* ===== UTILITY CLASSES ===== */
+  .coral-btn {
+    background: var(--coral);
+    color: #fff;
+    border: none;
+    padding: 14px 28px;
+    border-radius: var(--radius-btn);
+    font-family: 'Outfit', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .coral-btn:hover { background: var(--coral-hover); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(255,107,74,0.3); }
+  .gold-btn {
+    background: var(--gold);
+    color: #1a1a1e;
+    border: none;
+    padding: 14px 28px;
+    border-radius: var(--radius-btn);
+    font-family: 'Outfit', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .gold-btn:hover { background: var(--gold-hover); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(212,168,85,0.3); }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 16px;
+    border-radius: var(--radius-pill);
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .card-dark {
+    background: var(--dark-card);
+    border-radius: var(--radius-card-mobile);
+    border: 1px solid var(--dark-border);
+    overflow: hidden;
+  }
+  .card-light {
+    background: var(--light-card);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--light-border);
+    overflow: hidden;
+  }
+
+  /* ===== ANIMATIONS ===== */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .section-block { animation: fadeInUp 0.6s ease both; }
+</style>
+</head>
+<body>
+
+<!-- ===== STICKY NAVIGATION ===== -->
+<nav class="sticky-nav">
+  <div class="sticky-nav-inner">
+    <div class="nav-logo">STUDIO<strong>LOOP</strong></div>
+    <a href="#tokens">Tokens</a>
+    <a href="#consumer-home">Home</a>
+    <a href="#consumer-discover">Discover</a>
+    <a href="#consumer-detail">Class Detail</a>
+    <a href="#consumer-booking">Booking</a>
+    <a href="#gym-login">Gym Login</a>
+    <a href="#gym-dashboard">Dashboard</a>
+    <a href="#gym-members">Members</a>
+    <a href="#consumer-desktop">Desktop Discover</a>
+  </div>
+</nav>
+
+<div class="showcase">
+
+  <!-- ===== HERO TITLE ===== -->
+  <div class="hero-title">
+    <h1>STUDIO<span>LOOP</span></h1>
+    <p>Refined Premium Luxe Design Direction — Consumer dark theme with coral accents, Gym light theme with gold accents.</p>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 0: DESIGN TOKENS REFERENCE                           -->
+  <!-- ============================================================ -->
+  <div class="section-block" id="tokens">
+    <div class="section-header">
+      <div class="section-number gold">Reference</div>
+      <h2>Design <strong>Tokens</strong></h2>
+      <p>The foundational visual language — colours, type scale, spacing, and border radii that unify all screens.</p>
+    </div>
+
+    <div class="tokens-grid">
+      <!-- Dark surfaces -->
+      <div class="token-group">
+        <h3>Dark Theme Surfaces</h3>
+        <div class="color-swatches">
+          <div class="swatch-row"><div class="swatch" style="background:#0a0a0a"></div><div class="swatch-label"><code>#0a0a0a</code> — Background</div></div>
+          <div class="swatch-row"><div class="swatch" style="background:#1a1a1a"></div><div class="swatch-label"><code>#1a1a1a</code> — Cards</div></div>
+          <div class="swatch-row"><div class="swatch" style="background:#2a2a2a"></div><div class="swatch-label"><code>#2a2a2a</code> — Elevated</div></div>
+          <div class="swatch-row"><div class="swatch" style="background:#3a3a3a"></div><div class="swatch-label"><code>#3a3a3a</code> — Borders</div></div>
+        </div>
+      </div>
+
+      <!-- Light surfaces -->
+      <div class="token-group">
+        <h3>Light Theme Surfaces</h3>
+        <div class="color-swatches">
+          <div class="swatch-row"><div class="swatch" style="background:#f8f8fa; border-color: #e0e0e3"></div><div class="swatch-label"><code>#f8f8fa</code> — Background</div></div>
+          <div class="swatch-row"><div class="swatch" style="background:#ffffff; border-color: #e0e0e3"></div><div class="swatch-label"><code>#ffffff</code> — Cards</div></div>
+          <div class="swatch-row"><div class="swatch" style="background:#f0f0f2; border-color: #e0e0e3"></div><div class="swatch-label"><code>#f0f0f2</code> — Elevated</div></div>
+          <div class="swatch-row"><div class="swatch" style="background:#e0e0e3; border-color: #c0c0c3"></div><div class="swatch-label"><code>#e0e0e3</code> — Borders</div></div>
+        </div>
+      </div>
+
+      <!-- Accents -->
+      <div class="token-group">
+        <h3>Accent Palette</h3>
+        <div class="color-swatches">
+          <div class="swatch-row"><div class="swatch" style="background:#FF6B4A"></div><div class="swatch-label"><code>#FF6B4A</code> — Consumer Coral</div></div>
+          <div class="swatch-row"><div class="swatch" style="background:#d4a855"></div><div class="swatch-label"><code>#d4a855</code> — Gym Gold</div></div>
+          <div class="swatch-row"><div class="swatch" style="background:#6366f1"></div><div class="swatch-label"><code>#6366f1</code> — Admin Indigo</div></div>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div class="token-group">
+        <h3>Status Colours</h3>
+        <div class="color-swatches">
+          <div class="swatch-row"><div class="swatch" style="background:#22c55e"></div><div class="swatch-label"><code>#22c55e</code> — Success</div></div>
+          <div class="swatch-row"><div class="swatch" style="background:#f59e0b"></div><div class="swatch-label"><code>#f59e0b</code> — Warning</div></div>
+          <div class="swatch-row"><div class="swatch" style="background:#ef4444"></div><div class="swatch-label"><code>#ef4444</code> — Error</div></div>
+          <div class="swatch-row"><div class="swatch" style="background:#3b82f6"></div><div class="swatch-label"><code>#3b82f6</code> — Info</div></div>
+        </div>
+      </div>
+
+      <!-- Typography -->
+      <div class="token-group">
+        <h3>Typography Scale</h3>
+        <div class="type-scale">
+          <div class="type-sample"><span class="label">Display</span><span style="font-size:48px;font-weight:200;letter-spacing:-1px">Aa</span></div>
+          <div class="type-sample"><span class="label">H1 — 32px</span><span style="font-size:32px;font-weight:300">Heading One</span></div>
+          <div class="type-sample"><span class="label">H2 — 24px</span><span style="font-size:24px;font-weight:400">Heading Two</span></div>
+          <div class="type-sample"><span class="label">H3 — 18px</span><span style="font-size:18px;font-weight:500">Heading Three</span></div>
+          <div class="type-sample"><span class="label">Body — 15px</span><span style="font-size:15px;font-weight:400">Body text sample</span></div>
+          <div class="type-sample"><span class="label">Small — 13px</span><span style="font-size:13px;font-weight:400;color:var(--text-dark-secondary)">Caption or metadata</span></div>
+          <div class="type-sample"><span class="label">Micro — 11px</span><span style="font-size:11px;font-weight:500;color:var(--text-dark-secondary);letter-spacing:0.5px">OVERLINE</span></div>
+        </div>
+      </div>
+
+      <!-- Border radii -->
+      <div class="token-group">
+        <h3>Border Radii</h3>
+        <div class="radii-samples">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+            <div class="radius-demo" style="border-radius:8px">8px</div>
+            <span style="font-size:11px;color:var(--text-dark-secondary)">Buttons</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+            <div class="radius-demo" style="border-radius:12px">12px</div>
+            <span style="font-size:11px;color:var(--text-dark-secondary)">Inputs</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+            <div class="radius-demo" style="border-radius:16px">16px</div>
+            <span style="font-size:11px;color:var(--text-dark-secondary)">Cards (Desktop)</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+            <div class="radius-demo" style="border-radius:20px">20px</div>
+            <span style="font-size:11px;color:var(--text-dark-secondary)">Cards (Mobile)</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+            <div class="radius-demo" style="border-radius:100px;width:100px">100px</div>
+            <span style="font-size:11px;color:var(--text-dark-secondary)">Pills</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 1: CONSUMER MOBILE — HOME                            -->
+  <!-- ============================================================ -->
+  <div class="section-block" id="consumer-home">
+    <div class="section-header">
+      <div class="section-number">Section 01</div>
+      <h2>Consumer Mobile — <strong>Home Screen</strong></h2>
+      <p>Dark theme + coral accents. The home screen greets the user, shows progress stats, upcoming classes, and personalised recommendations.</p>
+    </div>
+
+    <div class="phone-frame-wrapper">
+      <div class="phone-frame">
+        <div class="status-bar">
+          <div class="notch"></div>
+          <span>09:41</span>
+          <span style="letter-spacing:2px">...</span>
+        </div>
+        <div class="phone-content">
+          <!-- Greeting -->
+          <div style="padding:24px 0 20px">
+            <div style="font-size:28px;font-weight:200;color:var(--text-dark-primary)">Good morning,</div>
+            <div style="font-size:28px;font-weight:600;color:var(--text-dark-primary)">Lerato</div>
+          </div>
+
+          <!-- Stats row -->
+          <div style="display:flex;gap:12px;margin-bottom:24px">
+            <div style="flex:1;background:var(--dark-card);border-radius:var(--radius-card-mobile);border:1px solid var(--dark-border);padding:16px">
+              <div style="font-size:28px;font-weight:200;color:var(--coral)">12</div>
+              <div style="font-size:12px;color:var(--text-dark-secondary);margin-top:2px">classes this month</div>
+            </div>
+            <div style="flex:1;background:var(--dark-card);border-radius:var(--radius-card-mobile);border:1px solid var(--dark-border);padding:16px">
+              <div style="font-size:28px;font-weight:200;color:var(--coral)">3</div>
+              <div style="font-size:12px;color:var(--text-dark-secondary);margin-top:2px">week streak</div>
+              <div style="margin-top:4px;font-size:14px">&#x1F525;</div>
+            </div>
+          </div>
+
+          <!-- Next class card -->
+          <div style="background:linear-gradient(135deg, #2a2218 0%, #1a1a1a 100%);border-radius:var(--radius-card-mobile);border:1px solid rgba(212,168,85,0.2);padding:20px;margin-bottom:28px">
+            <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase;margin-bottom:12px">Your next class</div>
+            <div style="font-size:22px;font-weight:500;color:var(--text-dark-primary);margin-bottom:4px">Power Yoga</div>
+            <div style="font-size:13px;color:var(--text-dark-secondary);margin-bottom:4px">Soul Fitness Woodstock</div>
+            <div style="font-size:13px;color:var(--text-dark-secondary);margin-bottom:16px">Tomorrow, 07:00</div>
+            <a style="font-size:14px;font-weight:500;color:var(--coral);text-decoration:none;cursor:pointer">View details &#8594;</a>
+          </div>
+
+          <!-- For You section -->
+          <div style="margin-bottom:20px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+              <div style="font-size:18px;font-weight:500">For You</div>
+              <a style="font-size:13px;color:var(--coral);text-decoration:none;cursor:pointer">See all</a>
+            </div>
+            <div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:8px">
+              <!-- Card 1 -->
+              <div style="min-width:220px;background:var(--dark-card);border-radius:var(--radius-card-mobile);border:1px solid var(--dark-border);overflow:hidden">
+                <div style="height:120px;background:linear-gradient(135deg, #1a2a3a, #0a0a0a);display:flex;align-items:flex-end;padding:12px">
+                  <div style="background:var(--coral);padding:4px 10px;border-radius:var(--radius-pill);font-size:11px;font-weight:600">R120</div>
+                </div>
+                <div style="padding:14px">
+                  <div style="font-size:15px;font-weight:500;margin-bottom:2px">HIIT Burn</div>
+                  <div style="font-size:12px;color:var(--text-dark-secondary)">FitBox Sea Point</div>
+                  <div style="font-size:12px;color:var(--text-dark-secondary);margin-top:4px">Wed, 18:00</div>
+                </div>
+              </div>
+              <!-- Card 2 -->
+              <div style="min-width:220px;background:var(--dark-card);border-radius:var(--radius-card-mobile);border:1px solid var(--dark-border);overflow:hidden">
+                <div style="height:120px;background:linear-gradient(135deg, #2a1a2a, #0a0a0a);display:flex;align-items:flex-end;padding:12px">
+                  <div style="background:rgba(255,255,255,0.12);padding:4px 10px;border-radius:var(--radius-pill);font-size:11px;font-weight:500;color:#fff">1 Credit</div>
+                </div>
+                <div style="padding:14px">
+                  <div style="font-size:15px;font-weight:500;margin-bottom:2px">Pilates Flow</div>
+                  <div style="font-size:12px;color:var(--text-dark-secondary)">Body Kinetics Gardens</div>
+                  <div style="font-size:12px;color:var(--text-dark-secondary);margin-top:4px">Thu, 09:30</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab bar -->
+        <div class="tab-bar">
+          <div class="tab-item active">
+            <div class="tab-icon">&#x1F50D;</div>
+            <span>Explore</span>
+          </div>
+          <div class="tab-item">
+            <div class="tab-icon">&#x1F4C5;</div>
+            <span>Bookings</span>
+          </div>
+          <div class="tab-item">
+            <div class="tab-icon">&#x25A3;</div>
+            <span>QR</span>
+          </div>
+          <div class="tab-item">
+            <div class="tab-icon">&#x1F464;</div>
+            <span>Profile</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 2: CONSUMER MOBILE — DISCOVER                        -->
+  <!-- ============================================================ -->
+  <div class="section-block" id="consumer-discover">
+    <div class="section-header">
+      <div class="section-number">Section 02</div>
+      <h2>Consumer Mobile — <strong>Discover Screen</strong></h2>
+      <p>Dark theme + coral accents. Search, filter by activity type, and browse popular classes nearby with availability indicators.</p>
+    </div>
+
+    <div class="phone-frame-wrapper">
+      <div class="phone-frame">
+        <div class="status-bar">
+          <div class="notch"></div>
+          <span>09:41</span>
+          <span style="letter-spacing:2px">...</span>
+        </div>
+        <div class="phone-content">
+          <!-- Search bar -->
+          <div style="margin:16px 0">
+            <div style="background:var(--dark-card);border:1px solid var(--dark-border);border-radius:var(--radius-input);padding:14px 16px;display:flex;align-items:center;gap:10px">
+              <span style="color:var(--text-dark-secondary);font-size:16px">&#x1F50D;</span>
+              <span style="color:var(--text-dark-secondary);font-size:14px">Search classes, studios...</span>
+            </div>
+          </div>
+
+          <!-- Filter pills -->
+          <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:20px">
+            <div class="pill" style="background:var(--coral);color:#fff;font-weight:600">All</div>
+            <div class="pill" style="background:var(--dark-card);color:var(--text-dark-secondary);border:1px solid var(--dark-border)">Yoga</div>
+            <div class="pill" style="background:var(--dark-card);color:var(--text-dark-secondary);border:1px solid var(--dark-border)">HIIT</div>
+            <div class="pill" style="background:var(--dark-card);color:var(--text-dark-secondary);border:1px solid var(--dark-border)">Boxing</div>
+            <div class="pill" style="background:var(--dark-card);color:var(--text-dark-secondary);border:1px solid var(--dark-border)">Pilates</div>
+            <div class="pill" style="background:var(--dark-card);color:var(--text-dark-secondary);border:1px solid var(--dark-border)">Cycling</div>
+          </div>
+
+          <!-- Section header -->
+          <div style="font-size:18px;font-weight:500;margin-bottom:16px">Popular Near You</div>
+
+          <!-- Class card 1 -->
+          <div style="background:var(--dark-card);border-radius:var(--radius-card-mobile);border:1px solid var(--dark-border);overflow:hidden;margin-bottom:16px">
+            <div style="height:140px;background:linear-gradient(135deg, #1a3028, #0a0a0a);position:relative">
+              <div style="position:absolute;top:12px;right:12px;background:rgba(239,68,68,0.2);color:var(--error);padding:4px 10px;border-radius:var(--radius-pill);font-size:11px;font-weight:600">3 spots left</div>
+              <div style="position:absolute;bottom:12px;left:12px;background:var(--coral);padding:4px 12px;border-radius:var(--radius-pill);font-size:12px;font-weight:600;color:#fff">R150</div>
+            </div>
+            <div style="padding:16px">
+              <div style="font-size:16px;font-weight:500;margin-bottom:2px">Morning Vinyasa</div>
+              <div style="font-size:13px;color:var(--text-dark-secondary)">Loom Yoga Studio, Gardens</div>
+              <div style="font-size:13px;color:var(--text-dark-secondary);margin-top:4px">Mon, 06:30 - 07:30</div>
+            </div>
+          </div>
+
+          <!-- Class card 2 -->
+          <div style="background:var(--dark-card);border-radius:var(--radius-card-mobile);border:1px solid var(--dark-border);overflow:hidden;margin-bottom:16px">
+            <div style="height:140px;background:linear-gradient(135deg, #2a1a1a, #0a0a0a);position:relative">
+              <div style="position:absolute;top:12px;right:12px;background:rgba(245,158,11,0.15);color:var(--warning);padding:4px 10px;border-radius:var(--radius-pill);font-size:11px;font-weight:600">5 spots left</div>
+              <div style="position:absolute;bottom:12px;left:12px;background:rgba(255,255,255,0.12);padding:4px 12px;border-radius:var(--radius-pill);font-size:12px;font-weight:500;color:#fff">1 Credit</div>
+            </div>
+            <div style="padding:16px">
+              <div style="font-size:16px;font-weight:500;margin-bottom:2px">Boxing Fundamentals</div>
+              <div style="font-size:13px;color:var(--text-dark-secondary)">Round One Boxing, Woodstock</div>
+              <div style="font-size:13px;color:var(--text-dark-secondary);margin-top:4px">Tue, 17:30 - 18:30</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab bar -->
+        <div class="tab-bar">
+          <div class="tab-item active">
+            <div class="tab-icon">&#x1F50D;</div>
+            <span>Explore</span>
+          </div>
+          <div class="tab-item">
+            <div class="tab-icon">&#x1F4C5;</div>
+            <span>Bookings</span>
+          </div>
+          <div class="tab-item">
+            <div class="tab-icon">&#x25A3;</div>
+            <span>QR</span>
+          </div>
+          <div class="tab-item">
+            <div class="tab-icon">&#x1F464;</div>
+            <span>Profile</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 3: CONSUMER MOBILE — CLASS DETAIL                    -->
+  <!-- ============================================================ -->
+  <div class="section-block" id="consumer-detail">
+    <div class="section-header">
+      <div class="section-number">Section 03</div>
+      <h2>Consumer Mobile — <strong>Class Detail</strong></h2>
+      <p>Dark theme + coral accents. Full class information with hero image area, instructor profile, description, and sticky booking bar.</p>
+    </div>
+
+    <div class="phone-frame-wrapper">
+      <div class="phone-frame" style="min-height:840px">
+        <div class="status-bar" style="position:absolute;top:0;left:0;right:0;z-index:2">
+          <div class="notch"></div>
+          <span>09:41</span>
+          <span style="letter-spacing:2px">...</span>
+        </div>
+        <div style="position:relative">
+          <!-- Hero area -->
+          <div style="height:280px;background:linear-gradient(180deg, #1a2a3a 0%, #0a0a0a 100%);position:relative">
+            <div style="position:absolute;top:50px;left:20px;font-size:24px;cursor:pointer">&#8592;</div>
+            <div style="position:absolute;bottom:0;left:0;right:0;height:120px;background:linear-gradient(180deg, transparent, var(--dark-bg))"></div>
+          </div>
+
+          <div style="padding:0 20px;position:relative;margin-top:-40px">
+            <!-- Class name -->
+            <div style="font-size:32px;font-weight:300;color:var(--text-dark-primary);margin-bottom:6px">Power Yoga</div>
+            <div style="font-size:14px;color:var(--text-dark-secondary);margin-bottom:12px">Soul Fitness &middot; 1.2km</div>
+
+            <!-- Time pill -->
+            <div style="display:inline-flex;align-items:center;gap:6px;background:var(--dark-card);border:1px solid var(--dark-border);border-radius:var(--radius-pill);padding:8px 16px;font-size:13px;color:var(--text-dark-primary);margin-bottom:24px">
+              <span>&#x1F4C5;</span> Tue, 4 Mar &middot; 07:00 - 08:00
+            </div>
+
+            <!-- Instructor -->
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;padding:16px;background:var(--dark-card);border-radius:var(--radius-card-mobile);border:1px solid var(--dark-border)">
+              <div style="width:52px;height:52px;border-radius:50%;border:2px solid var(--coral);background:var(--dark-elevated);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">&#x1F9D1;</div>
+              <div>
+                <div style="font-size:15px;font-weight:500">Naledi Mokoena</div>
+                <div style="font-size:12px;color:var(--text-dark-secondary);margin-top:2px">200hr RYT certified. Specialising in power vinyasa flows for strength and mobility.</div>
+              </div>
+            </div>
+
+            <!-- About -->
+            <div style="margin-bottom:24px">
+              <div style="font-size:16px;font-weight:500;margin-bottom:10px">About this class</div>
+              <div style="font-size:14px;color:var(--text-dark-secondary);line-height:1.6">A dynamic power yoga session that builds strength and flexibility through flowing sequences. Suitable for intermediate practitioners. Bring your own mat and water.</div>
+            </div>
+
+            <!-- Cancellation -->
+            <div style="padding:14px 16px;background:rgba(245,158,11,0.08);border-left:3px solid var(--warning);border-radius:0 var(--radius-btn) var(--radius-btn) 0;margin-bottom:100px">
+              <div style="font-size:13px;font-weight:500;color:var(--warning);margin-bottom:4px">Cancellation Policy</div>
+              <div style="font-size:13px;color:var(--text-dark-secondary)">Free cancellation up to 4 hours before class. Late cancellations forfeit the credit.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sticky bottom bar -->
+        <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(10,10,10,0.95);backdrop-filter:blur(12px);border-top:1px solid var(--dark-border);padding:16px 20px;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:15px;font-weight:500;color:var(--text-dark-primary)">1 Credit</div>
+            <div style="font-size:12px;color:var(--text-dark-secondary)">(R80)</div>
+          </div>
+          <button class="coral-btn" style="padding:12px 32px">Book Now</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 4: BOOKING CONFIRMATION BOTTOM SHEET                 -->
+  <!-- ============================================================ -->
+  <div class="section-block" id="consumer-booking">
+    <div class="section-header">
+      <div class="section-number">Section 04</div>
+      <h2>Consumer Mobile — <strong>Booking Confirmation</strong></h2>
+      <p>Bottom sheet overlay for booking confirmation, plus the success state after completing a booking.</p>
+    </div>
+
+    <div class="phone-frame-wrapper">
+      <!-- Confirm state -->
+      <div class="phone-frame" style="min-height:780px">
+        <div class="status-bar">
+          <div class="notch"></div>
+          <span>09:41</span>
+          <span style="letter-spacing:2px">...</span>
+        </div>
+        <!-- Dimmed content behind -->
+        <div style="padding:0 20px;opacity:0.3;pointer-events:none">
+          <div style="font-size:32px;font-weight:300;padding:24px 0 8px">Power Yoga</div>
+          <div style="font-size:14px;color:var(--text-dark-secondary)">Soul Fitness &middot; 1.2km</div>
+          <div style="margin-top:16px;height:80px;background:var(--dark-card);border-radius:16px"></div>
+          <div style="margin-top:12px;height:60px;background:var(--dark-card);border-radius:16px"></div>
+        </div>
+
+        <!-- Overlay -->
+        <div style="position:absolute;bottom:0;left:0;right:0;top:40%;background:rgba(0,0,0,0.6)"></div>
+
+        <!-- Bottom sheet -->
+        <div style="position:absolute;bottom:0;left:0;right:0;background:var(--dark-card);border-radius:24px 24px 0 0;border-top:1px solid var(--dark-border);padding:20px">
+          <!-- Drag handle -->
+          <div style="width:40px;height:4px;background:var(--dark-border);border-radius:4px;margin:0 auto 20px"></div>
+
+          <div style="font-size:18px;font-weight:500;margin-bottom:16px">Confirm Booking</div>
+
+          <!-- Class summary -->
+          <div style="background:var(--dark-elevated);border-radius:var(--radius-card-mobile);padding:16px;margin-bottom:16px">
+            <div style="font-size:15px;font-weight:500;margin-bottom:4px">Power Yoga</div>
+            <div style="font-size:13px;color:var(--text-dark-secondary)">Soul Fitness Woodstock</div>
+            <div style="font-size:13px;color:var(--text-dark-secondary);margin-top:4px">Tue, 4 Mar &middot; 07:00 - 08:00</div>
+          </div>
+
+          <!-- Payment -->
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--dark-border);margin-bottom:12px">
+            <div style="font-size:13px;color:var(--text-dark-secondary)">Payment</div>
+            <div style="font-size:14px;font-weight:500">Marketplace Subscription — 1 Credit</div>
+          </div>
+
+          <!-- Cancellation reminder -->
+          <div style="font-size:12px;color:var(--text-dark-secondary);margin-bottom:20px;line-height:1.5">Free cancellation up to 4 hours before class start.</div>
+
+          <!-- CTA -->
+          <button class="coral-btn" style="width:100%;padding:16px;font-size:16px">Confirm Booking</button>
+        </div>
+      </div>
+
+      <!-- Success state -->
+      <div class="phone-frame" style="min-height:780px">
+        <div class="status-bar">
+          <div class="notch"></div>
+          <span>09:41</span>
+          <span style="letter-spacing:2px">...</span>
+        </div>
+        <div style="padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:600px;text-align:center">
+          <!-- Checkmark -->
+          <div style="width:80px;height:80px;border-radius:50%;background:rgba(34,197,94,0.1);border:2px solid var(--success);display:flex;align-items:center;justify-content:center;font-size:36px;margin-bottom:24px">&#x2713;</div>
+
+          <div style="font-size:28px;font-weight:300;margin-bottom:8px">You're booked!</div>
+          <div style="font-size:14px;color:var(--text-dark-secondary);margin-bottom:32px">Get ready for Power Yoga</div>
+
+          <!-- Details card -->
+          <div style="background:var(--dark-card);border:1px solid var(--dark-border);border-radius:var(--radius-card-mobile);padding:20px;width:100%;text-align:left;margin-bottom:32px">
+            <div style="font-size:16px;font-weight:500;margin-bottom:4px">Power Yoga</div>
+            <div style="font-size:13px;color:var(--text-dark-secondary)">Soul Fitness Woodstock</div>
+            <div style="font-size:13px;color:var(--text-dark-secondary);margin-top:4px">Tue, 4 Mar &middot; 07:00 - 08:00</div>
+            <div style="font-size:13px;color:var(--text-dark-secondary);margin-top:4px">Instructor: Naledi Mokoena</div>
+          </div>
+
+          <!-- Action buttons -->
+          <div style="display:flex;gap:12px;width:100%">
+            <button style="flex:1;padding:14px;background:var(--dark-card);border:1px solid var(--dark-border);border-radius:var(--radius-btn);color:var(--text-dark-primary);font-family:'Outfit',sans-serif;font-size:14px;font-weight:500;cursor:pointer">&#x1F4C5; Add to Calendar</button>
+            <button style="flex:1;padding:14px;background:var(--dark-card);border:1px solid var(--dark-border);border-radius:var(--radius-btn);color:var(--text-dark-primary);font-family:'Outfit',sans-serif;font-size:14px;font-weight:500;cursor:pointer">&#x1F517; Share</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 5: GYM WEB — LOGIN                                   -->
+  <!-- ============================================================ -->
+  <div class="section-block" id="gym-login">
+    <div class="section-header">
+      <div class="section-number gold">Section 05</div>
+      <h2>Gym Web — <strong>Login</strong></h2>
+      <p>Light theme + gold accents. Split-panel login with brand presence on the left and credentials form on the right.</p>
+    </div>
+
+    <div class="desktop-frame">
+      <div class="desktop-top-bar">
+        <div class="dot red"></div>
+        <div class="dot yellow"></div>
+        <div class="dot green"></div>
+        <div class="url-bar">studio.studioloop.co.za/login</div>
+      </div>
+      <div style="display:flex;min-height:600px">
+        <!-- Left panel -->
+        <div style="flex:1;background:#0a0a0a;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:60px 40px">
+          <!-- Gold radial glow -->
+          <div style="position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle, rgba(212,168,85,0.15) 0%, transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%)"></div>
+          <div style="position:relative;z-index:1;text-align:center">
+            <div style="font-size:36px;letter-spacing:4px;margin-bottom:12px">
+              <span style="font-weight:200;color:#fff">STUDIO</span><span style="font-weight:700;color:var(--gold)">LOOP</span>
+            </div>
+            <div style="font-size:16px;font-weight:300;color:var(--text-dark-secondary);max-width:280px">Manage your studio with confidence</div>
+          </div>
+        </div>
+
+        <!-- Right panel -->
+        <div style="flex:1;background:var(--light-bg);display:flex;align-items:center;justify-content:center;padding:60px 40px">
+          <div style="width:100%;max-width:380px">
+            <div style="font-size:28px;font-weight:300;color:var(--text-light-primary);margin-bottom:8px">Welcome back</div>
+            <div style="font-size:14px;color:var(--text-light-secondary);margin-bottom:32px">Sign in to your studio dashboard</div>
+
+            <!-- Email -->
+            <div style="margin-bottom:16px">
+              <label style="display:block;font-size:13px;font-weight:500;color:var(--text-light-primary);margin-bottom:6px">Email</label>
+              <div style="background:var(--light-card);border:1px solid var(--light-border);border-radius:var(--radius-input);padding:14px 16px;font-size:14px;color:var(--text-light-secondary)">thabo@crossfitobs.co.za</div>
+            </div>
+
+            <!-- Password -->
+            <div style="margin-bottom:8px">
+              <label style="display:block;font-size:13px;font-weight:500;color:var(--text-light-primary);margin-bottom:6px">Password</label>
+              <div style="background:var(--light-card);border:1px solid var(--light-border);border-radius:var(--radius-input);padding:14px 16px;font-size:14px;color:var(--text-light-secondary)">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</div>
+            </div>
+
+            <div style="text-align:right;margin-bottom:24px">
+              <a style="font-size:13px;color:var(--gold);text-decoration:none;cursor:pointer;font-weight:500">Forgot password?</a>
+            </div>
+
+            <button class="gold-btn" style="width:100%;padding:16px;font-size:15px;margin-bottom:24px">Sign In</button>
+
+            <!-- Divider -->
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px">
+              <div style="flex:1;height:1px;background:var(--light-border)"></div>
+              <span style="font-size:12px;color:var(--text-light-secondary);font-weight:500">OR</span>
+              <div style="flex:1;height:1px;background:var(--light-border)"></div>
+            </div>
+
+            <!-- OAuth -->
+            <div style="display:flex;gap:12px">
+              <button style="flex:1;padding:12px;background:var(--light-card);border:1px solid var(--light-border);border-radius:var(--radius-btn);font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;color:var(--text-light-primary);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s">
+                <span style="font-size:16px">G</span> Google
+              </button>
+              <button style="flex:1;padding:12px;background:var(--light-card);border:1px solid var(--light-border);border-radius:var(--radius-btn);font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;color:var(--text-light-primary);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s">
+                <span style="font-size:16px">&#xF8FF;</span> Apple
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 6: GYM WEB — DASHBOARD                               -->
+  <!-- ============================================================ -->
+  <div class="section-block" id="gym-dashboard">
+    <div class="section-header">
+      <div class="section-number gold">Section 06</div>
+      <h2>Gym Web — <strong>Dashboard</strong></h2>
+      <p>Light theme + gold accents. Key metrics, AI-powered insights, and action items at a glance for studio owners and staff.</p>
+    </div>
+
+    <div class="desktop-frame">
+      <div class="desktop-top-bar">
+        <div class="dot red"></div>
+        <div class="dot yellow"></div>
+        <div class="dot green"></div>
+        <div class="url-bar">studio.studioloop.co.za/dashboard</div>
+      </div>
+      <div style="display:flex;min-height:700px">
+        <!-- Sidebar -->
+        <div style="width:260px;background:var(--light-card);border-right:1px solid var(--light-border);padding:24px 0;display:flex;flex-direction:column;flex-shrink:0">
+          <!-- Logo -->
+          <div style="padding:0 24px 24px;border-bottom:1px solid var(--light-border);margin-bottom:8px">
+            <div style="font-size:18px;letter-spacing:3px">
+              <span style="font-weight:200;color:var(--text-light-primary)">STUDIO</span><span style="font-weight:700;color:var(--gold)">LOOP</span>
+            </div>
+          </div>
+
+          <!-- Nav items -->
+          <div style="flex:1;padding:8px 12px">
+            <div style="padding:10px 16px;border-radius:var(--radius-btn);background:rgba(212,168,85,0.1);color:var(--gold);font-size:14px;font-weight:500;margin-bottom:4px;display:flex;align-items:center;gap:10px">
+              <span>&#x25A0;</span> Dashboard
+            </div>
+            <div style="padding:10px 16px;border-radius:var(--radius-btn);color:var(--text-light-secondary);font-size:14px;margin-bottom:4px;display:flex;align-items:center;gap:10px;cursor:pointer">
+              <span>&#x1F465;</span> Members
+            </div>
+            <div style="padding:10px 16px;border-radius:var(--radius-btn);color:var(--text-light-secondary);font-size:14px;margin-bottom:4px;display:flex;align-items:center;gap:10px;cursor:pointer">
+              <span>&#x1F4C5;</span> Schedule
+            </div>
+            <div style="padding:10px 16px;border-radius:var(--radius-btn);color:var(--text-light-secondary);font-size:14px;margin-bottom:4px;display:flex;align-items:center;gap:10px;cursor:pointer">
+              <span>&#x2713;</span> Check-in
+            </div>
+            <div style="padding:10px 16px;border-radius:var(--radius-btn);color:var(--text-light-secondary);font-size:14px;margin-bottom:4px;display:flex;align-items:center;gap:10px;cursor:pointer">
+              <span>&#x1F4CA;</span> Reports
+            </div>
+            <div style="padding:10px 16px;border-radius:var(--radius-btn);color:var(--text-light-secondary);font-size:14px;margin-bottom:4px;display:flex;align-items:center;gap:10px;cursor:pointer">
+              <span>&#x1F46A;</span> Staff
+            </div>
+            <div style="padding:10px 16px;border-radius:var(--radius-btn);color:var(--text-light-secondary);font-size:14px;margin-bottom:4px;display:flex;align-items:center;gap:10px;cursor:pointer">
+              <span>&#x2699;</span> Settings
+            </div>
+            <div style="padding:10px 16px;border-radius:var(--radius-btn);color:var(--text-light-secondary);font-size:14px;margin-bottom:4px;display:flex;align-items:center;gap:10px;cursor:pointer">
+              <span>&#x1F4AC;</span> Messaging
+            </div>
+            <div style="padding:10px 16px;border-radius:var(--radius-btn);color:var(--text-light-secondary);font-size:14px;margin-bottom:4px;display:flex;align-items:center;gap:10px;cursor:pointer">
+              <span>&#x1F4B3;</span> Payments
+            </div>
+          </div>
+
+          <!-- Logout -->
+          <div style="padding:12px 24px;border-top:1px solid var(--light-border)">
+            <div style="font-size:13px;color:var(--text-light-secondary);cursor:pointer">&#x2192; Log out</div>
+          </div>
+        </div>
+
+        <!-- Main content -->
+        <div style="flex:1;background:var(--light-bg)">
+          <!-- Top header -->
+          <div style="padding:20px 32px;border-bottom:1px solid var(--light-border);display:flex;justify-content:space-between;align-items:center;background:var(--light-card)">
+            <div>
+              <div style="font-size:20px;font-weight:500;color:var(--text-light-primary)">CrossFit Observatory</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="text-align:right">
+                <div style="font-size:14px;font-weight:500;color:var(--text-light-primary)">Thabo</div>
+                <div style="font-size:11px;color:var(--text-light-secondary)">Owner</div>
+              </div>
+              <div style="width:36px;height:36px;border-radius:50%;background:var(--light-elevated);border:1px solid var(--light-border);display:flex;align-items:center;justify-content:center;font-size:14px">T</div>
+            </div>
+          </div>
+
+          <div style="padding:28px 32px">
+            <!-- Metric cards -->
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px">
+              <!-- Revenue -->
+              <div style="background:var(--light-card);border:1px solid var(--light-border);border-radius:var(--radius-card);padding:20px">
+                <div style="font-size:12px;color:var(--text-light-secondary);margin-bottom:8px;font-weight:500">Revenue Today</div>
+                <div style="font-size:32px;font-weight:200;color:var(--text-light-primary);margin-bottom:6px">R12,450</div>
+                <div style="font-size:12px;color:var(--success);font-weight:500">&#x2191; 12% vs last Tue</div>
+              </div>
+              <!-- Check-ins -->
+              <div style="background:var(--light-card);border:1px solid var(--light-border);border-radius:var(--radius-card);padding:20px">
+                <div style="font-size:12px;color:var(--text-light-secondary);margin-bottom:8px;font-weight:500">Check-ins</div>
+                <div style="font-size:32px;font-weight:200;color:var(--text-light-primary);margin-bottom:6px">34</div>
+                <div style="font-size:12px;color:var(--success);font-weight:500">&#x2191; 8% vs average</div>
+              </div>
+              <!-- Bookings -->
+              <div style="background:var(--light-card);border:1px solid var(--light-border);border-radius:var(--radius-card);padding:20px">
+                <div style="font-size:12px;color:var(--text-light-secondary);margin-bottom:8px;font-weight:500">Bookings</div>
+                <div style="font-size:32px;font-weight:200;color:var(--text-light-primary);margin-bottom:6px">18</div>
+                <div style="font-size:12px;color:var(--error);font-weight:500">&#x2193; 3% vs average</div>
+              </div>
+              <!-- Active members -->
+              <div style="background:var(--light-card);border:1px solid var(--light-border);border-radius:var(--radius-card);padding:20px">
+                <div style="font-size:12px;color:var(--text-light-secondary);margin-bottom:8px;font-weight:500">Active Members</div>
+                <div style="font-size:32px;font-weight:200;color:var(--text-light-primary);margin-bottom:6px">127</div>
+                <div style="font-size:12px;color:var(--success);font-weight:500">&#x2191; 4 this week</div>
+              </div>
+            </div>
+
+            <!-- Insights -->
+            <div style="margin-bottom:32px">
+              <div style="font-size:16px;font-weight:500;color:var(--text-light-primary);margin-bottom:16px">Insights</div>
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <div style="background:var(--light-card);border:1px solid var(--light-border);border-left:3px solid var(--gold);border-radius:0 var(--radius-card) var(--radius-card) 0;padding:16px 20px;display:flex;justify-content:space-between;align-items:center">
+                  <div style="font-size:14px;color:var(--text-light-primary)">Your 6PM HIIT has been <strong>95% full for 3 weeks</strong> — consider adding capacity.</div>
+                  <button style="padding:8px 16px;background:rgba(212,168,85,0.1);color:var(--gold);border:1px solid rgba(212,168,85,0.3);border-radius:var(--radius-btn);font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;margin-left:16px">Add Second Session</button>
+                </div>
+                <div style="background:var(--light-card);border:1px solid var(--light-border);border-left:3px solid var(--gold);border-radius:0 var(--radius-card) var(--radius-card) 0;padding:16px 20px;display:flex;justify-content:space-between;align-items:center">
+                  <div style="font-size:14px;color:var(--text-light-primary)"><strong>8 members</strong> haven't visited in 14+ days — re-engage before churn.</div>
+                  <button style="padding:8px 16px;background:rgba(212,168,85,0.1);color:var(--gold);border:1px solid rgba(212,168,85,0.3);border-radius:var(--radius-btn);font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;margin-left:16px">Send Re-engagement</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action items -->
+            <div>
+              <div style="font-size:16px;font-weight:500;color:var(--text-light-primary);margin-bottom:16px">Action Items</div>
+              <div style="background:var(--light-card);border:1px solid var(--light-border);border-radius:var(--radius-card);overflow:hidden">
+                <div style="padding:14px 20px;border-bottom:1px solid var(--light-border);display:flex;align-items:center;justify-content:space-between">
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <div style="width:8px;height:8px;border-radius:50%;background:var(--error)"></div>
+                    <div>
+                      <div style="font-size:14px;font-weight:500;color:var(--text-light-primary)">Sipho Ndlovu</div>
+                      <div style="font-size:12px;color:var(--text-light-secondary)">Payment failed — R450 monthly membership</div>
+                    </div>
+                  </div>
+                  <div class="pill" style="background:rgba(239,68,68,0.1);color:var(--error);font-size:12px">Failed</div>
+                </div>
+                <div style="padding:14px 20px;display:flex;align-items:center;justify-content:space-between">
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <div style="width:8px;height:8px;border-radius:50%;background:var(--warning)"></div>
+                    <div>
+                      <div style="font-size:14px;font-weight:500;color:var(--text-light-primary)">Ayanda Dlamini</div>
+                      <div style="font-size:12px;color:var(--text-light-secondary)">Payment retrying — R350 class pack</div>
+                    </div>
+                  </div>
+                  <div class="pill" style="background:rgba(245,158,11,0.1);color:var(--warning);font-size:12px">Retrying</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 7: GYM WEB — MEMBERS TABLE                           -->
+  <!-- ============================================================ -->
+  <div class="section-block" id="gym-members">
+    <div class="section-header">
+      <div class="section-number gold">Section 07</div>
+      <h2>Gym Web — <strong>Members Table</strong></h2>
+      <p>Light theme + gold accents. Searchable, filterable member list with status badges and key data columns.</p>
+    </div>
+
+    <div class="desktop-frame">
+      <div class="desktop-top-bar">
+        <div class="dot red"></div>
+        <div class="dot yellow"></div>
+        <div class="dot green"></div>
+        <div class="url-bar">studio.studioloop.co.za/members</div>
+      </div>
+      <div style="display:flex;min-height:620px">
+        <!-- Sidebar (same as dashboard) -->
+        <div style="width:260px;background:var(--light-card);border-right:1px solid var(--light-border);padding:24px 0;display:flex;flex-direction:column;flex-shrink:0">
+          <div style="padding:0 24px 24px;border-bottom:1px solid var(--light-border);margin-bottom:8px">
+            <div style="font-size:18px;letter-spacing:3px">
+              <span style="font-weight:200;color:var(--text-light-primary)">STUDIO</span><span style="font-weight:700;color:var(--gold)">LOOP</span>
+            </div>
+          </div>
+          <div style="flex:1;padding:8px 12px">
+            <div style="padding:10px 16px;border-radius:var(--radius-btn);color:var(--text-light-secondary);font-size:14px;margin-bottom:4px;display:flex;align-items:center;gap:10px;cursor:pointer">
+              <span>&#x25A0;</span> Dashboard
+            </div>
+            <div style="padding:10px 16px;border-radius:var(--radius-btn);background:rgba(212,168,85,0.1);color:var(--gold);font-size:14px;font-weight:500;margin-bottom:4px;display:flex;align-items:center;gap:10px">
+              <span>&#x1F465;</span> Members
+            </div>
+            <div style="padding:10px 16px;border-radius:var(--radius-btn);color:var(--text-light-secondary);font-size:14px;margin-bottom:4px;display:flex;align-items:center;gap:10px;cursor:pointer">
+              <span>&#x1F4C5;</span> Schedule
+            </div>
+            <div style="padding:10px 16px;border-radius:var(--radius-btn);color:var(--text-light-secondary);font-size:14px;margin-bottom:4px;display:flex;align-items:center;gap:10px;cursor:pointer">
+              <span>&#x2713;</span> Check-in
+            </div>
+            <div style="padding:10px 16px;border-radius:var(--radius-btn);color:var(--text-light-secondary);font-size:14px;margin-bottom:4px;display:flex;align-items:center;gap:10px;cursor:pointer">
+              <span>&#x1F4CA;</span> Reports
+            </div>
+            <div style="padding:10px 16px;border-radius:var(--radius-btn);color:var(--text-light-secondary);font-size:14px;margin-bottom:4px;display:flex;align-items:center;gap:10px;cursor:pointer">
+              <span>&#x1F46A;</span> Staff
+            </div>
+            <div style="padding:10px 16px;border-radius:var(--radius-btn);color:var(--text-light-secondary);font-size:14px;margin-bottom:4px;display:flex;align-items:center;gap:10px;cursor:pointer">
+              <span>&#x2699;</span> Settings
+            </div>
+            <div style="padding:10px 16px;border-radius:var(--radius-btn);color:var(--text-light-secondary);font-size:14px;margin-bottom:4px;display:flex;align-items:center;gap:10px;cursor:pointer">
+              <span>&#x1F4AC;</span> Messaging
+            </div>
+            <div style="padding:10px 16px;border-radius:var(--radius-btn);color:var(--text-light-secondary);font-size:14px;margin-bottom:4px;display:flex;align-items:center;gap:10px;cursor:pointer">
+              <span>&#x1F4B3;</span> Payments
+            </div>
+          </div>
+          <div style="padding:12px 24px;border-top:1px solid var(--light-border)">
+            <div style="font-size:13px;color:var(--text-light-secondary);cursor:pointer">&#x2192; Log out</div>
+          </div>
+        </div>
+
+        <!-- Main content -->
+        <div style="flex:1;background:var(--light-bg)">
+          <!-- Top header -->
+          <div style="padding:20px 32px;border-bottom:1px solid var(--light-border);display:flex;justify-content:space-between;align-items:center;background:var(--light-card)">
+            <div style="font-size:20px;font-weight:500;color:var(--text-light-primary)">CrossFit Observatory</div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="text-align:right">
+                <div style="font-size:14px;font-weight:500;color:var(--text-light-primary)">Thabo</div>
+                <div style="font-size:11px;color:var(--text-light-secondary)">Owner</div>
+              </div>
+              <div style="width:36px;height:36px;border-radius:50%;background:var(--light-elevated);border:1px solid var(--light-border);display:flex;align-items:center;justify-content:center;font-size:14px">T</div>
+            </div>
+          </div>
+
+          <div style="padding:28px 32px">
+            <!-- Search + actions -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+              <div style="font-size:22px;font-weight:400;color:var(--text-light-primary)">Members</div>
+              <button class="gold-btn" style="padding:10px 20px;font-size:14px">+ Add Member</button>
+            </div>
+
+            <div style="display:flex;gap:12px;margin-bottom:20px;align-items:center">
+              <!-- Search -->
+              <div style="flex:1;max-width:320px;background:var(--light-card);border:1px solid var(--light-border);border-radius:var(--radius-input);padding:10px 14px;display:flex;align-items:center;gap:8px">
+                <span style="color:var(--text-light-secondary);font-size:14px">&#x1F50D;</span>
+                <span style="color:var(--text-light-secondary);font-size:14px">Search members...</span>
+              </div>
+              <!-- Filters -->
+              <div class="pill" style="background:var(--gold);color:#1a1a1e;font-weight:600;cursor:pointer">All</div>
+              <div class="pill" style="background:var(--light-card);color:var(--text-light-secondary);border:1px solid var(--light-border);cursor:pointer">Active</div>
+              <div class="pill" style="background:var(--light-card);color:var(--text-light-secondary);border:1px solid var(--light-border);cursor:pointer">At Risk</div>
+              <div class="pill" style="background:var(--light-card);color:var(--text-light-secondary);border:1px solid var(--light-border);cursor:pointer">Inactive</div>
+            </div>
+
+            <!-- Table -->
+            <div style="background:var(--light-card);border:1px solid var(--light-border);border-radius:var(--radius-card);overflow:hidden">
+              <!-- Header -->
+              <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr;padding:12px 20px;border-bottom:1px solid var(--light-border);font-size:12px;font-weight:600;color:var(--text-light-secondary);text-transform:uppercase;letter-spacing:0.5px">
+                <div>Member</div>
+                <div>Plan</div>
+                <div>Status</div>
+                <div>Last Visit</div>
+                <div style="text-align:right">Revenue</div>
+              </div>
+              <!-- Rows -->
+              <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr;padding:14px 20px;border-bottom:1px solid var(--light-border);align-items:center;font-size:14px;cursor:pointer;transition:background 0.15s" onmouseover="this.style.background='var(--light-elevated)'" onmouseout="this.style.background='transparent'">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:32px;height:32px;border-radius:50%;background:var(--light-elevated);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:var(--text-light-secondary)">LM</div>
+                  <div>
+                    <div style="font-weight:500;color:var(--text-light-primary)">Lerato Molefe</div>
+                    <div style="font-size:12px;color:var(--text-light-secondary)">lerato@gmail.com</div>
+                  </div>
+                </div>
+                <div style="color:var(--text-light-secondary)">Monthly Unlimited</div>
+                <div><span class="pill" style="background:rgba(34,197,94,0.1);color:var(--success);font-size:12px;padding:4px 12px">Active</span></div>
+                <div style="color:var(--text-light-secondary)">Today</div>
+                <div style="text-align:right;font-weight:500;color:var(--text-light-primary)">R5,400</div>
+              </div>
+
+              <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr;padding:14px 20px;border-bottom:1px solid var(--light-border);align-items:center;font-size:14px;cursor:pointer;transition:background 0.15s" onmouseover="this.style.background='var(--light-elevated)'" onmouseout="this.style.background='transparent'">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:32px;height:32px;border-radius:50%;background:var(--light-elevated);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:var(--text-light-secondary)">SN</div>
+                  <div>
+                    <div style="font-weight:500;color:var(--text-light-primary)">Sipho Ndlovu</div>
+                    <div style="font-size:12px;color:var(--text-light-secondary)">sipho.n@outlook.com</div>
+                  </div>
+                </div>
+                <div style="color:var(--text-light-secondary)">Monthly Unlimited</div>
+                <div><span class="pill" style="background:rgba(245,158,11,0.1);color:var(--warning);font-size:12px;padding:4px 12px">At Risk</span></div>
+                <div style="color:var(--text-light-secondary)">12 days ago</div>
+                <div style="text-align:right;font-weight:500;color:var(--text-light-primary)">R4,050</div>
+              </div>
+
+              <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr;padding:14px 20px;border-bottom:1px solid var(--light-border);align-items:center;font-size:14px;cursor:pointer;transition:background 0.15s" onmouseover="this.style.background='var(--light-elevated)'" onmouseout="this.style.background='transparent'">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:32px;height:32px;border-radius:50%;background:var(--light-elevated);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:var(--text-light-secondary)">AD</div>
+                  <div>
+                    <div style="font-weight:500;color:var(--text-light-primary)">Ayanda Dlamini</div>
+                    <div style="font-size:12px;color:var(--text-light-secondary)">ayanda.d@icloud.com</div>
+                  </div>
+                </div>
+                <div style="color:var(--text-light-secondary)">10 Class Pack</div>
+                <div><span class="pill" style="background:rgba(34,197,94,0.1);color:var(--success);font-size:12px;padding:4px 12px">Active</span></div>
+                <div style="color:var(--text-light-secondary)">2 days ago</div>
+                <div style="text-align:right;font-weight:500;color:var(--text-light-primary)">R2,800</div>
+              </div>
+
+              <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr;padding:14px 20px;border-bottom:1px solid var(--light-border);align-items:center;font-size:14px;cursor:pointer;transition:background 0.15s" onmouseover="this.style.background='var(--light-elevated)'" onmouseout="this.style.background='transparent'">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:32px;height:32px;border-radius:50%;background:var(--light-elevated);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:var(--text-light-secondary)">TM</div>
+                  <div>
+                    <div style="font-weight:500;color:var(--text-light-primary)">Thandiwe Mthembu</div>
+                    <div style="font-size:12px;color:var(--text-light-secondary)">thandi.m@gmail.com</div>
+                  </div>
+                </div>
+                <div style="color:var(--text-light-secondary)">Monthly Basic</div>
+                <div><span class="pill" style="background:rgba(239,68,68,0.1);color:var(--error);font-size:12px;padding:4px 12px">Inactive</span></div>
+                <div style="color:var(--text-light-secondary)">34 days ago</div>
+                <div style="text-align:right;font-weight:500;color:var(--text-light-primary)">R1,800</div>
+              </div>
+
+              <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr;padding:14px 20px;align-items:center;font-size:14px;cursor:pointer;transition:background 0.15s" onmouseover="this.style.background='var(--light-elevated)'" onmouseout="this.style.background='transparent'">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:32px;height:32px;border-radius:50%;background:var(--light-elevated);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:var(--text-light-secondary)">KB</div>
+                  <div>
+                    <div style="font-weight:500;color:var(--text-light-primary)">Kagiso Botha</div>
+                    <div style="font-size:12px;color:var(--text-light-secondary)">kagiso.b@yahoo.com</div>
+                  </div>
+                </div>
+                <div style="color:var(--text-light-secondary)">Monthly Unlimited</div>
+                <div><span class="pill" style="background:rgba(34,197,94,0.1);color:var(--success);font-size:12px;padding:4px 12px">Active</span></div>
+                <div style="color:var(--text-light-secondary)">Yesterday</div>
+                <div style="text-align:right;font-weight:500;color:var(--text-light-primary)">R3,600</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 8: CONSUMER WEB DESKTOP — DISCOVER                   -->
+  <!-- ============================================================ -->
+  <div class="section-block" id="consumer-desktop">
+    <div class="section-header">
+      <div class="section-number">Section 08</div>
+      <h2>Consumer Web Desktop — <strong>Discover</strong></h2>
+      <p>Dark theme + coral accents. Full-width desktop experience with top nav, search, filters, and a 3-column class card grid with hover states.</p>
+    </div>
+
+    <div class="desktop-frame dark">
+      <div class="desktop-top-bar">
+        <div class="dot red"></div>
+        <div class="dot yellow"></div>
+        <div class="dot green"></div>
+        <div class="url-bar">app.studioloop.co.za/explore</div>
+      </div>
+
+      <!-- Top nav -->
+      <div style="padding:0 40px;border-bottom:1px solid var(--dark-border);display:flex;justify-content:space-between;align-items:center;height:64px;background:rgba(10,10,10,0.95)">
+        <div style="display:flex;align-items:center;gap:40px">
+          <div style="font-size:18px;letter-spacing:3px">
+            <span style="font-weight:200;color:#fff">STUDIO</span><span style="font-weight:700;color:var(--coral)">LOOP</span>
+          </div>
+          <div style="display:flex;gap:4px">
+            <a style="padding:8px 16px;border-radius:var(--radius-pill);background:rgba(255,107,74,0.1);color:var(--coral);font-size:14px;font-weight:500;text-decoration:none;cursor:pointer">Explore</a>
+            <a style="padding:8px 16px;border-radius:var(--radius-pill);color:var(--text-dark-secondary);font-size:14px;text-decoration:none;cursor:pointer">Bookings</a>
+            <a style="padding:8px 16px;border-radius:var(--radius-pill);color:var(--text-dark-secondary);font-size:14px;text-decoration:none;cursor:pointer">Memberships</a>
+            <a style="padding:8px 16px;border-radius:var(--radius-pill);color:var(--text-dark-secondary);font-size:14px;text-decoration:none;cursor:pointer">Profile</a>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--dark-elevated);border:1px solid var(--dark-border);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500">L</div>
+        </div>
+      </div>
+
+      <div style="padding:40px;min-height:600px">
+        <!-- Search -->
+        <div style="max-width:640px;margin:0 auto 32px">
+          <div style="background:var(--dark-card);border:1px solid var(--dark-border);border-radius:var(--radius-input);padding:16px 20px;display:flex;align-items:center;gap:12px;font-size:15px">
+            <span style="color:var(--text-dark-secondary);font-size:18px">&#x1F50D;</span>
+            <span style="color:var(--text-dark-secondary)">Search classes, studios, or activities...</span>
+          </div>
+        </div>
+
+        <!-- Filter pills -->
+        <div style="display:flex;justify-content:center;gap:8px;margin-bottom:40px;flex-wrap:wrap">
+          <div class="pill" style="background:var(--coral);color:#fff;font-weight:600;cursor:pointer">All</div>
+          <div class="pill" style="background:var(--dark-card);color:var(--text-dark-secondary);border:1px solid var(--dark-border);cursor:pointer">Yoga</div>
+          <div class="pill" style="background:var(--dark-card);color:var(--text-dark-secondary);border:1px solid var(--dark-border);cursor:pointer">HIIT</div>
+          <div class="pill" style="background:var(--dark-card);color:var(--text-dark-secondary);border:1px solid var(--dark-border);cursor:pointer">Boxing</div>
+          <div class="pill" style="background:var(--dark-card);color:var(--text-dark-secondary);border:1px solid var(--dark-border);cursor:pointer">Pilates</div>
+          <div class="pill" style="background:var(--dark-card);color:var(--text-dark-secondary);border:1px solid var(--dark-border);cursor:pointer">Cycling</div>
+          <div class="pill" style="background:var(--dark-card);color:var(--text-dark-secondary);border:1px solid var(--dark-border);cursor:pointer">Strength</div>
+          <div class="pill" style="background:var(--dark-card);color:var(--text-dark-secondary);border:1px solid var(--dark-border);cursor:pointer">Dance</div>
+        </div>
+
+        <!-- 3-column grid -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
+          <!-- Card 1 -->
+          <div style="background:var(--dark-card);border:1px solid var(--dark-border);border-radius:var(--radius-card);overflow:hidden;cursor:pointer;transition:all 0.25s" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 40px rgba(0,0,0,0.4)';this.style.borderColor='var(--dark-elevated)'" onmouseout="this.style.transform='';this.style.boxShadow='';this.style.borderColor='var(--dark-border)'">
+            <div style="height:180px;background:linear-gradient(135deg, #1a3028, #0a1a14);position:relative">
+              <div style="position:absolute;top:12px;right:12px;background:rgba(239,68,68,0.2);color:var(--error);padding:4px 10px;border-radius:var(--radius-pill);font-size:11px;font-weight:600">2 spots left</div>
+              <div style="position:absolute;bottom:12px;left:12px;background:var(--coral);padding:5px 14px;border-radius:var(--radius-pill);font-size:13px;font-weight:600;color:#fff">R150</div>
+            </div>
+            <div style="padding:20px">
+              <div style="font-size:17px;font-weight:500;margin-bottom:4px">Morning Vinyasa</div>
+              <div style="font-size:13px;color:var(--text-dark-secondary);margin-bottom:8px">Loom Yoga Studio, Gardens</div>
+              <div style="font-size:13px;color:var(--text-dark-secondary)">Mon, 06:30 - 07:30</div>
+            </div>
+          </div>
+
+          <!-- Card 2 -->
+          <div style="background:var(--dark-card);border:1px solid var(--dark-border);border-radius:var(--radius-card);overflow:hidden;cursor:pointer;transition:all 0.25s" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 40px rgba(0,0,0,0.4)';this.style.borderColor='var(--dark-elevated)'" onmouseout="this.style.transform='';this.style.boxShadow='';this.style.borderColor='var(--dark-border)'">
+            <div style="height:180px;background:linear-gradient(135deg, #2a1a1a, #1a0a0a);position:relative">
+              <div style="position:absolute;top:12px;right:12px;background:rgba(245,158,11,0.15);color:var(--warning);padding:4px 10px;border-radius:var(--radius-pill);font-size:11px;font-weight:600">5 spots left</div>
+              <div style="position:absolute;bottom:12px;left:12px;background:rgba(255,255,255,0.12);padding:5px 14px;border-radius:var(--radius-pill);font-size:13px;font-weight:500;color:#fff">1 Credit</div>
+            </div>
+            <div style="padding:20px">
+              <div style="font-size:17px;font-weight:500;margin-bottom:4px">Boxing Fundamentals</div>
+              <div style="font-size:13px;color:var(--text-dark-secondary);margin-bottom:8px">Round One Boxing, Woodstock</div>
+              <div style="font-size:13px;color:var(--text-dark-secondary)">Tue, 17:30 - 18:30</div>
+            </div>
+          </div>
+
+          <!-- Card 3 -->
+          <div style="background:var(--dark-card);border:1px solid var(--dark-border);border-radius:var(--radius-card);overflow:hidden;cursor:pointer;transition:all 0.25s" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 40px rgba(0,0,0,0.4)';this.style.borderColor='var(--dark-elevated)'" onmouseout="this.style.transform='';this.style.boxShadow='';this.style.borderColor='var(--dark-border)'">
+            <div style="height:180px;background:linear-gradient(135deg, #1a1a2a, #0a0a1a);position:relative">
+              <div style="position:absolute;top:12px;right:12px;background:rgba(34,197,94,0.15);color:var(--success);padding:4px 10px;border-radius:var(--radius-pill);font-size:11px;font-weight:600">12 spots left</div>
+              <div style="position:absolute;bottom:12px;left:12px;background:var(--coral);padding:5px 14px;border-radius:var(--radius-pill);font-size:13px;font-weight:600;color:#fff">R120</div>
+            </div>
+            <div style="padding:20px">
+              <div style="font-size:17px;font-weight:500;margin-bottom:4px">Reformer Pilates</div>
+              <div style="font-size:13px;color:var(--text-dark-secondary);margin-bottom:8px">Core Studio, Sea Point</div>
+              <div style="font-size:13px;color:var(--text-dark-secondary)">Wed, 08:00 - 09:00</div>
+            </div>
+          </div>
+
+          <!-- Card 4 -->
+          <div style="background:var(--dark-card);border:1px solid var(--dark-border);border-radius:var(--radius-card);overflow:hidden;cursor:pointer;transition:all 0.25s" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 40px rgba(0,0,0,0.4)';this.style.borderColor='var(--dark-elevated)'" onmouseout="this.style.transform='';this.style.boxShadow='';this.style.borderColor='var(--dark-border)'">
+            <div style="height:180px;background:linear-gradient(135deg, #2a2218, #1a1408);position:relative">
+              <div style="position:absolute;top:12px;right:12px;background:rgba(245,158,11,0.15);color:var(--warning);padding:4px 10px;border-radius:var(--radius-pill);font-size:11px;font-weight:600">4 spots left</div>
+              <div style="position:absolute;bottom:12px;left:12px;background:rgba(255,255,255,0.12);padding:5px 14px;border-radius:var(--radius-pill);font-size:13px;font-weight:500;color:#fff">2 Credits</div>
+            </div>
+            <div style="padding:20px">
+              <div style="font-size:17px;font-weight:500;margin-bottom:4px">Spin & Sculpt</div>
+              <div style="font-size:13px;color:var(--text-dark-secondary);margin-bottom:8px">Ride Republic, V&A Waterfront</div>
+              <div style="font-size:13px;color:var(--text-dark-secondary)">Thu, 06:00 - 06:45</div>
+            </div>
+          </div>
+
+          <!-- Card 5 -->
+          <div style="background:var(--dark-card);border:1px solid var(--dark-border);border-radius:var(--radius-card);overflow:hidden;cursor:pointer;transition:all 0.25s" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 40px rgba(0,0,0,0.4)';this.style.borderColor='var(--dark-elevated)'" onmouseout="this.style.transform='';this.style.boxShadow='';this.style.borderColor='var(--dark-border)'">
+            <div style="height:180px;background:linear-gradient(135deg, #1a2a20, #081a10);position:relative">
+              <div style="position:absolute;top:12px;right:12px;background:rgba(34,197,94,0.15);color:var(--success);padding:4px 10px;border-radius:var(--radius-pill);font-size:11px;font-weight:600">8 spots left</div>
+              <div style="position:absolute;bottom:12px;left:12px;background:var(--coral);padding:5px 14px;border-radius:var(--radius-pill);font-size:13px;font-weight:600;color:#fff">R180</div>
+            </div>
+            <div style="padding:20px">
+              <div style="font-size:17px;font-weight:500;margin-bottom:4px">Functional HIIT</div>
+              <div style="font-size:13px;color:var(--text-dark-secondary);margin-bottom:8px">CrossFit Observatory</div>
+              <div style="font-size:13px;color:var(--text-dark-secondary)">Fri, 17:00 - 18:00</div>
+            </div>
+          </div>
+
+          <!-- Card 6 -->
+          <div style="background:var(--dark-card);border:1px solid var(--dark-border);border-radius:var(--radius-card);overflow:hidden;cursor:pointer;transition:all 0.25s" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 40px rgba(0,0,0,0.4)';this.style.borderColor='var(--dark-elevated)'" onmouseout="this.style.transform='';this.style.boxShadow='';this.style.borderColor='var(--dark-border)'">
+            <div style="height:180px;background:linear-gradient(135deg, #2a1a28, #1a0a18);position:relative">
+              <div style="position:absolute;top:12px;right:12px;background:rgba(239,68,68,0.2);color:var(--error);padding:4px 10px;border-radius:var(--radius-pill);font-size:11px;font-weight:600">1 spot left</div>
+              <div style="position:absolute;bottom:12px;left:12px;background:var(--coral);padding:5px 14px;border-radius:var(--radius-pill);font-size:13px;font-weight:600;color:#fff">R95</div>
+            </div>
+            <div style="padding:20px">
+              <div style="font-size:17px;font-weight:500;margin-bottom:4px">Contemporary Dance</div>
+              <div style="font-size:13px;color:var(--text-dark-secondary);margin-bottom:8px">Movement Lab, De Waterkant</div>
+              <div style="font-size:13px;color:var(--text-dark-secondary)">Sat, 10:00 - 11:15</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div style="text-align:center;padding:60px 0 20px;border-top:1px solid var(--dark-border)">
+    <div style="font-size:14px;letter-spacing:3px;margin-bottom:8px">
+      <span style="font-weight:200">STUDIO</span><span style="font-weight:700;color:var(--gold)">LOOP</span>
+    </div>
+    <div style="font-size:13px;color:var(--text-dark-secondary)">Design Direction Showcase &middot; Refined Premium Luxe &middot; February 2026</div>
+  </div>
+
+</div>
+</body>
+</html>

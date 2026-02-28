@@ -55,7 +55,7 @@ export function Home() {
         <h1 className="text-2xl font-bold text-gray-900">My Activity</h1>
         <Link
           to="/discover"
-          className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+          className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg text-white bg-coral-600 hover:bg-coral-700 transition-colors"
         >
           Find a class
         </Link>
@@ -97,7 +97,7 @@ export function Home() {
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
             Recent Class History
           </h2>
-          <Link to="/bookings" className="text-xs font-medium text-indigo-600 hover:text-indigo-500">
+          <Link to="/bookings" className="text-xs font-medium text-coral-600 hover:text-coral-500">
             View all bookings
           </Link>
         </div>
@@ -131,7 +131,7 @@ export function Home() {
         </p>
         <Link
           to="/qr-code"
-          className="inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors"
+          className="inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg bg-coral-50 text-coral-700 hover:bg-coral-100 transition-colors"
         >
           Open QR Code
         </Link>

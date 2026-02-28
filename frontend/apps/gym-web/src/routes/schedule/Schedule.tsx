@@ -25,12 +25,6 @@ type CalendarDayGroup = {
   sessions: CalendarSession[];
 };
 
-type ClassTemplate = {
-  id: string;
-  name: string;
-  class_type: string;
-  color: string;
-};
 
 const CLASS_TYPE_COLORS: Record<string, string> = {
   yoga: '#10B981',
@@ -109,16 +103,6 @@ export function Schedule() {
     },
   });
 
-  const templatesQuery = useQuery({
-    queryKey: ['class-templates'],
-    queryFn: async () => {
-      const resp = await fetch(`${API_BASE}/api/v1/gyms/me/class_templates`, {
-        headers: getAuthHeaders(),
-      });
-      if (!resp.ok) throw new Error('Failed to fetch templates');
-      return (await resp.json()) as ClassTemplate[];
-    },
-  });
 
   const sessionsByDate = useMemo(() => {
     const map: Record<string, CalendarSession[]> = {};
@@ -127,14 +111,6 @@ export function Schedule() {
     }
     return map;
   }, [calendarQuery.data]);
-
-  const templateColorMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    for (const t of templatesQuery.data ?? []) {
-      map[t.id] = t.color;
-    }
-    return map;
-  }, [templatesQuery.data]);
 
   function getSessionColor(s: CalendarSession): string {
     if (s.color) return s.color;
@@ -236,7 +212,7 @@ export function Schedule() {
             return (
               <div
                 key={dateStr}
-                className={`min-h-[200px] bg-white p-2 ${today ? 'ring-2 ring-inset ring-blue-500' : ''}`}
+                className={`min-h-[200px] bg-white p-2 ${today ? 'ring-2 ring-inset ring-gold-500' : ''}`}
               >
                 {/* Day header */}
                 <div className="mb-2 text-center">
@@ -245,7 +221,7 @@ export function Schedule() {
                   </div>
                   <div
                     className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-sm font-semibold ${
-                      today ? 'bg-blue-600 text-white' : 'text-gray-900'
+                      today ? 'bg-gold-600 text-white' : 'text-gray-900'
                     }`}
                   >
                     {day.getDate()}

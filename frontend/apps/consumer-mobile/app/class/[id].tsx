@@ -124,18 +124,18 @@ export default function ClassDetailScreen() {
 
   if (classQuery.isLoading) {
     return (
-      <View className="flex-1 bg-gray-50 items-center justify-center">
-        <ActivityIndicator size="large" color="#6366f1" />
+      <View className="flex-1 bg-[#0a0a0a] items-center justify-center">
+        <ActivityIndicator size="large" color="#FF6B4A" />
       </View>
     );
   }
 
   if (classQuery.isError || !classQuery.data) {
     return (
-      <View className="flex-1 bg-gray-50 items-center justify-center px-6">
+      <View className="flex-1 bg-[#0a0a0a] items-center justify-center px-6">
         <Ionicons name="alert-circle-outline" size={48} color="#d1d5db" />
         <Text className="text-gray-500 text-lg mt-4 mb-2">Class not found</Text>
-        <Pressable className="bg-indigo-600 rounded-lg py-3 px-6" onPress={() => router.back()}>
+        <Pressable className="bg-coral-600 rounded-lg py-3 px-6" onPress={() => router.back()}>
           <Text className="text-white font-semibold">Go Back</Text>
         </Pressable>
       </View>
@@ -145,23 +145,23 @@ export default function ClassDetailScreen() {
   const classData = classQuery.data;
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-[#0a0a0a]">
       <ScrollView contentContainerClassName="pb-24">
-        <View className="bg-white px-4 py-6 border-b border-gray-200">
+        <View className="bg-[#1a1a1a] px-4 py-6 border-b border-[#2a2a2a]">
           <View className="flex-row justify-between items-start">
             <View className="flex-1 mr-3">
-              <View className="bg-indigo-50 px-3 py-1 rounded-full self-start mb-2">
-                <Text className="text-indigo-700 text-sm font-medium">{classData.class_type}</Text>
+              <View className="bg-coral-50 px-3 py-1 rounded-full self-start mb-2">
+                <Text className="text-coral-700 text-sm font-medium">{classData.class_type}</Text>
               </View>
-              <Text className="text-2xl font-bold text-gray-900">{classData.title}</Text>
+              <Text className="text-2xl font-bold text-gray-50">{classData.title}</Text>
             </View>
-            <Text className="text-2xl font-bold text-indigo-600">
+            <Text className="text-2xl font-bold text-coral-600">
               {formatCurrency(classData.price_cents)}
             </Text>
           </View>
         </View>
 
-        <View className="bg-white mt-2 px-4 py-4 border-t border-b border-gray-200">
+        <View className="bg-[#1a1a1a] mt-2 px-4 py-4 border-t border-b border-[#2a2a2a]">
           <DetailRow icon="business-outline" label="Gym" value={classData.gym_name} />
           <DetailRow
             icon="location-outline"
@@ -188,7 +188,7 @@ export default function ClassDetailScreen() {
         </View>
 
         {!!classData.description && (
-          <View className="bg-white mt-2 px-4 py-4 border-t border-b border-gray-200">
+          <View className="bg-[#1a1a1a] mt-2 px-4 py-4 border-t border-b border-[#2a2a2a]">
             <Text className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
               About this class
             </Text>
@@ -197,7 +197,7 @@ export default function ClassDetailScreen() {
         )}
 
         {!!classData.cancellation_policy && (
-          <View className="bg-white mt-2 px-4 py-4 border-t border-b border-gray-200">
+          <View className="bg-[#1a1a1a] mt-2 px-4 py-4 border-t border-b border-[#2a2a2a]">
             <Text className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
               Cancellation Policy
             </Text>
@@ -205,7 +205,7 @@ export default function ClassDetailScreen() {
           </View>
         )}
 
-        <View className="bg-white mt-2 px-4 py-4 border-t border-b border-gray-200">
+        <View className="bg-[#1a1a1a] mt-2 px-4 py-4 border-t border-b border-[#2a2a2a]">
           <Text className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
             Booking Method
           </Text>
@@ -239,14 +239,14 @@ export default function ClassDetailScreen() {
         </View>
       </ScrollView>
 
-      <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-4">
+      <View className="absolute bottom-0 left-0 right-0 bg-[#1a1a1a] border-t border-[#2a2a2a] px-4 py-4">
         <Pressable
           className={`w-full py-4 rounded-lg ${
             bookMutation.isPending
-              ? 'bg-indigo-400'
+              ? 'bg-coral-400'
               : classData.spots_remaining === 0
                 ? 'bg-orange-500'
-                : 'bg-indigo-600'
+                : 'bg-coral-600'
           }`}
           onPress={() => bookMutation.mutate()}
           disabled={bookMutation.isPending}
@@ -277,7 +277,7 @@ function DetailRow({
     <View className="flex-row items-center py-2">
       <Ionicons name={icon} size={18} color="#6b7280" />
       <Text className="text-sm text-gray-500 ml-2 w-20">{label}</Text>
-      <Text className="text-sm text-gray-900 flex-1">{value}</Text>
+      <Text className="text-sm text-gray-50 flex-1">{value}</Text>
     </View>
   );
 }

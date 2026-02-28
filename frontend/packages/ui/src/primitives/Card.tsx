@@ -2,47 +2,34 @@ import React from 'react';
 import { View, Text, type ViewProps } from 'react-native';
 
 export interface CardProps extends ViewProps {
-  /** Card content */
   children: React.ReactNode;
-  /** Visual variant */
   variant?: 'default' | 'elevated' | 'outlined';
-  /** Additional className for styling */
   className?: string;
 }
 
 export interface CardHeaderProps extends ViewProps {
-  /** Header content */
   children: React.ReactNode;
-  /** Additional className for styling */
   className?: string;
 }
 
 export interface CardContentProps extends ViewProps {
-  /** Content */
   children: React.ReactNode;
-  /** Additional className for styling */
   className?: string;
 }
 
 export interface CardFooterProps extends ViewProps {
-  /** Footer content */
   children: React.ReactNode;
-  /** Additional className for styling */
   className?: string;
 }
 
-const baseCardClasses = 'bg-white rounded-lg overflow-hidden';
+const baseCardClasses = 'bg-surface-1 rounded-lg overflow-hidden';
 
 const variantClasses = {
-  default: 'border border-gray-200',
+  default: 'border border-border-default',
   elevated: 'shadow-md',
-  outlined: 'border-2 border-gray-300',
+  outlined: 'border-2 border-border-default',
 } as const;
 
-/**
- * Card component with cross-platform support
- * Container for content with variants
- */
 export function Card({
   children,
   variant = 'default',
@@ -60,22 +47,19 @@ export function Card({
   );
 }
 
-/**
- * Card header section
- */
 export function CardHeader({
   children,
   className = '',
   ...props
 }: CardHeaderProps) {
-  const headerClassName = ['px-4 py-3 border-b border-gray-200', className]
+  const headerClassName = ['px-4 py-3 border-b border-border-default', className]
     .filter(Boolean)
     .join(' ');
 
   return (
     <View className={headerClassName} {...props}>
       {typeof children === 'string' ? (
-        <Text className="text-lg font-semibold text-gray-900">{children}</Text>
+        <Text className="text-lg font-semibold text-text-primary">{children}</Text>
       ) : (
         children
       )}
@@ -83,9 +67,6 @@ export function CardHeader({
   );
 }
 
-/**
- * Card content section
- */
 export function CardContent({
   children,
   className = '',
@@ -100,16 +81,13 @@ export function CardContent({
   );
 }
 
-/**
- * Card footer section
- */
 export function CardFooter({
   children,
   className = '',
   ...props
 }: CardFooterProps) {
   const footerClassName = [
-    'px-4 py-3 border-t border-gray-200 bg-gray-50',
+    'px-4 py-3 border-t border-border-default bg-surface-2',
     className,
   ]
     .filter(Boolean)

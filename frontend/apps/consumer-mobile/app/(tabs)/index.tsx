@@ -5,6 +5,7 @@
 import { View, Text, FlatList, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
+import { MetricCard } from '@sl/ui';
 import { analyticsConsumerClassHistory, analyticsConsumerStats } from '@sl/api-client';
 import type { ConsumerClassHistoryItem } from '@sl/api-client';
 import { getConsumerProfile } from '../../lib/auth';
@@ -31,10 +32,10 @@ export default function HomeTab() {
 
   const renderHistory = ({ item }: { item: ConsumerClassHistoryItem }) => (
     <Pressable
-      className="bg-white rounded-lg p-4 mb-3 border border-gray-200"
+      className="bg-[#1a1a1a] rounded-lg p-4 mb-3 border border-[#2a2a2a]"
       onPress={() => router.push(`/class/${item.session_id}`)}
     >
-      <Text className="text-lg font-semibold text-gray-900">{item.class_name}</Text>
+      <Text className="text-lg font-semibold text-gray-50">{item.class_name}</Text>
       <Text className="text-sm text-gray-600 mt-1">Gym: {item.gym_id}</Text>
       <Text className="text-sm text-gray-500 mt-2">
         {new Date(item.attended_at).toLocaleDateString('en-ZA', {
@@ -47,7 +48,7 @@ export default function HomeTab() {
   );
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-[#0a0a0a]">
       <FlatList
         data={historyQuery.data ?? []}
         renderItem={renderHistory}
@@ -64,35 +65,35 @@ export default function HomeTab() {
         }
         ListHeaderComponent={
           <View className="mb-6">
-            <Text className="text-2xl font-bold text-gray-900">
+            <Text className="text-2xl font-bold text-gray-50">
               Welcome{profile?.name ? `, ${profile.name.split(' ')[0]}` : ''}
             </Text>
             <Text className="text-gray-600 mt-1">Your activity overview</Text>
 
             <View className="flex-row mt-4">
-              <View className="flex-1 bg-white border border-gray-200 rounded-lg p-3 mr-2">
-                <Text className="text-gray-500 text-xs">Classes this month</Text>
-                <Text className="text-gray-900 text-xl font-bold mt-1">
-                  {statsQuery.data?.total_classes_this_month ?? 0}
-                </Text>
+              <View className="flex-1 mr-2">
+                <MetricCard
+                  label="Classes this month"
+                  value={statsQuery.data?.total_classes_this_month ?? 0}
+                />
               </View>
-              <View className="flex-1 bg-white border border-gray-200 rounded-lg p-3 ml-2">
-                <Text className="text-gray-500 text-xs">Current streak</Text>
-                <Text className="text-gray-900 text-xl font-bold mt-1">
-                  {statsQuery.data?.current_streak_weeks ?? 0}w
-                </Text>
+              <View className="flex-1 ml-2">
+                <MetricCard
+                  label="Current streak"
+                  value={`${statsQuery.data?.current_streak_weeks ?? 0}w`}
+                />
               </View>
             </View>
 
             <View className="flex-row mt-3">
               <Pressable
-                className="flex-1 bg-indigo-600 rounded-lg py-3 px-4 mr-2"
+                className="flex-1 bg-coral-600 rounded-lg py-3 px-4 mr-2"
                 onPress={() => router.push('/(tabs)/qr-code')}
               >
                 <Text className="text-white text-center font-semibold">Show QR Code</Text>
               </Pressable>
               <Pressable
-                className="flex-1 bg-white border border-gray-300 rounded-lg py-3 px-4 ml-2"
+                className="flex-1 bg-[#1a1a1a] border border-gray-300 rounded-lg py-3 px-4 ml-2"
                 onPress={() => router.push('/(tabs)/discover')}
               >
                 <Text className="text-gray-700 text-center font-semibold">Browse Classes</Text>
@@ -102,7 +103,7 @@ export default function HomeTab() {
         }
         ListEmptyComponent={
           historyQuery.isLoading ? (
-            <ActivityIndicator size="large" color="#6366f1" className="mt-8" />
+            <ActivityIndicator size="large" color="#FF6B4A" className="mt-8" />
           ) : (
             <View className="items-center py-12">
               <Text className="text-gray-500 text-lg mb-2">No recent class activity</Text>
@@ -110,7 +111,7 @@ export default function HomeTab() {
                 Browse the marketplace to find classes near you
               </Text>
               <Pressable
-                className="bg-indigo-600 rounded-lg py-3 px-6"
+                className="bg-coral-600 rounded-lg py-3 px-6"
                 onPress={() => router.push('/(tabs)/discover')}
               >
                 <Text className="text-white font-semibold">Discover Classes</Text>

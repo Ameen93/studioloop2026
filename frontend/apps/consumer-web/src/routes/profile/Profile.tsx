@@ -157,7 +157,7 @@ export function Profile() {
             onClick={() => setActiveSection(key)}
             className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-colors ${
               activeSection === key
-                ? 'bg-indigo-50 text-indigo-700'
+                ? 'bg-coral-50 text-coral-700'
                 : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
@@ -193,7 +193,7 @@ export function Profile() {
                   name="firstName"
                   type="text"
                   defaultValue={profileQuery.data?.first_name ?? ''}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-coral-500 focus:border-coral-500 sm:text-sm"
                 />
               </div>
               <div>
@@ -205,7 +205,7 @@ export function Profile() {
                   name="lastName"
                   type="text"
                   defaultValue={profileQuery.data?.last_name ?? ''}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-coral-500 focus:border-coral-500 sm:text-sm"
                 />
               </div>
             </div>
@@ -233,7 +233,7 @@ export function Profile() {
                   type="tel"
                   defaultValue={profileQuery.data?.phone ?? ''}
                   placeholder="+27821234567"
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-coral-500 focus:border-coral-500 sm:text-sm"
                 />
             </div>
 
@@ -241,7 +241,7 @@ export function Profile() {
               <button
                 type="submit"
                 disabled={updateProfileMutation.isPending}
-                className="px-6 py-2 text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                className="px-6 py-2 text-sm font-medium rounded-lg text-white bg-coral-600 hover:bg-coral-700 transition-colors disabled:opacity-50"
               >
                 {updateProfileMutation.isPending
                   ? 'Saving...'
@@ -409,7 +409,7 @@ function ToggleRow({
         type="button"
         onClick={() => onChange(!checked)}
         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-          checked ? 'bg-indigo-600' : 'bg-gray-300'
+          checked ? 'bg-coral-600' : 'bg-gray-300'
         }`}
       >
         <span

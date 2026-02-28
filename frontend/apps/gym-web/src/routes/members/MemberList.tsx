@@ -53,12 +53,12 @@ export function MemberList() {
           placeholder="Search by email, tier, or plan..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 max-w-md px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          className="flex-1 max-w-md px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-gold-500 focus:border-gold-500 sm:text-sm"
         />
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as 'all' | GymMembershipStatus)}
-          className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gold-500 focus:border-gold-500 sm:text-sm"
         >
           <option value="all">All Statuses</option>
           <option value="active">Active</option>
@@ -103,7 +103,7 @@ export function MemberList() {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <Link
                     to={`/members/${member.membership_id}`}
-                    className="text-sm font-medium text-blue-600 hover:text-blue-800"
+                    className="text-sm font-medium text-gold-600 hover:text-gold-800"
                   >
                     {member.consumer_email}
                   </Link>

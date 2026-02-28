@@ -65,7 +65,7 @@ export function AppLayout() {
   return (
     <div className="min-h-screen flex bg-gray-50">
       {/* Sidebar */}
-      <aside className="w-64 bg-gray-900 text-white flex flex-col">
+      <aside className="w-64 bg-gray-900 text-white flex flex-col" data-theme="dark">
         <div className="p-6 border-b border-gray-800">
           <h1 className="text-xl font-bold">StudioLoop</h1>
           <p className="text-sm text-gray-400 mt-1">Gym Management</p>
@@ -80,7 +80,7 @@ export function AppLayout() {
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-6 py-2.5 text-sm font-medium transition-colors ${
                       isActive
-                        ? 'bg-gray-800 text-white border-r-2 border-blue-500'
+                        ? 'bg-gray-800 text-white border-r-2 border-gold-500'
                         : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
                     }`
                   }
@@ -119,7 +119,7 @@ export function AppLayout() {
             <span className="text-sm text-gray-600">
               {staffInfo?.full_name || 'Staff Member'}
             </span>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 capitalize">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gold-100 text-gold-800 capitalize">
               {staffInfo?.role || 'staff'}
             </span>
           </div>

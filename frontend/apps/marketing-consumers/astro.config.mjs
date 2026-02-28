@@ -2,6 +2,6 @@ import { defineConfig } from 'astro/config';
 
 export default defineConfig({
   output: 'static',
-  site: 'https://app.studioloop.co.za',
+  site: process.env.SITE_URL || 'https://app.studioloop.co.za',
   publicDir: '../../public',
 });

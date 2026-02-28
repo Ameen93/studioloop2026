@@ -1,0 +1,11 @@
+__tests__/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+.vscode/
+.idea/
+*.md
+.env.local
+.env.*.local
+coverage/

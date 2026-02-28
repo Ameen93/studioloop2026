@@ -11,3 +11,6 @@ alembic upgrade head
 
 # Create initial data in DB
 python app/initial_data.py
+
+# Seed demo data (idempotent — safe to run on every deploy)
+python scripts/seed.py

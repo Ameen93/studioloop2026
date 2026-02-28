@@ -15,7 +15,8 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.studioloop.consumer"
+      "bundleIdentifier": "com.studioloop.consumer",
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
@@ -37,7 +38,7 @@
         "expo-notifications",
         {
           "icon": "./assets/icon.png",
-          "color": "#6366f1"
+          "color": "#FF6B4A"
         }
       ]
     ]

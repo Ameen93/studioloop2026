@@ -123,20 +123,20 @@ export default function RegisterScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-gray-50"
+      className="flex-1 bg-[#0a0a0a]"
     >
       <ScrollView
         contentContainerClassName="flex-grow justify-center px-6 py-12"
         keyboardShouldPersistTaps="handled"
       >
         <View className="w-full max-w-md mx-auto">
-          <Text className="text-3xl font-bold text-gray-900 text-center mb-2">
+          <Text className="text-3xl font-bold text-gray-50 text-center mb-2">
             Create your account
           </Text>
           <Text className="text-gray-600 text-center mb-8">
             Already have an account?{' '}
             <Text
-              className="text-primary-600 font-medium"
+              className="text-coral-600 font-medium"
               onPress={() => router.push('/(auth)/login')}
             >
               Sign in
@@ -155,7 +155,7 @@ export default function RegisterScreen() {
               <View className="flex-1">
                 <Text className="text-sm font-medium text-gray-700 mb-1">First name</Text>
                 <TextInput
-                  className={`w-full px-3 py-2 border rounded-md bg-white ${
+                  className={`w-full px-3 py-2 border rounded-md bg-[#1a1a1a] ${
                     errors.firstName ? 'border-red-300' : 'border-gray-300'
                   }`}
                   placeholder="John"
@@ -171,7 +171,7 @@ export default function RegisterScreen() {
               <View className="flex-1">
                 <Text className="text-sm font-medium text-gray-700 mb-1">Last name</Text>
                 <TextInput
-                  className={`w-full px-3 py-2 border rounded-md bg-white ${
+                  className={`w-full px-3 py-2 border rounded-md bg-[#1a1a1a] ${
                     errors.lastName ? 'border-red-300' : 'border-gray-300'
                   }`}
                   placeholder="Doe"
@@ -190,7 +190,7 @@ export default function RegisterScreen() {
             <View>
               <Text className="text-sm font-medium text-gray-700 mb-1">Email address</Text>
               <TextInput
-                className={`w-full px-3 py-2 border rounded-md bg-white ${
+                className={`w-full px-3 py-2 border rounded-md bg-[#1a1a1a] ${
                   errors.email ? 'border-red-300' : 'border-gray-300'
                 }`}
                 placeholder="john@example.com"
@@ -207,7 +207,7 @@ export default function RegisterScreen() {
             <View>
               <Text className="text-sm font-medium text-gray-700 mb-1">Password</Text>
               <TextInput
-                className={`w-full px-3 py-2 border rounded-md bg-white ${
+                className={`w-full px-3 py-2 border rounded-md bg-[#1a1a1a] ${
                   errors.password ? 'border-red-300' : 'border-gray-300'
                 }`}
                 placeholder="Min. 8 characters"
@@ -225,7 +225,7 @@ export default function RegisterScreen() {
             <View>
               <Text className="text-sm font-medium text-gray-700 mb-1">Confirm password</Text>
               <TextInput
-                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-[#1a1a1a]"
                 placeholder="Confirm your password"
                 value={formData.confirmPassword}
                 onChangeText={(text) => setFormData((prev) => ({ ...prev, confirmPassword: text }))}
@@ -237,7 +237,7 @@ export default function RegisterScreen() {
             {/* Submit button */}
             <Pressable
               className={`w-full py-3 rounded-md mt-6 ${
-                registerMutation.isPending ? 'bg-primary-400' : 'bg-primary-600'
+                registerMutation.isPending ? 'bg-coral-400' : 'bg-coral-600'
               }`}
               onPress={handleSubmit}
               disabled={registerMutation.isPending}

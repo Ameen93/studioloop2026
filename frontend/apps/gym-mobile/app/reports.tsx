@@ -78,15 +78,15 @@ export default function ReportsScreen() {
 
   return (
     <ScrollView
-      className="flex-1 bg-gray-50"
+      className="flex-1 bg-[#0a0a0a]"
       contentContainerClassName="pb-8"
       refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} />}
     >
-      <View className="flex-row bg-white border-b border-gray-200 px-4 py-2">
+      <View className="flex-row bg-[#1a1a1a] border-b border-[#2a2a2a] px-4 py-2">
         {(['revenue', 'attendance', 'memberships'] as const).map((tab) => (
           <Pressable
             key={tab}
-            className={`flex-1 py-2 rounded-lg mx-0.5 ${activeTab === tab ? 'bg-emerald-600' : 'bg-gray-100'}`}
+            className={`flex-1 py-2 rounded-lg mx-0.5 ${activeTab === tab ? 'bg-gold-600' : 'bg-gray-100'}`}
             onPress={() => setActiveTab(tab)}
           >
             <Text
@@ -99,7 +99,7 @@ export default function ReportsScreen() {
       </View>
 
       {isLoading ? (
-        <ActivityIndicator size="large" color="#059669" className="mt-12" />
+        <ActivityIndicator size="large" color="#d4a855" className="mt-12" />
       ) : (
         <View className="px-4 pt-4">
           {activeTab === 'revenue' && revenueQuery.data && (
@@ -109,7 +109,7 @@ export default function ReportsScreen() {
                   label="Total Revenue"
                   value={formatCurrency(revenueQuery.data.total_revenue_cents)}
                   icon="cash"
-                  color="#059669"
+                  color="#d4a855"
                 />
                 <StatCard
                   label="Growth"
@@ -119,15 +119,15 @@ export default function ReportsScreen() {
                 />
               </View>
 
-              <View className="bg-white rounded-lg p-4 mb-2 border border-gray-200">
+              <View className="bg-[#1a1a1a] rounded-lg p-4 mb-2 border border-[#2a2a2a]">
                 <Text className="text-sm text-gray-500">Memberships</Text>
-                <Text className="text-lg font-semibold text-gray-900">
+                <Text className="text-lg font-semibold text-gray-50">
                   {formatCurrency(revenueQuery.data.source_breakdown.memberships_cents)}
                 </Text>
               </View>
-              <View className="bg-white rounded-lg p-4 mb-2 border border-gray-200">
+              <View className="bg-[#1a1a1a] rounded-lg p-4 mb-2 border border-[#2a2a2a]">
                 <Text className="text-sm text-gray-500">Classes</Text>
-                <Text className="text-lg font-semibold text-gray-900">
+                <Text className="text-lg font-semibold text-gray-50">
                   {formatCurrency(revenueQuery.data.source_breakdown.classes_cents)}
                 </Text>
               </View>
@@ -141,7 +141,7 @@ export default function ReportsScreen() {
                   label="Total Check-ins"
                   value={String(attendanceQuery.data.total_check_ins)}
                   icon="people"
-                  color="#059669"
+                  color="#d4a855"
                 />
                 <StatCard
                   label="Avg Daily"
@@ -150,11 +150,11 @@ export default function ReportsScreen() {
                   color="#f59e0b"
                 />
               </View>
-              <View className="bg-white rounded-lg p-4 mb-3 border border-gray-200">
+              <View className="bg-[#1a1a1a] rounded-lg p-4 mb-3 border border-[#2a2a2a]">
                 <View className="flex-row items-center">
                   <Ionicons name="time" size={20} color="#6366f1" />
                   <Text className="text-gray-500 ml-2">Peak Hour</Text>
-                  <Text className="text-gray-900 font-semibold ml-auto">
+                  <Text className="text-gray-50 font-semibold ml-auto">
                     {attendanceQuery.data.peak_hour ?? '--'}:00
                   </Text>
                 </View>
@@ -169,7 +169,7 @@ export default function ReportsScreen() {
                   label="Active Members"
                   value={String(membershipQuery.data.total_active_members)}
                   icon="person"
-                  color="#059669"
+                  color="#d4a855"
                 />
                 <StatCard
                   label="New This Period"
@@ -220,9 +220,9 @@ function StatCard({
 }) {
   return (
     <View className="flex-1 mx-1">
-      <View className="bg-white rounded-lg p-4 border border-gray-200">
+      <View className="bg-[#1a1a1a] rounded-lg p-4 border border-[#2a2a2a]">
         <Ionicons name={icon} size={24} color={color} />
-        <Text className="text-xl font-bold text-gray-900 mt-2">{value}</Text>
+        <Text className="text-xl font-bold text-gray-50 mt-2">{value}</Text>
         <Text className="text-xs text-gray-500 mt-1">{label}</Text>
       </View>
     </View>
@@ -231,7 +231,7 @@ function StatCard({
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <View className="bg-white rounded-lg p-6 border border-gray-200 items-center">
+    <View className="bg-[#1a1a1a] rounded-lg p-6 border border-[#2a2a2a] items-center">
       <Ionicons name="analytics-outline" size={32} color="#d1d5db" />
       <Text className="text-gray-400 mt-2">{message}</Text>
     </View>

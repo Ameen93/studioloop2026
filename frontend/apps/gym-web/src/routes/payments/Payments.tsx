@@ -130,7 +130,7 @@ export function Payments() {
         </div>
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <p className="text-sm text-gray-500">Marketplace Net Payout</p>
-          <p className="text-2xl font-bold text-blue-600">
+          <p className="text-2xl font-bold text-gold-600">
             {formatCents(payoutsQuery.data?.net_payout_cents ?? 0)}
           </p>
           <p className="text-xs text-gray-500">{payoutsQuery.data?.payout_schedule ?? '-'}</p>
@@ -149,7 +149,7 @@ export function Payments() {
               onClick={() => setActiveTab(tab.key)}
               className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === tab.key
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-gold-500 text-gold-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >

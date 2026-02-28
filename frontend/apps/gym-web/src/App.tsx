@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import './lib/configureApiClient';
 import { Login } from './routes/auth/Login';
+import { OAuthCallback } from './routes/auth/OAuthCallback';
 import { AuthGuard } from './components/layout/AuthGuard';
 import { AppLayout } from './components/layout/AppLayout';
 import { Dashboard } from './routes/Dashboard';
@@ -31,6 +32,7 @@ function App() {
         <Routes>
           {/* Auth routes */}
           <Route path="/login" element={<Login />} />
+          <Route path="/auth/oauth-callback" element={<OAuthCallback />} />
 
           {/* Protected routes */}
           <Route element={<AuthGuard />}>

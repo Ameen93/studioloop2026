@@ -1,6 +1,6 @@
 # StudioLoop 2026 — Backlog
 
-**Last updated:** 2026-02-26
+**Last updated:** 2026-02-28
 
 ---
 
@@ -15,10 +15,15 @@
 
 ## 🟡 Ready to Build (no blockers)
 
-- [ ] Epic 5 sprint status → mark as done in sprint-status.yaml
+- [x] Epic 5 sprint status → mark as done in sprint-status.yaml ✅ 2026-02-28
+- [x] Seed demo data refresh for sales conversations ✅ 2026-02-28 (gym descriptions enhanced)
+- [x] Migration drift resolved — `alembic check` clean ✅ 2026-02-28
+- [x] Marketing sites made env-aware (hardcoded URLs removed) ✅ 2026-02-28
+- [x] Staging env template created (`.env.staging.example`) ✅ 2026-02-28
+- [x] Pitch one-pager created (`docs/pitch-one-pager.md`) ✅ 2026-02-28
+- [x] Demo walkthrough guide created (`docs/demo-walkthrough.md`) ✅ 2026-02-28
 - [ ] Epic 16: Deployment infrastructure (once platform chosen)
 - [ ] Fix FIRST_SUPERUSER_PASSWORD default ("changethis")
-- [ ] Seed demo data refresh for sales conversations
 - [ ] Landing page at marketing-gyms app — polish for outreach
 - [ ] Consumer marketing site — polish for launch
 - [ ] E2E test suite — currently has specs but needs CI integration

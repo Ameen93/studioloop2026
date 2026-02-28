@@ -626,14 +626,42 @@
           "consumer-auth"
         ],
         "summary": "Google Login",
-        "description": "Initiate Google OAuth flow (Story 1.9, AC #1).\n\nRedirects to Google's authorization endpoint with proper scopes.\nUses session middleware for OAuth state management.\n\nArgs:\n    request: FastAPI request object (needed for Authlib)\n\nReturns:\n    RedirectResponse to Google's authorization endpoint\n\nRaises:\n    HTTPException: 503 if Google OAuth is not configured",
+        "description": "Initiate Google OAuth flow (Story 1.9, AC #1).\n\nRedirects to Google's authorization endpoint with proper scopes.\nUses session middleware for OAuth state management.\n\nArgs:\n    request: FastAPI request object (needed for Authlib)\n    redirect_uri: Optional frontend URL to redirect to after OAuth completes\n\nReturns:\n    RedirectResponse to Google's authorization endpoint\n\nRaises:\n    HTTPException: 503 if Google OAuth is not configured",
         "operationId": "consumer-auth-google_login",
+        "parameters": [
+          {
+            "name": "redirect_uri",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Redirect Uri"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -646,16 +674,14 @@
           "consumer-auth"
         ],
         "summary": "Google Callback",
-        "description": "Handle Google OAuth callback (Story 1.9, AC #1, #2, #3, #5).\n\nValidates OAuth response, creates/links user account, and returns JWT tokens.\n- If google_id exists: Login existing user\n- If email exists but no google_id: Link Google to existing account\n- If neither: Create new consumer\n\nArgs:\n    request: FastAPI request object (contains OAuth callback params)\n    session: Database session\n\nReturns:\n    ConsumerToken with access_token and refresh_token\n\nRaises:\n    HTTPException: 400 if OAuth validation fails\n    HTTPException: 503 if Google OAuth is not configured",
+        "description": "Handle Google OAuth callback (Story 1.9, AC #1, #2, #3, #5).\n\nValidates OAuth response, creates/links user account, and returns JWT tokens.\nIf a redirect_uri was stored in session, redirects with tokens in URL fragment.\nOtherwise returns JSON (backward compatibility).\n\nArgs:\n    request: FastAPI request object (contains OAuth callback params)\n    session: Database session\n\nReturns:\n    ConsumerToken or RedirectResponse with tokens in fragment\n\nRaises:\n    HTTPException: 400 if OAuth validation fails\n    HTTPException: 503 if Google OAuth is not configured",
         "operationId": "consumer-auth-google_callback",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ConsumerToken"
-                }
+                "schema": {}
               }
             }
           }
@@ -715,14 +741,42 @@
           "consumer-auth"
         ],
         "summary": "Apple Login",
-        "description": "Initiate Apple OAuth flow (Story 1.10, AC #1, #4).\n\nRedirects user to Apple's authorization endpoint for Sign in with Apple.\nUses SessionMiddleware for CSRF protection via state parameter.\n\nArgs:\n    request: FastAPI request object (needed for Authlib)\n\nReturns:\n    RedirectResponse to Apple's authorization endpoint\n\nRaises:\n    HTTPException: 503 if Apple Sign In is not configured",
+        "description": "Initiate Apple OAuth flow (Story 1.10, AC #1, #4).\n\nRedirects user to Apple's authorization endpoint for Sign in with Apple.\nUses SessionMiddleware for CSRF protection via state parameter.\n\nArgs:\n    request: FastAPI request object (needed for Authlib)\n    redirect_uri: Optional frontend URL to redirect to after OAuth completes\n\nReturns:\n    RedirectResponse to Apple's authorization endpoint\n\nRaises:\n    HTTPException: 503 if Apple Sign In is not configured",
         "operationId": "consumer-auth-apple_login",
+        "parameters": [
+          {
+            "name": "redirect_uri",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Redirect Uri"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -735,16 +789,14 @@
           "consumer-auth"
         ],
         "summary": "Apple Callback",
-        "description": "Handle Apple OAuth callback (Story 1.10, AC #1, #2, #3, #5).\n\nApple uses response_mode=form_post, so this is a POST endpoint.\nValidates OAuth response, creates/links user account, and returns JWT tokens.\n- If apple_id exists: Login existing user\n- If email exists but no apple_id: Link Apple to existing account\n- If neither: Create new consumer\n\nSupports Apple's Hide My Email relay addresses (AC #3).\n\nArgs:\n    request: FastAPI request object (contains OAuth callback form data)\n    session: Database session\n\nReturns:\n    ConsumerToken with access_token and refresh_token\n\nRaises:\n    HTTPException: 400 if OAuth validation fails\n    HTTPException: 403 if account is deactivated\n    HTTPException: 503 if Apple Sign In is not configured",
+        "description": "Handle Apple OAuth callback (Story 1.10, AC #1, #2, #3, #5).\n\nApple uses response_mode=form_post, so this is a POST endpoint.\nValidates OAuth response, creates/links user account, and returns JWT tokens.\nIf a redirect_uri was stored in session, redirects with tokens in URL fragment.\n\nArgs:\n    request: FastAPI request object (contains OAuth callback form data)\n    session: Database session\n\nReturns:\n    ConsumerToken or RedirectResponse with tokens in fragment\n\nRaises:\n    HTTPException: 400 if OAuth validation fails\n    HTTPException: 403 if account is deactivated\n    HTTPException: 503 if Apple Sign In is not configured",
         "operationId": "consumer-auth-apple_callback",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ConsumerToken"
-                }
+                "schema": {}
               }
             }
           }
@@ -1445,100 +1497,6 @@
         }
       }
     },
-    "/api/v1/gyms/me/class_sessions": {
-      "post": {
-        "tags": [
-          "gyms"
-        ],
-        "summary": "Create My Class Session",
-        "operationId": "gyms-create_my_class_session",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ClassSessionCreateRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ClassSessionResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/gyms/me/class_sessions/{class_session_id}/cancel": {
-      "post": {
-        "tags": [
-          "gyms"
-        ],
-        "summary": "Cancel My Class Session",
-        "operationId": "gyms-cancel_my_class_session",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "class_session_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Class Session Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ClassSessionResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/gyms/me/members/import/preview": {
       "post": {
         "tags": [
@@ -1657,6 +1615,881 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/app__api__routes__gyms__GymProfileResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gyms/me/class_templates": {
+      "get": {
+        "tags": [
+          "class-scheduling"
+        ],
+        "summary": "List Class Templates",
+        "operationId": "class-scheduling-list_class_templates",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ClassTemplateResponse"
+                  },
+                  "type": "array",
+                  "title": "Response Class-Scheduling-List Class Templates"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "class-scheduling"
+        ],
+        "summary": "Create Class Template",
+        "operationId": "class-scheduling-create_class_template",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassTemplateCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassTemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/gyms/me/class_templates/{template_id}": {
+      "get": {
+        "tags": [
+          "class-scheduling"
+        ],
+        "summary": "Get Class Template",
+        "operationId": "class-scheduling-get_class_template",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassTemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "class-scheduling"
+        ],
+        "summary": "Update Class Template",
+        "operationId": "class-scheduling-update_class_template",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassTemplateUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassTemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "class-scheduling"
+        ],
+        "summary": "Delete Class Template",
+        "operationId": "class-scheduling-delete_class_template",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gyms/me/class_sessions": {
+      "post": {
+        "tags": [
+          "class-scheduling"
+        ],
+        "summary": "Create Class Session",
+        "operationId": "class-scheduling-create_class_session",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassSessionCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassSessionFullResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "class-scheduling"
+        ],
+        "summary": "List Class Sessions",
+        "operationId": "class-scheduling-list_class_sessions",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClassSessionFullResponse"
+                  },
+                  "title": "Response Class-Scheduling-List Class Sessions"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gyms/me/class_sessions/recurring": {
+      "post": {
+        "tags": [
+          "class-scheduling"
+        ],
+        "summary": "Create Recurring Sessions",
+        "operationId": "class-scheduling-create_recurring_sessions",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecurringScheduleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecurringScheduleResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/gyms/me/class_sessions/{class_session_id}/instructor": {
+      "patch": {
+        "tags": [
+          "class-scheduling"
+        ],
+        "summary": "Assign Instructor",
+        "operationId": "class-scheduling-assign_instructor",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "class_session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Class Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstructorAssignRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassSessionFullResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gyms/me/class_sessions/pending": {
+      "get": {
+        "tags": [
+          "class-scheduling"
+        ],
+        "summary": "List Pending Sessions",
+        "operationId": "class-scheduling-list_pending_sessions",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ClassSessionFullResponse"
+                  },
+                  "type": "array",
+                  "title": "Response Class-Scheduling-List Pending Sessions"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/gyms/me/class_sessions/{class_session_id}/approval": {
+      "patch": {
+        "tags": [
+          "class-scheduling"
+        ],
+        "summary": "Update Approval",
+        "operationId": "class-scheduling-update_approval",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "class_session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Class Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApprovalActionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassSessionFullResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gyms/me/class_sessions/{class_session_id}/cancel": {
+      "post": {
+        "tags": [
+          "class-scheduling"
+        ],
+        "summary": "Cancel Class Session",
+        "operationId": "class-scheduling-cancel_class_session",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "class_session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Class Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/CancelRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CancelResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gyms/me/class_sessions/{class_session_id}/capacity": {
+      "patch": {
+        "tags": [
+          "class-scheduling"
+        ],
+        "summary": "Update Capacity",
+        "operationId": "class-scheduling-update_capacity",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "class_session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Class Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CapacityUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassSessionFullResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gyms/me/class_sessions/{class_session_id}/pricing": {
+      "patch": {
+        "tags": [
+          "class-scheduling"
+        ],
+        "summary": "Update Pricing",
+        "operationId": "class-scheduling-update_pricing",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "class_session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Class Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PricingUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassSessionFullResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gyms/me/class_sessions/calendar": {
+      "get": {
+        "tags": [
+          "class-scheduling"
+        ],
+        "summary": "Get Calendar",
+        "operationId": "class-scheduling-get_calendar",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "End Date"
+            }
+          },
+          {
+            "name": "space_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Space Id"
+            }
+          },
+          {
+            "name": "instructor_staff_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Instructor Staff Id"
+            }
+          },
+          {
+            "name": "class_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ClassType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Class Type"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ClassSessionStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CalendarDayGroup"
+                  },
+                  "title": "Response Class-Scheduling-Get Calendar"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gyms/me/class_sessions/{class_session_id}": {
+      "get": {
+        "tags": [
+          "class-scheduling"
+        ],
+        "summary": "Get Class Session",
+        "operationId": "class-scheduling-get_class_session",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "class_session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Class Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassSessionFullResponse"
                 }
               }
             }
@@ -1912,6 +2745,142 @@
             "OAuth2PasswordBearer": []
           }
         ]
+      }
+    },
+    "/api/v1/auth/staff/google": {
+      "get": {
+        "tags": [
+          "staff-auth"
+        ],
+        "summary": "Staff Google Login",
+        "description": "Initiate Google OAuth flow for staff.\n\nArgs:\n    request: FastAPI request object\n    redirect_uri: Frontend URL to redirect to after OAuth completes",
+        "operationId": "staff-auth-staff_google_login",
+        "parameters": [
+          {
+            "name": "redirect_uri",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Redirect Uri"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/staff/google/callback": {
+      "get": {
+        "tags": [
+          "staff-auth"
+        ],
+        "summary": "Staff Google Callback",
+        "description": "Handle Google OAuth callback for staff (link-only, no auto-creation).\n\nStaff must already exist (created by gym owner). This endpoint:\n- Finds staff by google_id or email\n- Links google_id if not already linked\n- Returns tokens with role/gym_id claims\n- Errors if no staff account found",
+        "operationId": "staff-auth-staff_google_callback",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/staff/apple": {
+      "get": {
+        "tags": [
+          "staff-auth"
+        ],
+        "summary": "Staff Apple Login",
+        "description": "Initiate Apple OAuth flow for staff.",
+        "operationId": "staff-auth-staff_apple_login",
+        "parameters": [
+          {
+            "name": "redirect_uri",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Redirect Uri"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/staff/apple/callback": {
+      "post": {
+        "tags": [
+          "staff-auth"
+        ],
+        "summary": "Staff Apple Callback",
+        "description": "Handle Apple OAuth callback for staff (link-only, no auto-creation).\n\nApple uses response_mode=form_post, so this is a POST endpoint.\nStaff must already exist. Links apple_id if not already linked.",
+        "operationId": "staff-auth-staff_apple_callback",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/gyms/me/staff": {
@@ -5649,6 +6618,334 @@
         ]
       }
     },
+    "/api/v1/payments/subscriptions": {
+      "post": {
+        "tags": [
+          "payments"
+        ],
+        "summary": "Create Subscription",
+        "operationId": "payments-create_subscription",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSubscriptionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSubscriptionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/payments/{payment_id}": {
+      "get": {
+        "tags": [
+          "payments"
+        ],
+        "summary": "Get Payment Status",
+        "operationId": "payments-get_payment_status",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "payment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Payment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payments/": {
+      "get": {
+        "tags": [
+          "payments"
+        ],
+        "summary": "List Payments For Gym",
+        "operationId": "payments-list_payments_for_gym",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "gym_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Gym Id"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          },
+          {
+            "name": "payment_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/PaymentType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Payment Type"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/PaymentStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GymPaymentsListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payments/webhook": {
+      "post": {
+        "tags": [
+          "payments"
+        ],
+        "summary": "Process Payment Webhook",
+        "operationId": "payments-process_payment_webhook",
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PaymentProviderName",
+              "default": "stitch"
+            }
+          },
+          {
+            "name": "X-Signature",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Signature"
+            }
+          },
+          {
+            "name": "svix-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Svix-Id"
+            }
+          },
+          {
+            "name": "svix-timestamp",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Svix-Timestamp"
+            }
+          },
+          {
+            "name": "svix-signature",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Svix-Signature"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentWebhookRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Payments-Process Payment Webhook"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/payments/webhooks/{provider}": {
       "post": {
         "tags": [
@@ -5679,6 +6976,54 @@
                 }
               ],
               "title": "X-Signature"
+            }
+          },
+          {
+            "name": "svix-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Svix-Id"
+            }
+          },
+          {
+            "name": "svix-timestamp",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Svix-Timestamp"
+            }
+          },
+          {
+            "name": "svix-signature",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Svix-Signature"
             }
           }
         ],
@@ -8847,6 +10192,28 @@
         "title": "AdminGymListResponse",
         "description": "Paginated gym list for admin."
       },
+      "ApprovalActionRequest": {
+        "properties": {
+          "approval_status": {
+            "$ref": "#/components/schemas/ApprovalStatus"
+          }
+        },
+        "type": "object",
+        "required": [
+          "approval_status"
+        ],
+        "title": "ApprovalActionRequest"
+      },
+      "ApprovalStatus": {
+        "type": "string",
+        "enum": [
+          "auto_approved",
+          "pending_approval",
+          "approved",
+          "rejected"
+        ],
+        "title": "ApprovalStatus"
+      },
       "AtRiskMemberItem": {
         "properties": {
           "consumer_id": {
@@ -9324,6 +10691,125 @@
         ],
         "title": "BookingType"
       },
+      "CalendarDayGroup": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "sessions": {
+            "items": {
+              "$ref": "#/components/schemas/CalendarSessionItem"
+            },
+            "type": "array",
+            "title": "Sessions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "sessions"
+        ],
+        "title": "CalendarDayGroup"
+      },
+      "CalendarSessionItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "space_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Space Id"
+          },
+          "instructor_staff_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instructor Staff Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "class_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClassType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "start_time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start Time"
+          },
+          "end_time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "End Time"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "capacity": {
+            "type": "integer",
+            "title": "Capacity"
+          },
+          "spots_booked": {
+            "type": "integer",
+            "title": "Spots Booked"
+          },
+          "price_cents": {
+            "type": "integer",
+            "title": "Price Cents"
+          },
+          "approval_status": {
+            "type": "string",
+            "title": "Approval Status"
+          },
+          "color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "space_id",
+          "instructor_staff_id",
+          "title",
+          "class_type",
+          "start_time",
+          "end_time",
+          "status",
+          "capacity",
+          "spots_booked",
+          "price_cents",
+          "approval_status"
+        ],
+        "title": "CalendarSessionItem"
+      },
       "CancelBookingResponse": {
         "properties": {
           "booking_id": {
@@ -9346,6 +10832,99 @@
           "refunded"
         ],
         "title": "CancelBookingResponse"
+      },
+      "CancelRequest": {
+        "properties": {
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "title": "CancelRequest"
+      },
+      "CancelResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "cancellation_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancellation Reason"
+          },
+          "cancelled_by_staff_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelled By Staff Id"
+          },
+          "booking_count": {
+            "type": "integer",
+            "title": "Booking Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "cancellation_reason",
+          "cancelled_by_staff_id",
+          "booking_count"
+        ],
+        "title": "CancelResponse"
+      },
+      "CapacityUpdateRequest": {
+        "properties": {
+          "capacity": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Capacity"
+          },
+          "waitlist_capacity": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Waitlist Capacity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "capacity"
+        ],
+        "title": "CapacityUpdateRequest"
       },
       "CheckInRecord": {
         "properties": {
@@ -9561,6 +11140,28 @@
             "minLength": 1,
             "title": "Title"
           },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "class_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClassType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "start_time": {
             "type": "string",
             "format": "date-time",
@@ -9570,6 +11171,58 @@
             "type": "string",
             "format": "date-time",
             "title": "End Time"
+          },
+          "capacity": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Capacity",
+            "default": 20
+          },
+          "price_cents": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Price Cents",
+            "default": 0
+          },
+          "instructor_staff_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instructor Staff Id"
+          },
+          "class_template_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Class Template Id"
+          },
+          "waitlist_enabled": {
+            "type": "boolean",
+            "title": "Waitlist Enabled",
+            "default": true
+          },
+          "waitlist_capacity": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Waitlist Capacity",
+            "default": 0
+          },
+          "marketplace_visible": {
+            "type": "boolean",
+            "title": "Marketplace Visible",
+            "default": true
           }
         },
         "type": "object",
@@ -9581,7 +11234,7 @@
         ],
         "title": "ClassSessionCreateRequest"
       },
-      "ClassSessionResponse": {
+      "ClassSessionFullResponse": {
         "properties": {
           "id": {
             "type": "string",
@@ -9598,9 +11251,42 @@
             "format": "uuid",
             "title": "Space Id"
           },
+          "instructor_staff_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instructor Staff Id"
+          },
           "title": {
             "type": "string",
             "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "class_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClassType"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "start_time": {
             "type": "string",
@@ -9615,6 +11301,93 @@
           "status": {
             "type": "string",
             "title": "Status"
+          },
+          "capacity": {
+            "type": "integer",
+            "title": "Capacity"
+          },
+          "spots_booked": {
+            "type": "integer",
+            "title": "Spots Booked"
+          },
+          "waitlist_enabled": {
+            "type": "boolean",
+            "title": "Waitlist Enabled"
+          },
+          "waitlist_capacity": {
+            "type": "integer",
+            "title": "Waitlist Capacity"
+          },
+          "price_cents": {
+            "type": "integer",
+            "title": "Price Cents"
+          },
+          "class_template_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Class Template Id"
+          },
+          "recurrence_group_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recurrence Group Id"
+          },
+          "approval_status": {
+            "type": "string",
+            "title": "Approval Status"
+          },
+          "created_by_staff_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By Staff Id"
+          },
+          "cancellation_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancellation Reason"
+          },
+          "cancelled_by_staff_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelled By Staff Id"
+          },
+          "marketplace_visible": {
+            "type": "boolean",
+            "title": "Marketplace Visible"
           }
         },
         "type": "object",
@@ -9622,12 +11395,359 @@
           "id",
           "gym_id",
           "space_id",
+          "instructor_staff_id",
           "title",
+          "description",
+          "class_type",
           "start_time",
           "end_time",
-          "status"
+          "status",
+          "capacity",
+          "spots_booked",
+          "waitlist_enabled",
+          "waitlist_capacity",
+          "price_cents",
+          "class_template_id",
+          "recurrence_group_id",
+          "approval_status",
+          "created_by_staff_id",
+          "cancellation_reason",
+          "cancelled_by_staff_id",
+          "marketplace_visible"
         ],
-        "title": "ClassSessionResponse"
+        "title": "ClassSessionFullResponse"
+      },
+      "ClassSessionStatus": {
+        "type": "string",
+        "enum": [
+          "scheduled",
+          "cancelled"
+        ],
+        "title": "ClassSessionStatus"
+      },
+      "ClassTemplateCreateRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "default_duration_minutes": {
+            "type": "integer",
+            "maximum": 480.0,
+            "minimum": 5.0,
+            "title": "Default Duration Minutes",
+            "default": 60
+          },
+          "default_capacity": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Default Capacity",
+            "default": 20
+          },
+          "class_type": {
+            "$ref": "#/components/schemas/ClassType",
+            "default": "other"
+          },
+          "default_instructor_staff_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Instructor Staff Id"
+          },
+          "default_space_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Space Id"
+          },
+          "default_price_cents": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Default Price Cents",
+            "default": 0
+          },
+          "waitlist_enabled": {
+            "type": "boolean",
+            "title": "Waitlist Enabled",
+            "default": true
+          },
+          "color": {
+            "type": "string",
+            "maxLength": 7,
+            "title": "Color",
+            "default": "#3B82F6"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "ClassTemplateCreateRequest"
+      },
+      "ClassTemplateResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "gym_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Gym Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "default_duration_minutes": {
+            "type": "integer",
+            "title": "Default Duration Minutes"
+          },
+          "default_capacity": {
+            "type": "integer",
+            "title": "Default Capacity"
+          },
+          "class_type": {
+            "$ref": "#/components/schemas/ClassType"
+          },
+          "default_instructor_staff_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Instructor Staff Id"
+          },
+          "default_space_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Space Id"
+          },
+          "default_price_cents": {
+            "type": "integer",
+            "title": "Default Price Cents"
+          },
+          "waitlist_enabled": {
+            "type": "boolean",
+            "title": "Waitlist Enabled"
+          },
+          "color": {
+            "type": "string",
+            "title": "Color"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "gym_id",
+          "name",
+          "description",
+          "default_duration_minutes",
+          "default_capacity",
+          "class_type",
+          "default_instructor_staff_id",
+          "default_space_id",
+          "default_price_cents",
+          "waitlist_enabled",
+          "color",
+          "is_active"
+        ],
+        "title": "ClassTemplateResponse"
+      },
+      "ClassTemplateUpdateRequest": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "default_duration_minutes": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 480.0,
+                "minimum": 5.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Duration Minutes"
+          },
+          "default_capacity": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Capacity"
+          },
+          "class_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClassType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "default_instructor_staff_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Instructor Staff Id"
+          },
+          "default_space_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Space Id"
+          },
+          "default_price_cents": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Price Cents"
+          },
+          "waitlist_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Waitlist Enabled"
+          },
+          "color": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 7
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          }
+        },
+        "type": "object",
+        "title": "ClassTemplateUpdateRequest"
+      },
+      "ClassType": {
+        "type": "string",
+        "enum": [
+          "yoga",
+          "pilates",
+          "hiit",
+          "crossfit",
+          "cycling",
+          "boxing",
+          "strength",
+          "swimming",
+          "dance",
+          "martial_arts",
+          "other"
+        ],
+        "title": "ClassType"
       },
       "ComplaintCreate": {
         "properties": {
@@ -10379,6 +12499,102 @@
         "type": "object",
         "title": "ConsumerUpdate",
         "description": "Schema for updating consumer profile - all fields optional."
+      },
+      "CreateSubscriptionRequest": {
+        "properties": {
+          "gym_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Gym Id"
+          },
+          "amount_cents": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Amount Cents"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Description"
+          },
+          "return_url": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Return Url"
+          },
+          "cancel_url": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Cancel Url"
+          },
+          "webhook_url": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Webhook Url"
+          },
+          "provider": {
+            "$ref": "#/components/schemas/PaymentProviderName",
+            "default": "stitch"
+          },
+          "related_entity_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Related Entity Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "gym_id",
+          "amount_cents",
+          "description",
+          "return_url",
+          "cancel_url",
+          "webhook_url"
+        ],
+        "title": "CreateSubscriptionRequest"
+      },
+      "CreateSubscriptionResponse": {
+        "properties": {
+          "payment_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Payment Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PaymentStatus"
+          },
+          "provider": {
+            "$ref": "#/components/schemas/PaymentProviderName"
+          },
+          "provider_reference": {
+            "type": "string",
+            "title": "Provider Reference"
+          },
+          "redirect_url": {
+            "type": "string",
+            "title": "Redirect Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "payment_id",
+          "status",
+          "provider",
+          "provider_reference",
+          "redirect_url"
+        ],
+        "title": "CreateSubscriptionResponse"
       },
       "CreditIssueResponse": {
         "properties": {
@@ -11825,6 +14041,27 @@
           "expires_in_seconds"
         ],
         "title": "InitiatePaymentResponse"
+      },
+      "InstructorAssignRequest": {
+        "properties": {
+          "instructor_staff_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instructor Staff Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "instructor_staff_id"
+        ],
+        "title": "InstructorAssignRequest"
       },
       "InstructorEarningsResponse": {
         "properties": {
@@ -13506,7 +15743,8 @@
         "type": "string",
         "enum": [
           "ozow",
-          "payfast"
+          "payfast",
+          "stitch"
         ],
         "title": "PaymentProviderName"
       },
@@ -13520,6 +15758,99 @@
           "refunded"
         ],
         "title": "PaymentStatus"
+      },
+      "PaymentStatusResponse": {
+        "properties": {
+          "payment_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Payment Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PaymentStatus"
+          },
+          "provider": {
+            "$ref": "#/components/schemas/PaymentProviderName"
+          },
+          "provider_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Reference"
+          },
+          "amount_cents": {
+            "type": "integer",
+            "title": "Amount Cents"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "failed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failed At"
+          },
+          "failure_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "payment_id",
+          "status",
+          "provider",
+          "provider_reference",
+          "amount_cents",
+          "currency",
+          "description",
+          "created_at",
+          "completed_at",
+          "failed_at",
+          "failure_reason"
+        ],
+        "title": "PaymentStatusResponse"
       },
       "PaymentType": {
         "type": "string",
@@ -13862,6 +16193,31 @@
         "type": "object",
         "title": "PreferencesUpdate"
       },
+      "PricingUpdateRequest": {
+        "properties": {
+          "price_cents": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Price Cents"
+          },
+          "marketplace_visible": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marketplace Visible"
+          }
+        },
+        "type": "object",
+        "required": [
+          "price_cents"
+        ],
+        "title": "PricingUpdateRequest"
+      },
       "PrivateUserCreate": {
         "properties": {
           "email": {
@@ -13972,6 +16328,175 @@
           "vat_rate_percent"
         ],
         "title": "ReceiptResponse"
+      },
+      "RecurringScheduleRequest": {
+        "properties": {
+          "space_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Space Id"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "class_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClassType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Start Date"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date",
+            "title": "End Date"
+          },
+          "days_of_week": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Days Of Week"
+          },
+          "start_time_hour": {
+            "type": "integer",
+            "maximum": 23.0,
+            "minimum": 0.0,
+            "title": "Start Time Hour"
+          },
+          "start_time_minute": {
+            "type": "integer",
+            "maximum": 59.0,
+            "minimum": 0.0,
+            "title": "Start Time Minute"
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "maximum": 480.0,
+            "minimum": 5.0,
+            "title": "Duration Minutes"
+          },
+          "capacity": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Capacity",
+            "default": 20
+          },
+          "price_cents": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Price Cents",
+            "default": 0
+          },
+          "instructor_staff_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instructor Staff Id"
+          },
+          "class_template_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Class Template Id"
+          },
+          "waitlist_enabled": {
+            "type": "boolean",
+            "title": "Waitlist Enabled",
+            "default": true
+          },
+          "waitlist_capacity": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Waitlist Capacity",
+            "default": 0
+          },
+          "marketplace_visible": {
+            "type": "boolean",
+            "title": "Marketplace Visible",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "space_id",
+          "title",
+          "start_date",
+          "end_date",
+          "days_of_week",
+          "start_time_hour",
+          "start_time_minute",
+          "duration_minutes"
+        ],
+        "title": "RecurringScheduleRequest"
+      },
+      "RecurringScheduleResponse": {
+        "properties": {
+          "recurrence_group_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Recurrence Group Id"
+          },
+          "created_count": {
+            "type": "integer",
+            "title": "Created Count"
+          },
+          "skipped_conflicts": {
+            "type": "integer",
+            "title": "Skipped Conflicts"
+          },
+          "sessions": {
+            "items": {
+              "$ref": "#/components/schemas/ClassSessionFullResponse"
+            },
+            "type": "array",
+            "title": "Sessions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "recurrence_group_id",
+          "created_count",
+          "skipped_conflicts",
+          "sessions"
+        ],
+        "title": "RecurringScheduleResponse"
       },
       "ReferralLinkResponse": {
         "properties": {
@@ -14764,6 +17289,28 @@
           "is_active": {
             "type": "boolean",
             "title": "Is Active"
+          },
+          "google_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Google Id"
+          },
+          "apple_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apple Id"
           }
         },
         "type": "object",

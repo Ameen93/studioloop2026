@@ -62,12 +62,12 @@ export default function ProfileTab() {
     onPress?: () => void;
   }) => (
     <Pressable
-      className="flex-row items-center py-3 px-4 bg-white"
+      className="flex-row items-center py-3 px-4 bg-[#1a1a1a]"
       onPress={onPress}
       disabled={!onPress}
     >
       <Ionicons name={icon} size={22} color="#6b7280" />
-      <Text className="flex-1 ml-3 text-gray-900">{label}</Text>
+      <Text className="flex-1 ml-3 text-gray-50">{label}</Text>
       {value && <Text className="text-gray-500 mr-2">{value}</Text>}
       {onPress && <Ionicons name="chevron-forward" size={18} color="#d1d5db" />}
     </Pressable>
@@ -84,24 +84,24 @@ export default function ProfileTab() {
     value: boolean;
     onValueChange: (val: boolean) => void;
   }) => (
-    <View className="flex-row items-center py-3 px-4 bg-white">
+    <View className="flex-row items-center py-3 px-4 bg-[#1a1a1a]">
       <Ionicons name={icon} size={22} color="#6b7280" />
-      <Text className="flex-1 ml-3 text-gray-900">{label}</Text>
+      <Text className="flex-1 ml-3 text-gray-50">{label}</Text>
       <Switch
         value={value}
         onValueChange={onValueChange}
         trackColor={{ false: '#d1d5db', true: '#818cf8' }}
-        thumbColor={value ? '#6366f1' : '#f4f4f5'}
+        thumbColor={value ? '#FF6B4A' : '#f4f4f5'}
       />
     </View>
   );
 
   return (
-    <ScrollView className="flex-1 bg-gray-50">
+    <ScrollView className="flex-1 bg-[#0a0a0a]">
       {/* Profile header */}
-      <View className="bg-white px-4 py-6 items-center border-b border-gray-200">
-        <View className="w-20 h-20 rounded-full bg-indigo-100 items-center justify-center mb-3">
-          <Text className="text-2xl font-bold text-indigo-600">
+      <View className="bg-[#1a1a1a] px-4 py-6 items-center border-b border-[#2a2a2a]">
+        <View className="w-20 h-20 rounded-full bg-coral-100 items-center justify-center mb-3">
+          <Text className="text-2xl font-bold text-coral-600">
             {profile?.name
               ? profile.name
                   .split(' ')
@@ -111,7 +111,7 @@ export default function ProfileTab() {
               : '?'}
           </Text>
         </View>
-        <Text className="text-xl font-bold text-gray-900">{profile?.name ?? 'Consumer'}</Text>
+        <Text className="text-xl font-bold text-gray-50">{profile?.name ?? 'Consumer'}</Text>
         <Text className="text-gray-500 mt-1">{profile?.email ?? ''}</Text>
       </View>
 
@@ -120,7 +120,7 @@ export default function ProfileTab() {
         <Text className="text-sm font-medium text-gray-500 uppercase tracking-wide px-4 mb-2">
           Account
         </Text>
-        <View className="border-t border-b border-gray-200">
+        <View className="border-t border-b border-[#2a2a2a]">
           <MenuRow
             icon="person-outline"
             label="Edit Profile"
@@ -142,7 +142,7 @@ export default function ProfileTab() {
         <Text className="text-sm font-medium text-gray-500 uppercase tracking-wide px-4 mb-2">
           Notifications
         </Text>
-        <View className="border-t border-b border-gray-200">
+        <View className="border-t border-b border-[#2a2a2a]">
           <ToggleRow
             icon="notifications-outline"
             label="Push Notifications"
@@ -171,7 +171,7 @@ export default function ProfileTab() {
         <Text className="text-sm font-medium text-gray-500 uppercase tracking-wide px-4 mb-2">
           Support
         </Text>
-        <View className="border-t border-b border-gray-200">
+        <View className="border-t border-b border-[#2a2a2a]">
           <MenuRow
             icon="help-circle-outline"
             label="Help & FAQ"
@@ -200,7 +200,7 @@ export default function ProfileTab() {
       {/* Sign out */}
       <View className="mt-6 mb-8">
         <Pressable
-          className="mx-4 py-3 bg-white border border-red-300 rounded-lg"
+          className="mx-4 py-3 bg-[#1a1a1a] border border-red-300 rounded-lg"
           onPress={handleLogout}
         >
           <Text className="text-red-600 text-center font-semibold">Sign Out</Text>

@@ -43,7 +43,7 @@ export function MemberDetail() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link to="/members" className="text-sm text-blue-600 hover:text-blue-800">
+        <Link to="/members" className="text-sm text-gold-600 hover:text-gold-800">
           &larr; Back to Members
         </Link>
       </div>

@@ -41,8 +41,8 @@ export function ForgotPassword() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
         <div className="max-w-md w-full text-center space-y-4">
-          <div className="mx-auto w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center">
-            <svg className="w-8 h-8 text-indigo-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <div className="mx-auto w-16 h-16 rounded-full bg-coral-100 flex items-center justify-center">
+            <svg className="w-8 h-8 text-coral-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
             </svg>
           </div>
@@ -52,7 +52,7 @@ export function ForgotPassword() {
           </p>
           <Link
             to="/login"
-            className="mt-4 inline-flex items-center px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+            className="mt-4 inline-flex items-center px-4 py-2 text-sm font-medium text-coral-600 bg-coral-50 rounded-lg hover:bg-coral-100 transition-colors"
           >
             Back to sign in
           </Link>
@@ -65,7 +65,7 @@ export function ForgotPassword() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h1 className="text-center text-3xl font-bold text-indigo-600">StudioLoop</h1>
+          <h1 className="text-center text-3xl font-bold text-coral-600">StudioLoop</h1>
           <h2 className="mt-4 text-center text-2xl font-bold text-gray-900">
             Reset your password
           </h2>
@@ -93,7 +93,7 @@ export function ForgotPassword() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-coral-500 focus:border-coral-500 sm:text-sm"
               placeholder="you@example.com"
             />
           </div>
@@ -102,14 +102,14 @@ export function ForgotPassword() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex justify-center py-2.5 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full flex justify-center py-2.5 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-coral-600 hover:bg-coral-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-coral-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isLoading ? 'Sending...' : 'Send reset link'}
             </button>
           </div>
 
           <div className="text-center">
-            <Link to="/login" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+            <Link to="/login" className="text-sm font-medium text-coral-600 hover:text-coral-500">
               Back to sign in
             </Link>
           </div>

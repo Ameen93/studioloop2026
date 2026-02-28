@@ -49,6 +49,16 @@ export type AdminGymListResponse = {
   limit: number;
 };
 
+export type ApprovalActionRequest = {
+  approval_status: ApprovalStatus;
+};
+
+export type ApprovalStatus =
+  | "auto_approved"
+  | "pending_approval"
+  | "approved"
+  | "rejected";
+
 export type AtRiskMemberItem = {
   consumer_id: string;
   full_name: string;
@@ -161,10 +171,48 @@ export type BookingStatus = "booked" | "cancelled" | "checked_in";
 
 export type BookingType = "membership_benefit" | "pay_per_class";
 
+export type CalendarDayGroup = {
+  date: string;
+  sessions: Array<CalendarSessionItem>;
+};
+
+export type CalendarSessionItem = {
+  id: string;
+  space_id: string;
+  instructor_staff_id: string | null;
+  title: string;
+  class_type: ClassType | null;
+  start_time: string;
+  end_time: string;
+  status: string;
+  capacity: number;
+  spots_booked: number;
+  price_cents: number;
+  approval_status: string;
+  color?: string | null;
+};
+
 export type CancelBookingResponse = {
   booking_id: string;
   status: BookingStatus;
   refunded: boolean;
+};
+
+export type CancelRequest = {
+  reason?: string | null;
+};
+
+export type CancelResponse = {
+  id: string;
+  status: string;
+  cancellation_reason: string | null;
+  cancelled_by_staff_id: string | null;
+  booking_count: number;
+};
+
+export type CapacityUpdateRequest = {
+  capacity: number;
+  waitlist_capacity?: number | null;
 };
 
 export type CheckInRecord = {
@@ -217,19 +265,100 @@ export type ClassPerformanceResponse = {
 export type ClassSessionCreateRequest = {
   space_id: string;
   title: string;
+  description?: string | null;
+  class_type?: ClassType | null;
   start_time: string;
   end_time: string;
+  capacity?: number;
+  price_cents?: number;
+  instructor_staff_id?: string | null;
+  class_template_id?: string | null;
+  waitlist_enabled?: boolean;
+  waitlist_capacity?: number;
+  marketplace_visible?: boolean;
 };
 
-export type ClassSessionResponse = {
+export type ClassSessionFullResponse = {
   id: string;
   gym_id: string;
   space_id: string;
+  instructor_staff_id: string | null;
   title: string;
+  description: string | null;
+  class_type: ClassType | null;
   start_time: string;
   end_time: string;
   status: string;
+  capacity: number;
+  spots_booked: number;
+  waitlist_enabled: boolean;
+  waitlist_capacity: number;
+  price_cents: number;
+  class_template_id: string | null;
+  recurrence_group_id: string | null;
+  approval_status: string;
+  created_by_staff_id: string | null;
+  cancellation_reason: string | null;
+  cancelled_by_staff_id: string | null;
+  marketplace_visible: boolean;
 };
+
+export type ClassSessionStatus = "scheduled" | "cancelled";
+
+export type ClassTemplateCreateRequest = {
+  name: string;
+  description?: string | null;
+  default_duration_minutes?: number;
+  default_capacity?: number;
+  class_type?: ClassType;
+  default_instructor_staff_id?: string | null;
+  default_space_id?: string | null;
+  default_price_cents?: number;
+  waitlist_enabled?: boolean;
+  color?: string;
+};
+
+export type ClassTemplateResponse = {
+  id: string;
+  gym_id: string;
+  name: string;
+  description: string | null;
+  default_duration_minutes: number;
+  default_capacity: number;
+  class_type: ClassType;
+  default_instructor_staff_id: string | null;
+  default_space_id: string | null;
+  default_price_cents: number;
+  waitlist_enabled: boolean;
+  color: string;
+  is_active: boolean;
+};
+
+export type ClassTemplateUpdateRequest = {
+  name?: string | null;
+  description?: string | null;
+  default_duration_minutes?: number | null;
+  default_capacity?: number | null;
+  class_type?: ClassType | null;
+  default_instructor_staff_id?: string | null;
+  default_space_id?: string | null;
+  default_price_cents?: number | null;
+  waitlist_enabled?: boolean | null;
+  color?: string | null;
+};
+
+export type ClassType =
+  | "yoga"
+  | "pilates"
+  | "hiit"
+  | "crossfit"
+  | "cycling"
+  | "boxing"
+  | "strength"
+  | "swimming"
+  | "dance"
+  | "martial_arts"
+  | "other";
 
 /**
  * Schema for creating a new complaint.
@@ -394,6 +523,25 @@ export type ConsumerUpdate = {
   phone?: string | null;
   avatar_url?: string | null;
   accepts_marketing?: boolean | null;
+};
+
+export type CreateSubscriptionRequest = {
+  gym_id: string;
+  amount_cents: number;
+  description: string;
+  return_url: string;
+  cancel_url: string;
+  webhook_url: string;
+  provider?: PaymentProviderName;
+  related_entity_id?: string | null;
+};
+
+export type CreateSubscriptionResponse = {
+  payment_id: string;
+  status: PaymentStatus;
+  provider: PaymentProviderName;
+  provider_reference: string;
+  redirect_url: string;
 };
 
 /**
@@ -697,6 +845,10 @@ export type InitiatePaymentResponse = {
   provider_reference: string;
   redirect_url: string;
   expires_in_seconds: number;
+};
+
+export type InstructorAssignRequest = {
+  instructor_staff_id: string | null;
 };
 
 export type InstructorEarningsResponse = {
@@ -1018,7 +1170,7 @@ export type PaymentItem = {
   created_at: string;
 };
 
-export type PaymentProviderName = "ozow" | "payfast";
+export type PaymentProviderName = "ozow" | "payfast" | "stitch";
 
 export type PaymentStatus =
   | "pending"
@@ -1026,6 +1178,20 @@ export type PaymentStatus =
   | "failed"
   | "failed_permanent"
   | "refunded";
+
+export type PaymentStatusResponse = {
+  payment_id: string;
+  status: PaymentStatus;
+  provider: PaymentProviderName;
+  provider_reference: string | null;
+  amount_cents: number;
+  currency: string;
+  description: string;
+  created_at: string;
+  completed_at: string | null;
+  failed_at: string | null;
+  failure_reason: string | null;
+};
 
 export type PaymentType =
   | "membership"
@@ -1088,6 +1254,11 @@ export type PreferencesUpdate = {
   whatsapp_enabled?: boolean | null;
 };
 
+export type PricingUpdateRequest = {
+  price_cents: number;
+  marketplace_visible?: boolean | null;
+};
+
 export type PrivateUserCreate = {
   email: string;
   password: string;
@@ -1111,6 +1282,33 @@ export type ReceiptResponse = {
   vat_amount_cents: number;
   total_cents: number;
   vat_rate_percent: number;
+};
+
+export type RecurringScheduleRequest = {
+  space_id: string;
+  title: string;
+  description?: string | null;
+  class_type?: ClassType | null;
+  start_date: string;
+  end_date: string;
+  days_of_week: Array<number>;
+  start_time_hour: number;
+  start_time_minute: number;
+  duration_minutes: number;
+  capacity?: number;
+  price_cents?: number;
+  instructor_staff_id?: string | null;
+  class_template_id?: string | null;
+  waitlist_enabled?: boolean;
+  waitlist_capacity?: number;
+  marketplace_visible?: boolean;
+};
+
+export type RecurringScheduleResponse = {
+  recurrence_group_id: string;
+  created_count: number;
+  skipped_conflicts: number;
+  sessions: Array<ClassSessionFullResponse>;
 };
 
 export type ReferralLinkResponse = {
@@ -1287,6 +1485,8 @@ export type StaffPublic = {
   gym_id: string;
   is_email_verified: boolean;
   is_active: boolean;
+  google_id?: string | null;
+  apple_id?: string | null;
 };
 
 export type StaffPublicResponse = {
@@ -2013,9 +2213,21 @@ export type ConsumerAuthUpdateConsumerProfileResponse =
 export type ConsumerAuthGoogleLoginData = {
   body?: never;
   path?: never;
-  query?: never;
+  query?: {
+    redirect_uri?: string | null;
+  };
   url: "/api/v1/auth/consumer/google";
 };
+
+export type ConsumerAuthGoogleLoginErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ConsumerAuthGoogleLoginError =
+  ConsumerAuthGoogleLoginErrors[keyof ConsumerAuthGoogleLoginErrors];
 
 export type ConsumerAuthGoogleLoginResponses = {
   /**
@@ -2035,11 +2247,8 @@ export type ConsumerAuthGoogleCallbackResponses = {
   /**
    * Successful Response
    */
-  200: ConsumerToken;
+  200: unknown;
 };
-
-export type ConsumerAuthGoogleCallbackResponse =
-  ConsumerAuthGoogleCallbackResponses[keyof ConsumerAuthGoogleCallbackResponses];
 
 export type ConsumerAuthSetPasswordData = {
   body: SetPasswordRequest;
@@ -2071,9 +2280,21 @@ export type ConsumerAuthSetPasswordResponse =
 export type ConsumerAuthAppleLoginData = {
   body?: never;
   path?: never;
-  query?: never;
+  query?: {
+    redirect_uri?: string | null;
+  };
   url: "/api/v1/auth/consumer/apple";
 };
+
+export type ConsumerAuthAppleLoginErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ConsumerAuthAppleLoginError =
+  ConsumerAuthAppleLoginErrors[keyof ConsumerAuthAppleLoginErrors];
 
 export type ConsumerAuthAppleLoginResponses = {
   /**
@@ -2093,11 +2314,8 @@ export type ConsumerAuthAppleCallbackResponses = {
   /**
    * Successful Response
    */
-  200: ConsumerToken;
+  200: unknown;
 };
-
-export type ConsumerAuthAppleCallbackResponse =
-  ConsumerAuthAppleCallbackResponses[keyof ConsumerAuthAppleCallbackResponses];
 
 export type GymsRegisterGymData = {
   body: GymRegistrationRequest;
@@ -2523,62 +2741,6 @@ export type GymsUpdateMySpaceAmenitiesResponses = {
 export type GymsUpdateMySpaceAmenitiesResponse =
   GymsUpdateMySpaceAmenitiesResponses[keyof GymsUpdateMySpaceAmenitiesResponses];
 
-export type GymsCreateMyClassSessionData = {
-  body: ClassSessionCreateRequest;
-  path?: never;
-  query?: never;
-  url: "/api/v1/gyms/me/class_sessions";
-};
-
-export type GymsCreateMyClassSessionErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
-};
-
-export type GymsCreateMyClassSessionError =
-  GymsCreateMyClassSessionErrors[keyof GymsCreateMyClassSessionErrors];
-
-export type GymsCreateMyClassSessionResponses = {
-  /**
-   * Successful Response
-   */
-  201: ClassSessionResponse;
-};
-
-export type GymsCreateMyClassSessionResponse =
-  GymsCreateMyClassSessionResponses[keyof GymsCreateMyClassSessionResponses];
-
-export type GymsCancelMyClassSessionData = {
-  body?: never;
-  path: {
-    class_session_id: string;
-  };
-  query?: never;
-  url: "/api/v1/gyms/me/class_sessions/{class_session_id}/cancel";
-};
-
-export type GymsCancelMyClassSessionErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
-};
-
-export type GymsCancelMyClassSessionError =
-  GymsCancelMyClassSessionErrors[keyof GymsCancelMyClassSessionErrors];
-
-export type GymsCancelMyClassSessionResponses = {
-  /**
-   * Successful Response
-   */
-  200: ClassSessionResponse;
-};
-
-export type GymsCancelMyClassSessionResponse =
-  GymsCancelMyClassSessionResponses[keyof GymsCancelMyClassSessionResponses];
-
 export type GymsPreviewMemberImportCsvData = {
   body: BodyGymsPreviewMemberImportCsv;
   path?: never;
@@ -2661,6 +2823,446 @@ export type GymsGetPublicGymProfileResponses = {
 
 export type GymsGetPublicGymProfileResponse =
   GymsGetPublicGymProfileResponses[keyof GymsGetPublicGymProfileResponses];
+
+export type ClassSchedulingListClassTemplatesData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/api/v1/gyms/me/class_templates";
+};
+
+export type ClassSchedulingListClassTemplatesResponses = {
+  /**
+   * Successful Response
+   */
+  200: Array<ClassTemplateResponse>;
+};
+
+export type ClassSchedulingListClassTemplatesResponse =
+  ClassSchedulingListClassTemplatesResponses[keyof ClassSchedulingListClassTemplatesResponses];
+
+export type ClassSchedulingCreateClassTemplateData = {
+  body: ClassTemplateCreateRequest;
+  path?: never;
+  query?: never;
+  url: "/api/v1/gyms/me/class_templates";
+};
+
+export type ClassSchedulingCreateClassTemplateErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ClassSchedulingCreateClassTemplateError =
+  ClassSchedulingCreateClassTemplateErrors[keyof ClassSchedulingCreateClassTemplateErrors];
+
+export type ClassSchedulingCreateClassTemplateResponses = {
+  /**
+   * Successful Response
+   */
+  201: ClassTemplateResponse;
+};
+
+export type ClassSchedulingCreateClassTemplateResponse =
+  ClassSchedulingCreateClassTemplateResponses[keyof ClassSchedulingCreateClassTemplateResponses];
+
+export type ClassSchedulingDeleteClassTemplateData = {
+  body?: never;
+  path: {
+    template_id: string;
+  };
+  query?: never;
+  url: "/api/v1/gyms/me/class_templates/{template_id}";
+};
+
+export type ClassSchedulingDeleteClassTemplateErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ClassSchedulingDeleteClassTemplateError =
+  ClassSchedulingDeleteClassTemplateErrors[keyof ClassSchedulingDeleteClassTemplateErrors];
+
+export type ClassSchedulingDeleteClassTemplateResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type ClassSchedulingDeleteClassTemplateResponse =
+  ClassSchedulingDeleteClassTemplateResponses[keyof ClassSchedulingDeleteClassTemplateResponses];
+
+export type ClassSchedulingGetClassTemplateData = {
+  body?: never;
+  path: {
+    template_id: string;
+  };
+  query?: never;
+  url: "/api/v1/gyms/me/class_templates/{template_id}";
+};
+
+export type ClassSchedulingGetClassTemplateErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ClassSchedulingGetClassTemplateError =
+  ClassSchedulingGetClassTemplateErrors[keyof ClassSchedulingGetClassTemplateErrors];
+
+export type ClassSchedulingGetClassTemplateResponses = {
+  /**
+   * Successful Response
+   */
+  200: ClassTemplateResponse;
+};
+
+export type ClassSchedulingGetClassTemplateResponse =
+  ClassSchedulingGetClassTemplateResponses[keyof ClassSchedulingGetClassTemplateResponses];
+
+export type ClassSchedulingUpdateClassTemplateData = {
+  body: ClassTemplateUpdateRequest;
+  path: {
+    template_id: string;
+  };
+  query?: never;
+  url: "/api/v1/gyms/me/class_templates/{template_id}";
+};
+
+export type ClassSchedulingUpdateClassTemplateErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ClassSchedulingUpdateClassTemplateError =
+  ClassSchedulingUpdateClassTemplateErrors[keyof ClassSchedulingUpdateClassTemplateErrors];
+
+export type ClassSchedulingUpdateClassTemplateResponses = {
+  /**
+   * Successful Response
+   */
+  200: ClassTemplateResponse;
+};
+
+export type ClassSchedulingUpdateClassTemplateResponse =
+  ClassSchedulingUpdateClassTemplateResponses[keyof ClassSchedulingUpdateClassTemplateResponses];
+
+export type ClassSchedulingListClassSessionsData = {
+  body?: never;
+  path?: never;
+  query?: {
+    limit?: number;
+    offset?: number;
+  };
+  url: "/api/v1/gyms/me/class_sessions";
+};
+
+export type ClassSchedulingListClassSessionsErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ClassSchedulingListClassSessionsError =
+  ClassSchedulingListClassSessionsErrors[keyof ClassSchedulingListClassSessionsErrors];
+
+export type ClassSchedulingListClassSessionsResponses = {
+  /**
+   * Successful Response
+   */
+  200: Array<ClassSessionFullResponse>;
+};
+
+export type ClassSchedulingListClassSessionsResponse =
+  ClassSchedulingListClassSessionsResponses[keyof ClassSchedulingListClassSessionsResponses];
+
+export type ClassSchedulingCreateClassSessionData = {
+  body: ClassSessionCreateRequest;
+  path?: never;
+  query?: never;
+  url: "/api/v1/gyms/me/class_sessions";
+};
+
+export type ClassSchedulingCreateClassSessionErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ClassSchedulingCreateClassSessionError =
+  ClassSchedulingCreateClassSessionErrors[keyof ClassSchedulingCreateClassSessionErrors];
+
+export type ClassSchedulingCreateClassSessionResponses = {
+  /**
+   * Successful Response
+   */
+  201: ClassSessionFullResponse;
+};
+
+export type ClassSchedulingCreateClassSessionResponse =
+  ClassSchedulingCreateClassSessionResponses[keyof ClassSchedulingCreateClassSessionResponses];
+
+export type ClassSchedulingCreateRecurringSessionsData = {
+  body: RecurringScheduleRequest;
+  path?: never;
+  query?: never;
+  url: "/api/v1/gyms/me/class_sessions/recurring";
+};
+
+export type ClassSchedulingCreateRecurringSessionsErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ClassSchedulingCreateRecurringSessionsError =
+  ClassSchedulingCreateRecurringSessionsErrors[keyof ClassSchedulingCreateRecurringSessionsErrors];
+
+export type ClassSchedulingCreateRecurringSessionsResponses = {
+  /**
+   * Successful Response
+   */
+  201: RecurringScheduleResponse;
+};
+
+export type ClassSchedulingCreateRecurringSessionsResponse =
+  ClassSchedulingCreateRecurringSessionsResponses[keyof ClassSchedulingCreateRecurringSessionsResponses];
+
+export type ClassSchedulingAssignInstructorData = {
+  body: InstructorAssignRequest;
+  path: {
+    class_session_id: string;
+  };
+  query?: never;
+  url: "/api/v1/gyms/me/class_sessions/{class_session_id}/instructor";
+};
+
+export type ClassSchedulingAssignInstructorErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ClassSchedulingAssignInstructorError =
+  ClassSchedulingAssignInstructorErrors[keyof ClassSchedulingAssignInstructorErrors];
+
+export type ClassSchedulingAssignInstructorResponses = {
+  /**
+   * Successful Response
+   */
+  200: ClassSessionFullResponse;
+};
+
+export type ClassSchedulingAssignInstructorResponse =
+  ClassSchedulingAssignInstructorResponses[keyof ClassSchedulingAssignInstructorResponses];
+
+export type ClassSchedulingListPendingSessionsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/api/v1/gyms/me/class_sessions/pending";
+};
+
+export type ClassSchedulingListPendingSessionsResponses = {
+  /**
+   * Successful Response
+   */
+  200: Array<ClassSessionFullResponse>;
+};
+
+export type ClassSchedulingListPendingSessionsResponse =
+  ClassSchedulingListPendingSessionsResponses[keyof ClassSchedulingListPendingSessionsResponses];
+
+export type ClassSchedulingUpdateApprovalData = {
+  body: ApprovalActionRequest;
+  path: {
+    class_session_id: string;
+  };
+  query?: never;
+  url: "/api/v1/gyms/me/class_sessions/{class_session_id}/approval";
+};
+
+export type ClassSchedulingUpdateApprovalErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ClassSchedulingUpdateApprovalError =
+  ClassSchedulingUpdateApprovalErrors[keyof ClassSchedulingUpdateApprovalErrors];
+
+export type ClassSchedulingUpdateApprovalResponses = {
+  /**
+   * Successful Response
+   */
+  200: ClassSessionFullResponse;
+};
+
+export type ClassSchedulingUpdateApprovalResponse =
+  ClassSchedulingUpdateApprovalResponses[keyof ClassSchedulingUpdateApprovalResponses];
+
+export type ClassSchedulingCancelClassSessionData = {
+  body?: CancelRequest | null;
+  path: {
+    class_session_id: string;
+  };
+  query?: never;
+  url: "/api/v1/gyms/me/class_sessions/{class_session_id}/cancel";
+};
+
+export type ClassSchedulingCancelClassSessionErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ClassSchedulingCancelClassSessionError =
+  ClassSchedulingCancelClassSessionErrors[keyof ClassSchedulingCancelClassSessionErrors];
+
+export type ClassSchedulingCancelClassSessionResponses = {
+  /**
+   * Successful Response
+   */
+  200: CancelResponse;
+};
+
+export type ClassSchedulingCancelClassSessionResponse =
+  ClassSchedulingCancelClassSessionResponses[keyof ClassSchedulingCancelClassSessionResponses];
+
+export type ClassSchedulingUpdateCapacityData = {
+  body: CapacityUpdateRequest;
+  path: {
+    class_session_id: string;
+  };
+  query?: never;
+  url: "/api/v1/gyms/me/class_sessions/{class_session_id}/capacity";
+};
+
+export type ClassSchedulingUpdateCapacityErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ClassSchedulingUpdateCapacityError =
+  ClassSchedulingUpdateCapacityErrors[keyof ClassSchedulingUpdateCapacityErrors];
+
+export type ClassSchedulingUpdateCapacityResponses = {
+  /**
+   * Successful Response
+   */
+  200: ClassSessionFullResponse;
+};
+
+export type ClassSchedulingUpdateCapacityResponse =
+  ClassSchedulingUpdateCapacityResponses[keyof ClassSchedulingUpdateCapacityResponses];
+
+export type ClassSchedulingUpdatePricingData = {
+  body: PricingUpdateRequest;
+  path: {
+    class_session_id: string;
+  };
+  query?: never;
+  url: "/api/v1/gyms/me/class_sessions/{class_session_id}/pricing";
+};
+
+export type ClassSchedulingUpdatePricingErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ClassSchedulingUpdatePricingError =
+  ClassSchedulingUpdatePricingErrors[keyof ClassSchedulingUpdatePricingErrors];
+
+export type ClassSchedulingUpdatePricingResponses = {
+  /**
+   * Successful Response
+   */
+  200: ClassSessionFullResponse;
+};
+
+export type ClassSchedulingUpdatePricingResponse =
+  ClassSchedulingUpdatePricingResponses[keyof ClassSchedulingUpdatePricingResponses];
+
+export type ClassSchedulingGetCalendarData = {
+  body?: never;
+  path?: never;
+  query: {
+    start_date: string;
+    end_date: string;
+    space_id?: string | null;
+    instructor_staff_id?: string | null;
+    class_type?: ClassType | null;
+    status?: ClassSessionStatus | null;
+  };
+  url: "/api/v1/gyms/me/class_sessions/calendar";
+};
+
+export type ClassSchedulingGetCalendarErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ClassSchedulingGetCalendarError =
+  ClassSchedulingGetCalendarErrors[keyof ClassSchedulingGetCalendarErrors];
+
+export type ClassSchedulingGetCalendarResponses = {
+  /**
+   * Successful Response
+   */
+  200: Array<CalendarDayGroup>;
+};
+
+export type ClassSchedulingGetCalendarResponse =
+  ClassSchedulingGetCalendarResponses[keyof ClassSchedulingGetCalendarResponses];
+
+export type ClassSchedulingGetClassSessionData = {
+  body?: never;
+  path: {
+    class_session_id: string;
+  };
+  query?: never;
+  url: "/api/v1/gyms/me/class_sessions/{class_session_id}";
+};
+
+export type ClassSchedulingGetClassSessionErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ClassSchedulingGetClassSessionError =
+  ClassSchedulingGetClassSessionErrors[keyof ClassSchedulingGetClassSessionErrors];
+
+export type ClassSchedulingGetClassSessionResponses = {
+  /**
+   * Successful Response
+   */
+  200: ClassSessionFullResponse;
+};
+
+export type ClassSchedulingGetClassSessionResponse =
+  ClassSchedulingGetClassSessionResponses[keyof ClassSchedulingGetClassSessionResponses];
 
 export type StaffAuthLoginStaffData = {
   body: StaffLoginRequest;
@@ -2813,6 +3415,86 @@ export type StaffAuthUpdateStaffProfileResponses = {
 
 export type StaffAuthUpdateStaffProfileResponse =
   StaffAuthUpdateStaffProfileResponses[keyof StaffAuthUpdateStaffProfileResponses];
+
+export type StaffAuthStaffGoogleLoginData = {
+  body?: never;
+  path?: never;
+  query?: {
+    redirect_uri?: string | null;
+  };
+  url: "/api/v1/auth/staff/google";
+};
+
+export type StaffAuthStaffGoogleLoginErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type StaffAuthStaffGoogleLoginError =
+  StaffAuthStaffGoogleLoginErrors[keyof StaffAuthStaffGoogleLoginErrors];
+
+export type StaffAuthStaffGoogleLoginResponses = {
+  /**
+   * Successful Response
+   */
+  200: unknown;
+};
+
+export type StaffAuthStaffGoogleCallbackData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/api/v1/auth/staff/google/callback";
+};
+
+export type StaffAuthStaffGoogleCallbackResponses = {
+  /**
+   * Successful Response
+   */
+  200: unknown;
+};
+
+export type StaffAuthStaffAppleLoginData = {
+  body?: never;
+  path?: never;
+  query?: {
+    redirect_uri?: string | null;
+  };
+  url: "/api/v1/auth/staff/apple";
+};
+
+export type StaffAuthStaffAppleLoginErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type StaffAuthStaffAppleLoginError =
+  StaffAuthStaffAppleLoginErrors[keyof StaffAuthStaffAppleLoginErrors];
+
+export type StaffAuthStaffAppleLoginResponses = {
+  /**
+   * Successful Response
+   */
+  200: unknown;
+};
+
+export type StaffAuthStaffAppleCallbackData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/api/v1/auth/staff/apple/callback";
+};
+
+export type StaffAuthStaffAppleCallbackResponses = {
+  /**
+   * Successful Response
+   */
+  200: unknown;
+};
 
 export type StaffMembershipsListStaffData = {
   body?: never;
@@ -4639,16 +5321,108 @@ export type PaymentsInitiatePaymentFlowResponses = {
 export type PaymentsInitiatePaymentFlowResponse =
   PaymentsInitiatePaymentFlowResponses[keyof PaymentsInitiatePaymentFlowResponses];
 
+export type PaymentsCreateSubscriptionData = {
+  body: CreateSubscriptionRequest;
+  path?: never;
+  query?: never;
+  url: "/api/v1/payments/subscriptions";
+};
+
+export type PaymentsCreateSubscriptionErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type PaymentsCreateSubscriptionError =
+  PaymentsCreateSubscriptionErrors[keyof PaymentsCreateSubscriptionErrors];
+
+export type PaymentsCreateSubscriptionResponses = {
+  /**
+   * Successful Response
+   */
+  200: CreateSubscriptionResponse;
+};
+
+export type PaymentsCreateSubscriptionResponse =
+  PaymentsCreateSubscriptionResponses[keyof PaymentsCreateSubscriptionResponses];
+
+export type PaymentsGetPaymentStatusData = {
+  body?: never;
+  path: {
+    payment_id: string;
+  };
+  query?: never;
+  url: "/api/v1/payments/{payment_id}";
+};
+
+export type PaymentsGetPaymentStatusErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type PaymentsGetPaymentStatusError =
+  PaymentsGetPaymentStatusErrors[keyof PaymentsGetPaymentStatusErrors];
+
+export type PaymentsGetPaymentStatusResponses = {
+  /**
+   * Successful Response
+   */
+  200: PaymentStatusResponse;
+};
+
+export type PaymentsGetPaymentStatusResponse =
+  PaymentsGetPaymentStatusResponses[keyof PaymentsGetPaymentStatusResponses];
+
+export type PaymentsListPaymentsForGymData = {
+  body?: never;
+  path?: never;
+  query: {
+    gym_id: string;
+    start_date?: string | null;
+    end_date?: string | null;
+    payment_type?: PaymentType | null;
+    status?: PaymentStatus | null;
+  };
+  url: "/api/v1/payments/";
+};
+
+export type PaymentsListPaymentsForGymErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type PaymentsListPaymentsForGymError =
+  PaymentsListPaymentsForGymErrors[keyof PaymentsListPaymentsForGymErrors];
+
+export type PaymentsListPaymentsForGymResponses = {
+  /**
+   * Successful Response
+   */
+  200: GymPaymentsListResponse;
+};
+
+export type PaymentsListPaymentsForGymResponse =
+  PaymentsListPaymentsForGymResponses[keyof PaymentsListPaymentsForGymResponses];
+
 export type PaymentsProcessPaymentWebhookData = {
   body: PaymentWebhookRequest;
   headers?: {
     "X-Signature"?: string | null;
+    "svix-id"?: string | null;
+    "svix-timestamp"?: string | null;
+    "svix-signature"?: string | null;
   };
-  path: {
-    provider: PaymentProviderName;
+  path?: never;
+  query?: {
+    provider?: PaymentProviderName;
   };
-  query?: never;
-  url: "/api/v1/payments/webhooks/{provider}";
+  url: "/api/v1/payments/webhook";
 };
 
 export type PaymentsProcessPaymentWebhookErrors = {
@@ -4672,6 +5446,43 @@ export type PaymentsProcessPaymentWebhookResponses = {
 
 export type PaymentsProcessPaymentWebhookResponse =
   PaymentsProcessPaymentWebhookResponses[keyof PaymentsProcessPaymentWebhookResponses];
+
+export type PaymentsProcessPaymentWebhook2Data = {
+  body: PaymentWebhookRequest;
+  headers?: {
+    "X-Signature"?: string | null;
+    "svix-id"?: string | null;
+    "svix-timestamp"?: string | null;
+    "svix-signature"?: string | null;
+  };
+  path: {
+    provider: PaymentProviderName;
+  };
+  query?: never;
+  url: "/api/v1/payments/webhooks/{provider}";
+};
+
+export type PaymentsProcessPaymentWebhook2Errors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type PaymentsProcessPaymentWebhook2Error =
+  PaymentsProcessPaymentWebhook2Errors[keyof PaymentsProcessPaymentWebhook2Errors];
+
+export type PaymentsProcessPaymentWebhook2Responses = {
+  /**
+   * Successful Response
+   */
+  200: {
+    [key: string]: string;
+  };
+};
+
+export type PaymentsProcessPaymentWebhook2Response =
+  PaymentsProcessPaymentWebhook2Responses[keyof PaymentsProcessPaymentWebhook2Responses];
 
 export type PaymentsGymPaymentDashboardData = {
   body?: never;

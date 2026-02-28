@@ -118,7 +118,7 @@ export function ClassDetail() {
     <div className="max-w-3xl mx-auto px-4 py-6">
       <Link
         to="/discover"
-        className="inline-flex items-center text-sm text-indigo-600 hover:text-indigo-500 font-medium mb-6"
+        className="inline-flex items-center text-sm text-coral-600 hover:text-coral-500 font-medium mb-6"
       >
         &larr; Back to classes
       </Link>
@@ -137,11 +137,11 @@ export function ClassDetail() {
 
       {!classDetail ? null : (
         <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-          <div className="h-3 bg-indigo-500" />
+          <div className="h-3 bg-coral-500" />
           <div className="p-6">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 mb-2">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-coral-50 text-coral-700 mb-2">
                   {classDetail.class_type}
                 </span>
                 <h1 className="text-2xl font-bold text-gray-900">{classDetail.title}</h1>
@@ -236,7 +236,7 @@ export function ClassDetail() {
                       value="membership"
                       checked={bookingMethod === 'membership'}
                       onChange={() => setBookingMethod('membership')}
-                      className="text-indigo-600 focus:ring-indigo-500"
+                      className="text-coral-600 focus:ring-coral-500"
                     />
                     <div>
                       <p className="text-sm font-medium text-gray-900">Use gym membership</p>
@@ -253,7 +253,7 @@ export function ClassDetail() {
                       value="subscription"
                       checked={bookingMethod === 'subscription'}
                       onChange={() => setBookingMethod('subscription')}
-                      className="text-indigo-600 focus:ring-indigo-500"
+                      className="text-coral-600 focus:ring-coral-500"
                     />
                     <div>
                       <p className="text-sm font-medium text-gray-900">
@@ -272,7 +272,7 @@ export function ClassDetail() {
                       value="pay_per_class"
                       checked={bookingMethod === 'pay_per_class'}
                       onChange={() => setBookingMethod('pay_per_class')}
-                      className="text-indigo-600 focus:ring-indigo-500"
+                      className="text-coral-600 focus:ring-coral-500"
                     />
                     <div>
                       <p className="text-sm font-medium text-gray-900">Pay per class</p>
@@ -288,7 +288,7 @@ export function ClassDetail() {
                 <button
                   onClick={() => bookingMutation.mutate()}
                   disabled={bookingMutation.isPending}
-                  className="w-full py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="w-full py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-coral-600 hover:bg-coral-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-coral-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {bookingMutation.isPending
                     ? 'Processing...'

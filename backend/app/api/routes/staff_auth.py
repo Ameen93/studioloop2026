@@ -1,6 +1,6 @@
 """Staff authentication endpoints.
 
-Handles staff login and token refresh with role/gym_id claims in JWT.
+Handles staff login, token refresh, and OAuth with role/gym_id claims in JWT.
 Per ARCH-10: Custom JWT (FastAPI native) for authentication.
 Per ARCH-12: JWT access + refresh rotation.
 Per ARCH-13: Role claims in JWT for RBAC.
@@ -9,9 +9,10 @@ Per ARCH-13: Role claims in JWT for RBAC.
 from datetime import timedelta
 
 import jwt
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import ValidationError
-from sqlmodel import select
+from sqlmodel import or_, select
+from starlette.responses import Response
 
 from app.api.deps import CurrentStaff, SessionDep
 from app.core import security
@@ -413,3 +414,291 @@ def update_staff_profile(
     session.refresh(current_staff)
 
     return current_staff
+
+
+# =============================================================================
+# Staff Google OAuth Endpoints
+# =============================================================================
+
+
+def _build_staff_token(staff: Staff) -> StaffToken:
+    """Build a StaffToken with JWT access and refresh tokens."""
+    access_token = create_access_token(
+        subject=str(staff.id),
+        expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
+        role=staff.role.value,
+        gym_id=str(staff.gym_id),
+    )
+    refresh_token = create_refresh_token(
+        subject=str(staff.id),
+        expires_delta=timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+        role=staff.role.value,
+        gym_id=str(staff.gym_id),
+        token_version=staff.token_version,
+    )
+    return StaffToken(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+        staff_id=str(staff.id),
+        role=staff.role.value,
+        gym_id=str(staff.gym_id),
+    )
+
+
+@router.get("/google")
+async def staff_google_login(
+    request: Request,
+    redirect_uri: str | None = None,
+) -> Response:
+    """Initiate Google OAuth flow for staff.
+
+    Args:
+        request: FastAPI request object
+        redirect_uri: Frontend URL to redirect to after OAuth completes
+    """
+    if not settings.GOOGLE_CLIENT_ID or not settings.GOOGLE_CLIENT_SECRET:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "code": "OAUTH_NOT_CONFIGURED",
+                "message": "Google OAuth is not configured",
+                "details": {},
+            },
+        )
+
+    from app.core.oauth import oauth
+
+    if redirect_uri:
+        from app.core.oauth_utils import validate_oauth_redirect_uri
+
+        validate_oauth_redirect_uri(redirect_uri)
+        request.session["oauth_redirect_uri"] = redirect_uri
+
+    google_redirect = settings.GOOGLE_STAFF_REDIRECT_URI
+    return await oauth.google.authorize_redirect(request, google_redirect)  # type: ignore[no-any-return]
+
+
+@router.get("/google/callback", response_model=None)
+async def staff_google_callback(
+    request: Request,
+    session: SessionDep,
+) -> StaffToken | Response:
+    """Handle Google OAuth callback for staff (link-only, no auto-creation).
+
+    Staff must already exist (created by gym owner). This endpoint:
+    - Finds staff by google_id or email
+    - Links google_id if not already linked
+    - Returns tokens with role/gym_id claims
+    - Errors if no staff account found
+    """
+    from app.core.oauth import oauth
+    from app.core.oauth_utils import build_oauth_redirect_response
+
+    def _oauth_error(code: str, message: str, http_status: int = 400) -> Response:
+        frontend_redirect = request.session.pop("oauth_redirect_uri", None)
+        if frontend_redirect:
+            return build_oauth_redirect_response(
+                frontend_redirect, {"error": code, "error_message": message}
+            )
+        raise HTTPException(
+            status_code=http_status,
+            detail={"code": code, "message": message, "details": {}},
+        )
+
+    if not settings.GOOGLE_CLIENT_ID or not settings.GOOGLE_CLIENT_SECRET:
+        return _oauth_error(
+            "OAUTH_NOT_CONFIGURED", "Google OAuth is not configured", 503
+        )
+
+    try:
+        token = await oauth.google.authorize_access_token(request)
+    except Exception:
+        return _oauth_error("INVALID_OAUTH_STATE", "Invalid or expired OAuth state")
+
+    user_info = token.get("userinfo")
+    if not user_info:
+        return _oauth_error(
+            "OAUTH_USER_INFO_FAILED", "Failed to get user info from Google"
+        )
+
+    google_id = user_info.get("sub")
+    email = user_info.get("email")
+
+    if not email:
+        return _oauth_error(
+            "OAUTH_NO_EMAIL", "Google account does not have an email address"
+        )
+
+    # Find existing staff by google_id or email (link-only, no creation)
+    staff = session.exec(
+        select(Staff).where(or_(Staff.google_id == google_id, Staff.email == email))
+    ).first()
+
+    if not staff or not staff.is_active:
+        return _oauth_error(
+            "NO_STAFF_ACCOUNT",
+            "No staff account found for this email. Contact your gym admin.",
+        )
+
+    # Link Google ID if not already linked
+    if not staff.google_id:
+        staff.google_id = google_id
+        session.add(staff)
+        session.commit()
+        session.refresh(staff)
+
+    staff_token = _build_staff_token(staff)
+
+    # Include gym name for frontend
+    gym_name = staff.gym.name if staff.gym else ""
+
+    frontend_redirect = request.session.pop("oauth_redirect_uri", None)
+    if frontend_redirect:
+        return build_oauth_redirect_response(
+            frontend_redirect,
+            {
+                "access_token": staff_token.access_token,
+                "refresh_token": staff_token.refresh_token,
+                "token_type": "bearer",
+                "staff_id": staff_token.staff_id,
+                "role": staff_token.role,
+                "gym_id": staff_token.gym_id,
+                "gym_name": gym_name,
+            },
+        )
+
+    return staff_token
+
+
+# =============================================================================
+# Staff Apple OAuth Endpoints
+# =============================================================================
+
+
+@router.get("/apple")
+async def staff_apple_login(
+    request: Request,
+    redirect_uri: str | None = None,
+) -> Response:
+    """Initiate Apple OAuth flow for staff."""
+    if not settings.APPLE_CLIENT_ID or not settings.APPLE_PRIVATE_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "code": "OAUTH_NOT_CONFIGURED",
+                "message": "Apple Sign In is not configured",
+                "details": {},
+            },
+        )
+
+    from app.core.oauth import oauth
+
+    if redirect_uri:
+        from app.core.oauth_utils import validate_oauth_redirect_uri
+
+        validate_oauth_redirect_uri(redirect_uri)
+        request.session["oauth_redirect_uri"] = redirect_uri
+
+    apple_redirect = settings.APPLE_STAFF_REDIRECT_URI
+    return await oauth.apple.authorize_redirect(request, apple_redirect)  # type: ignore[no-any-return]
+
+
+@router.post("/apple/callback", response_model=None)
+async def staff_apple_callback(
+    request: Request,
+    session: SessionDep,
+) -> StaffToken | Response:
+    """Handle Apple OAuth callback for staff (link-only, no auto-creation).
+
+    Apple uses response_mode=form_post, so this is a POST endpoint.
+    Staff must already exist. Links apple_id if not already linked.
+    """
+    import jwt as pyjwt
+
+    from app.core.oauth import generate_apple_client_secret, oauth
+    from app.core.oauth_utils import build_oauth_redirect_response
+
+    def _oauth_error(code: str, message: str, http_status: int = 400) -> Response:
+        frontend_redirect = request.session.pop("oauth_redirect_uri", None)
+        if frontend_redirect:
+            return build_oauth_redirect_response(
+                frontend_redirect, {"error": code, "error_message": message}
+            )
+        raise HTTPException(
+            status_code=http_status,
+            detail={"code": code, "message": message, "details": {}},
+        )
+
+    if not settings.APPLE_CLIENT_ID or not settings.APPLE_PRIVATE_KEY:
+        return _oauth_error(
+            "OAUTH_NOT_CONFIGURED", "Apple Sign In is not configured", 503
+        )
+
+    try:
+        client_secret = generate_apple_client_secret()
+        oauth.apple.client_secret = client_secret
+        token = await oauth.apple.authorize_access_token(request)
+    except Exception:
+        return _oauth_error("INVALID_OAUTH_STATE", "Invalid or expired OAuth state")
+
+    id_token = token.get("id_token")
+    if not id_token:
+        return _oauth_error(
+            "OAUTH_USER_INFO_FAILED", "Failed to get ID token from Apple"
+        )
+
+    try:
+        decoded = pyjwt.decode(id_token, options={"verify_signature": False})
+    except Exception:
+        return _oauth_error("OAUTH_USER_INFO_FAILED", "Failed to decode Apple ID token")
+
+    apple_id = decoded.get("sub")
+    email = decoded.get("email")
+
+    if not apple_id:
+        return _oauth_error(
+            "OAUTH_USER_INFO_FAILED", "Apple ID token missing required 'sub' claim"
+        )
+    if not email:
+        return _oauth_error(
+            "OAUTH_NO_EMAIL", "Apple account does not have an email address"
+        )
+
+    # Find existing staff by apple_id or email (link-only, no creation)
+    staff = session.exec(
+        select(Staff).where(or_(Staff.apple_id == apple_id, Staff.email == email))
+    ).first()
+
+    if not staff or not staff.is_active:
+        return _oauth_error(
+            "NO_STAFF_ACCOUNT",
+            "No staff account found for this email. Contact your gym admin.",
+        )
+
+    # Link Apple ID if not already linked
+    if not staff.apple_id:
+        staff.apple_id = apple_id
+        session.add(staff)
+        session.commit()
+        session.refresh(staff)
+
+    staff_token = _build_staff_token(staff)
+    gym_name = staff.gym.name if staff.gym else ""
+
+    frontend_redirect = request.session.pop("oauth_redirect_uri", None)
+    if frontend_redirect:
+        return build_oauth_redirect_response(
+            frontend_redirect,
+            {
+                "access_token": staff_token.access_token,
+                "refresh_token": staff_token.refresh_token,
+                "token_type": "bearer",
+                "staff_id": staff_token.staff_id,
+                "role": staff_token.role,
+                "gym_id": staff_token.gym_id,
+                "gym_name": gym_name,
+            },
+        )
+
+    return staff_token

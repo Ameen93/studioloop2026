@@ -44,7 +44,7 @@ export function VerifyEmailSent() {
               Didn&apos;t receive the email?{' '}
               <Link
                 to="/auth/resend-verification"
-                className="font-medium text-primary-600 hover:text-primary-500"
+                className="font-medium text-gray-700 hover:text-gray-500"
               >
                 Click here to resend
               </Link>

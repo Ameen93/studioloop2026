@@ -59,6 +59,22 @@ class Staff(SoftDeleteMixin, GymScopedModel, table=True):
     )
     hourly_rate_cents: int | None = Field(default=None, ge=0)
 
+    # Social login fields (OAuth)
+    google_id: str | None = Field(
+        default=None,
+        index=True,
+        max_length=255,
+        description="Google OAuth sub/ID for social login",
+        sa_column_kwargs={"unique": True, "nullable": True},
+    )
+    apple_id: str | None = Field(
+        default=None,
+        index=True,
+        max_length=255,
+        description="Apple Sign-In user identifier",
+        sa_column_kwargs={"unique": True, "nullable": True},
+    )
+
     # Token rotation (ARCH-12)
     token_version: int = Field(
         default=1,
@@ -115,3 +131,5 @@ class StaffPublic(SQLModel):
     gym_id: UUID
     is_email_verified: bool
     is_active: bool
+    google_id: str | None = None
+    apple_id: str | None = None

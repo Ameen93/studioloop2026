@@ -11,7 +11,7 @@ export interface ButtonProps extends Omit<PressableProps, 'children'> {
   /** Button content */
   children: React.ReactNode;
   /** Visual variant */
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'accent';
   /** Size of the button */
   size?: 'sm' | 'md' | 'lg';
   /** Show loading spinner */
@@ -25,17 +25,19 @@ export interface ButtonProps extends Omit<PressableProps, 'children'> {
 }
 
 const variantClasses = {
-  primary: 'bg-primary-500 active:bg-primary-600',
-  secondary: 'bg-gray-200 active:bg-gray-300',
-  outline: 'bg-transparent border border-primary-500 active:bg-primary-50',
-  ghost: 'bg-transparent active:bg-gray-100',
+  primary: 'bg-coral-500 active:bg-coral-600',
+  secondary: 'bg-surface-2 active:bg-surface-3',
+  outline: 'bg-transparent border border-coral-500 active:bg-coral-50',
+  ghost: 'bg-transparent active:bg-surface-2',
+  accent: 'bg-accent-500 active:bg-accent-600',
 } as const;
 
 const variantTextClasses = {
   primary: 'text-white',
-  secondary: 'text-gray-900',
-  outline: 'text-primary-500',
-  ghost: 'text-gray-700',
+  secondary: 'text-text-primary',
+  outline: 'text-coral-500',
+  ghost: 'text-text-secondary',
+  accent: 'text-white',
 } as const;
 
 const sizeClasses = {
@@ -52,10 +54,6 @@ const textSizeClasses = {
 
 const disabledClasses = 'opacity-50';
 
-/**
- * Button component with cross-platform support
- * Uses NativeWind/Tailwind for consistent styling
- */
 export function Button({
   children,
   variant = 'primary',
@@ -87,7 +85,8 @@ export function Button({
     .filter(Boolean)
     .join(' ');
 
-  // For web, we can render a native button for better accessibility
+  const spinnerColor = variant === 'primary' || variant === 'accent' ? '#ffffff' : '#FF6B4A';
+
   if (Platform.OS === 'web') {
     return (
       <Pressable
@@ -99,7 +98,7 @@ export function Button({
         {loading ? (
           <ActivityIndicator
             size="small"
-            color={variant === 'primary' ? '#ffffff' : '#5b6ff2'}
+            color={spinnerColor}
             className="mr-2"
           />
         ) : null}
@@ -108,7 +107,6 @@ export function Button({
     );
   }
 
-  // Native mobile rendering
   return (
     <Pressable
       className={buttonClassName}
@@ -119,7 +117,7 @@ export function Button({
       {loading ? (
         <ActivityIndicator
           size="small"
-          color={variant === 'primary' ? '#ffffff' : '#5b6ff2'}
+          color={spinnerColor}
           style={{ marginRight: 8 }}
         />
       ) : null}

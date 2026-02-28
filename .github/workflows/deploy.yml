@@ -1,0 +1,99 @@
+# StudioLoop Production Deploy
+# Builds and deploys all frontend apps to Vercel on push to master.
+# Railway auto-deploys the backend via GitHub integration (configured in dashboard).
+
+name: Deploy
+
+on:
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+
+jobs:
+  deploy-frontend:
+    name: Deploy Frontend Apps
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    strategy:
+      matrix:
+        include:
+          - app: gym-web
+            vercel_project_id: prj_y2xzGKmjJW9laCZBqV8R8sKMbnX1
+          - app: consumer-web
+            vercel_project_id: prj_eWvjhBrFUwTMKjVn2Sme0BzAn2tv
+          - app: web
+            vercel_project_id: prj_RRrUEHw9Ig7NdZR7pquuXXKe1Ik7
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+          cache-dependency-path: './frontend/pnpm-lock.yaml'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build ${{ matrix.app }}
+        run: pnpm --filter ${{ matrix.app }} build
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+
+      - name: Install Vercel CLI
+        run: npm i -g vercel@latest
+
+      - name: Prepare Vercel output
+        run: |
+          APP_DIR=apps/${{ matrix.app }}
+          rm -rf $APP_DIR/.vercel/output
+          mkdir -p $APP_DIR/.vercel/output/static
+          cp -r $APP_DIR/dist/* $APP_DIR/.vercel/output/static/
+          cat > $APP_DIR/.vercel/output/config.json << 'CONF'
+          {
+            "version": 3,
+            "routes": [
+              { "handle": "filesystem" },
+              { "src": "/(.*)", "dest": "/index.html" }
+            ]
+          }
+          CONF
+          mkdir -p $APP_DIR/.vercel
+          echo '{"projectId":"${{ matrix.vercel_project_id }}","orgId":"${{ secrets.VERCEL_ORG_ID }}"}' > $APP_DIR/.vercel/project.json
+
+      - name: Deploy to Vercel
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: ./frontend/apps/${{ matrix.app }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ matrix.vercel_project_id }}
+
+  deploy-backend:
+    name: Deploy Backend (Railway)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm i -g @railway/cli
+
+      - name: Deploy to Railway
+        run: railway up --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}

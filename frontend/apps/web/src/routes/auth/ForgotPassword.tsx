@@ -42,7 +42,7 @@ export function ForgotPassword() {
           </p>
           <Link
             to="/auth/login"
-            className="mt-4 inline-flex items-center px-4 py-2 text-sm font-medium text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors"
+            className="mt-4 inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
           >
             Back to sign in
           </Link>
@@ -77,7 +77,7 @@ export function ForgotPassword() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm"
               placeholder="you@example.com"
             />
           </div>
@@ -85,13 +85,13 @@ export function ForgotPassword() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex justify-center py-2.5 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex justify-center py-2.5 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gray-700 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Sending...' : 'Send reset link'}
             </button>
           </div>
           <div className="text-center">
-            <Link to="/auth/login" className="text-sm font-medium text-primary-600 hover:text-primary-500">
+            <Link to="/auth/login" className="text-sm font-medium text-gray-700 hover:text-gray-500">
               Back to sign in
             </Link>
           </div>

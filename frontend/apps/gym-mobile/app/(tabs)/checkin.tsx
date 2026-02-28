@@ -141,27 +141,27 @@ export default function CheckinTab() {
 
   if (mode === 'qr' && !permission?.granted) {
     return (
-      <View className="flex-1 bg-gray-50 items-center justify-center px-6">
+      <View className="flex-1 bg-[#0a0a0a] items-center justify-center px-6">
         <Ionicons name="camera-outline" size={64} color="#d1d5db" />
-        <Text className="text-lg font-semibold text-gray-900 mt-4 mb-2">Camera Permission</Text>
+        <Text className="text-lg font-semibold text-gray-50 mt-4 mb-2">Camera Permission</Text>
         <Text className="text-gray-500 text-center mb-6">
           Camera access is needed to scan member QR codes for check-in
         </Text>
-        <Pressable className="bg-emerald-600 rounded-lg py-3 px-6" onPress={requestPermission}>
+        <Pressable className="bg-gold-600 rounded-lg py-3 px-6" onPress={requestPermission}>
           <Text className="text-white font-semibold">Grant Permission</Text>
         </Pressable>
         <Pressable className="mt-4" onPress={() => setMode('manual')}>
-          <Text className="text-emerald-600 font-medium">Use manual check-in instead</Text>
+          <Text className="text-gold-600 font-medium">Use manual check-in instead</Text>
         </Pressable>
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-gray-50">
-      <View className="flex-row bg-white border-b border-gray-200 px-4 py-2">
+    <View className="flex-1 bg-[#0a0a0a]">
+      <View className="flex-row bg-[#1a1a1a] border-b border-[#2a2a2a] px-4 py-2">
         <Pressable
-          className={`flex-1 py-2 rounded-lg mr-1 ${mode === 'qr' ? 'bg-emerald-600' : 'bg-gray-100'}`}
+          className={`flex-1 py-2 rounded-lg mr-1 ${mode === 'qr' ? 'bg-gold-600' : 'bg-gray-100'}`}
           onPress={() => setMode('qr')}
         >
           <Text className={`text-center font-medium ${mode === 'qr' ? 'text-white' : 'text-gray-600'}`}>
@@ -169,7 +169,7 @@ export default function CheckinTab() {
           </Text>
         </Pressable>
         <Pressable
-          className={`flex-1 py-2 rounded-lg ml-1 ${mode === 'manual' ? 'bg-emerald-600' : 'bg-gray-100'}`}
+          className={`flex-1 py-2 rounded-lg ml-1 ${mode === 'manual' ? 'bg-gold-600' : 'bg-gray-100'}`}
           onPress={() => setMode('manual')}
         >
           <Text className={`text-center font-medium ${mode === 'manual' ? 'text-white' : 'text-gray-600'}`}>
@@ -217,10 +217,10 @@ export default function CheckinTab() {
         </View>
       ) : (
         <View className="flex-1 px-4 pt-4">
-          <View className="flex-row items-center bg-white border border-gray-300 rounded-lg px-3">
+          <View className="flex-row items-center bg-[#1a1a1a] border border-gray-300 rounded-lg px-3">
             <Ionicons name="search" size={20} color="#9ca3af" />
             <TextInput
-              className="flex-1 py-3 px-2 text-gray-900"
+              className="flex-1 py-3 px-2 text-gray-50"
               placeholder="Search by name, phone, or email..."
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -240,11 +240,11 @@ export default function CheckinTab() {
             className="mt-3"
             renderItem={({ item }) => (
               <Pressable
-                className="bg-white rounded-lg p-4 mb-2 border border-gray-200 flex-row items-center"
+                className="bg-[#1a1a1a] rounded-lg p-4 mb-2 border border-[#2a2a2a] flex-row items-center"
                 onPress={() => handleManualCheckin(item)}
               >
-                <View className="w-10 h-10 rounded-full bg-emerald-100 items-center justify-center">
-                  <Text className="text-emerald-600 font-bold">
+                <View className="w-10 h-10 rounded-full bg-gold-100 items-center justify-center">
+                  <Text className="text-gold-600 font-bold">
                     {[item.first_name, item.last_name]
                       .map((n) => n[0] ?? '')
                       .join('')
@@ -252,7 +252,7 @@ export default function CheckinTab() {
                   </Text>
                 </View>
                 <View className="flex-1 ml-3">
-                  <Text className="text-gray-900 font-semibold">
+                  <Text className="text-gray-50 font-semibold">
                     {item.first_name} {item.last_name}
                   </Text>
                   <Text className="text-gray-500 text-sm">{item.phone ?? 'No phone'}</Text>

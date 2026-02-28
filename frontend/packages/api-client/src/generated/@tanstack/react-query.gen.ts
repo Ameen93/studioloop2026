@@ -40,17 +40,35 @@ import {
   gymsDeactivateMySpace,
   gymsUpdateMySpace,
   gymsUpdateMySpaceAmenities,
-  gymsCreateMyClassSession,
-  gymsCancelMyClassSession,
   gymsPreviewMemberImportCsv,
   gymsConfirmMemberImport,
   gymsGetPublicGymProfile,
+  classSchedulingListClassTemplates,
+  classSchedulingCreateClassTemplate,
+  classSchedulingDeleteClassTemplate,
+  classSchedulingGetClassTemplate,
+  classSchedulingUpdateClassTemplate,
+  classSchedulingListClassSessions,
+  classSchedulingCreateClassSession,
+  classSchedulingCreateRecurringSessions,
+  classSchedulingAssignInstructor,
+  classSchedulingListPendingSessions,
+  classSchedulingUpdateApproval,
+  classSchedulingCancelClassSession,
+  classSchedulingUpdateCapacity,
+  classSchedulingUpdatePricing,
+  classSchedulingGetCalendar,
+  classSchedulingGetClassSession,
   staffAuthLoginStaff,
   staffAuthRefreshStaffToken,
   staffAuthForgotPassword,
   staffAuthResetPassword,
   staffAuthGetCurrentStaffProfile,
   staffAuthUpdateStaffProfile,
+  staffAuthStaffGoogleLogin,
+  staffAuthStaffGoogleCallback,
+  staffAuthStaffAppleLogin,
+  staffAuthStaffAppleCallback,
   staffMembershipsListStaff,
   staffMembershipsAddStaffMember,
   staffMembershipsUpdateStaffRole,
@@ -116,7 +134,11 @@ import {
   analyticsAtRiskMembers,
   analyticsGymOwnerDashboard,
   paymentsInitiatePaymentFlow,
+  paymentsCreateSubscription,
+  paymentsGetPaymentStatus,
+  paymentsListPaymentsForGym,
   paymentsProcessPaymentWebhook,
+  paymentsProcessPaymentWebhook2,
   paymentsGymPaymentDashboard,
   paymentsGymPaymentDetail,
   paymentsFailedPaymentActionItems,
@@ -226,7 +248,6 @@ import type {
   ConsumerAuthSetPasswordResponse,
   ConsumerAuthAppleLoginData,
   ConsumerAuthAppleCallbackData,
-  ConsumerAuthAppleCallbackResponse,
   GymsRegisterGymData,
   GymsRegisterGymError,
   GymsRegisterGymResponse,
@@ -267,12 +288,6 @@ import type {
   GymsUpdateMySpaceAmenitiesData,
   GymsUpdateMySpaceAmenitiesError,
   GymsUpdateMySpaceAmenitiesResponse,
-  GymsCreateMyClassSessionData,
-  GymsCreateMyClassSessionError,
-  GymsCreateMyClassSessionResponse,
-  GymsCancelMyClassSessionData,
-  GymsCancelMyClassSessionError,
-  GymsCancelMyClassSessionResponse,
   GymsPreviewMemberImportCsvData,
   GymsPreviewMemberImportCsvError,
   GymsPreviewMemberImportCsvResponse,
@@ -280,6 +295,44 @@ import type {
   GymsConfirmMemberImportError,
   GymsConfirmMemberImportResponse,
   GymsGetPublicGymProfileData,
+  ClassSchedulingListClassTemplatesData,
+  ClassSchedulingCreateClassTemplateData,
+  ClassSchedulingCreateClassTemplateError,
+  ClassSchedulingCreateClassTemplateResponse,
+  ClassSchedulingDeleteClassTemplateData,
+  ClassSchedulingDeleteClassTemplateError,
+  ClassSchedulingDeleteClassTemplateResponse,
+  ClassSchedulingGetClassTemplateData,
+  ClassSchedulingUpdateClassTemplateData,
+  ClassSchedulingUpdateClassTemplateError,
+  ClassSchedulingUpdateClassTemplateResponse,
+  ClassSchedulingListClassSessionsData,
+  ClassSchedulingListClassSessionsError,
+  ClassSchedulingListClassSessionsResponse,
+  ClassSchedulingCreateClassSessionData,
+  ClassSchedulingCreateClassSessionError,
+  ClassSchedulingCreateClassSessionResponse,
+  ClassSchedulingCreateRecurringSessionsData,
+  ClassSchedulingCreateRecurringSessionsError,
+  ClassSchedulingCreateRecurringSessionsResponse,
+  ClassSchedulingAssignInstructorData,
+  ClassSchedulingAssignInstructorError,
+  ClassSchedulingAssignInstructorResponse,
+  ClassSchedulingListPendingSessionsData,
+  ClassSchedulingUpdateApprovalData,
+  ClassSchedulingUpdateApprovalError,
+  ClassSchedulingUpdateApprovalResponse,
+  ClassSchedulingCancelClassSessionData,
+  ClassSchedulingCancelClassSessionError,
+  ClassSchedulingCancelClassSessionResponse,
+  ClassSchedulingUpdateCapacityData,
+  ClassSchedulingUpdateCapacityError,
+  ClassSchedulingUpdateCapacityResponse,
+  ClassSchedulingUpdatePricingData,
+  ClassSchedulingUpdatePricingError,
+  ClassSchedulingUpdatePricingResponse,
+  ClassSchedulingGetCalendarData,
+  ClassSchedulingGetClassSessionData,
   StaffAuthLoginStaffData,
   StaffAuthLoginStaffError,
   StaffAuthLoginStaffResponse,
@@ -296,6 +349,10 @@ import type {
   StaffAuthUpdateStaffProfileData,
   StaffAuthUpdateStaffProfileError,
   StaffAuthUpdateStaffProfileResponse,
+  StaffAuthStaffGoogleLoginData,
+  StaffAuthStaffGoogleCallbackData,
+  StaffAuthStaffAppleLoginData,
+  StaffAuthStaffAppleCallbackData,
   StaffMembershipsListStaffData,
   StaffMembershipsAddStaffMemberData,
   StaffMembershipsAddStaffMemberError,
@@ -434,9 +491,17 @@ import type {
   PaymentsInitiatePaymentFlowData,
   PaymentsInitiatePaymentFlowError,
   PaymentsInitiatePaymentFlowResponse,
+  PaymentsCreateSubscriptionData,
+  PaymentsCreateSubscriptionError,
+  PaymentsCreateSubscriptionResponse,
+  PaymentsGetPaymentStatusData,
+  PaymentsListPaymentsForGymData,
   PaymentsProcessPaymentWebhookData,
   PaymentsProcessPaymentWebhookError,
   PaymentsProcessPaymentWebhookResponse,
+  PaymentsProcessPaymentWebhook2Data,
+  PaymentsProcessPaymentWebhook2Error,
+  PaymentsProcessPaymentWebhook2Response,
   PaymentsGymPaymentDashboardData,
   PaymentsGymPaymentDetailData,
   PaymentsFailedPaymentActionItemsData,
@@ -1289,12 +1354,12 @@ export const consumerAuthAppleCallbackOptions = (
 export const consumerAuthAppleCallbackMutation = (
   options?: Partial<Options<ConsumerAuthAppleCallbackData>>,
 ): UseMutationOptions<
-  ConsumerAuthAppleCallbackResponse,
+  unknown,
   DefaultError,
   Options<ConsumerAuthAppleCallbackData>
 > => {
   const mutationOptions: UseMutationOptions<
-    ConsumerAuthAppleCallbackResponse,
+    unknown,
     DefaultError,
     Options<ConsumerAuthAppleCallbackData>
   > = {
@@ -1784,96 +1849,6 @@ export const gymsUpdateMySpaceAmenitiesMutation = (
   return mutationOptions;
 };
 
-export const gymsCreateMyClassSessionQueryKey = (
-  options: Options<GymsCreateMyClassSessionData>,
-) => createQueryKey("gymsCreateMyClassSession", options);
-
-export const gymsCreateMyClassSessionOptions = (
-  options: Options<GymsCreateMyClassSessionData>,
-) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await gymsCreateMyClassSession({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: gymsCreateMyClassSessionQueryKey(options),
-  });
-};
-
-export const gymsCreateMyClassSessionMutation = (
-  options?: Partial<Options<GymsCreateMyClassSessionData>>,
-): UseMutationOptions<
-  GymsCreateMyClassSessionResponse,
-  GymsCreateMyClassSessionError,
-  Options<GymsCreateMyClassSessionData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    GymsCreateMyClassSessionResponse,
-    GymsCreateMyClassSessionError,
-    Options<GymsCreateMyClassSessionData>
-  > = {
-    mutationFn: async (localOptions) => {
-      const { data } = await gymsCreateMyClassSession({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const gymsCancelMyClassSessionQueryKey = (
-  options: Options<GymsCancelMyClassSessionData>,
-) => createQueryKey("gymsCancelMyClassSession", options);
-
-export const gymsCancelMyClassSessionOptions = (
-  options: Options<GymsCancelMyClassSessionData>,
-) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await gymsCancelMyClassSession({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: gymsCancelMyClassSessionQueryKey(options),
-  });
-};
-
-export const gymsCancelMyClassSessionMutation = (
-  options?: Partial<Options<GymsCancelMyClassSessionData>>,
-): UseMutationOptions<
-  GymsCancelMyClassSessionResponse,
-  GymsCancelMyClassSessionError,
-  Options<GymsCancelMyClassSessionData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    GymsCancelMyClassSessionResponse,
-    GymsCancelMyClassSessionError,
-    Options<GymsCancelMyClassSessionData>
-  > = {
-    mutationFn: async (localOptions) => {
-      const { data } = await gymsCancelMyClassSession({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
 export const gymsPreviewMemberImportCsvQueryKey = (
   options: Options<GymsPreviewMemberImportCsvData>,
 ) => createQueryKey("gymsPreviewMemberImportCsv", options);
@@ -1982,6 +1957,538 @@ export const gymsGetPublicGymProfileOptions = (
       return data;
     },
     queryKey: gymsGetPublicGymProfileQueryKey(options),
+  });
+};
+
+export const classSchedulingListClassTemplatesQueryKey = (
+  options?: Options<ClassSchedulingListClassTemplatesData>,
+) => createQueryKey("classSchedulingListClassTemplates", options);
+
+export const classSchedulingListClassTemplatesOptions = (
+  options?: Options<ClassSchedulingListClassTemplatesData>,
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await classSchedulingListClassTemplates({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: classSchedulingListClassTemplatesQueryKey(options),
+  });
+};
+
+export const classSchedulingCreateClassTemplateQueryKey = (
+  options: Options<ClassSchedulingCreateClassTemplateData>,
+) => createQueryKey("classSchedulingCreateClassTemplate", options);
+
+export const classSchedulingCreateClassTemplateOptions = (
+  options: Options<ClassSchedulingCreateClassTemplateData>,
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await classSchedulingCreateClassTemplate({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: classSchedulingCreateClassTemplateQueryKey(options),
+  });
+};
+
+export const classSchedulingCreateClassTemplateMutation = (
+  options?: Partial<Options<ClassSchedulingCreateClassTemplateData>>,
+): UseMutationOptions<
+  ClassSchedulingCreateClassTemplateResponse,
+  ClassSchedulingCreateClassTemplateError,
+  Options<ClassSchedulingCreateClassTemplateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClassSchedulingCreateClassTemplateResponse,
+    ClassSchedulingCreateClassTemplateError,
+    Options<ClassSchedulingCreateClassTemplateData>
+  > = {
+    mutationFn: async (localOptions) => {
+      const { data } = await classSchedulingCreateClassTemplate({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const classSchedulingDeleteClassTemplateMutation = (
+  options?: Partial<Options<ClassSchedulingDeleteClassTemplateData>>,
+): UseMutationOptions<
+  ClassSchedulingDeleteClassTemplateResponse,
+  ClassSchedulingDeleteClassTemplateError,
+  Options<ClassSchedulingDeleteClassTemplateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClassSchedulingDeleteClassTemplateResponse,
+    ClassSchedulingDeleteClassTemplateError,
+    Options<ClassSchedulingDeleteClassTemplateData>
+  > = {
+    mutationFn: async (localOptions) => {
+      const { data } = await classSchedulingDeleteClassTemplate({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const classSchedulingGetClassTemplateQueryKey = (
+  options: Options<ClassSchedulingGetClassTemplateData>,
+) => createQueryKey("classSchedulingGetClassTemplate", options);
+
+export const classSchedulingGetClassTemplateOptions = (
+  options: Options<ClassSchedulingGetClassTemplateData>,
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await classSchedulingGetClassTemplate({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: classSchedulingGetClassTemplateQueryKey(options),
+  });
+};
+
+export const classSchedulingUpdateClassTemplateMutation = (
+  options?: Partial<Options<ClassSchedulingUpdateClassTemplateData>>,
+): UseMutationOptions<
+  ClassSchedulingUpdateClassTemplateResponse,
+  ClassSchedulingUpdateClassTemplateError,
+  Options<ClassSchedulingUpdateClassTemplateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClassSchedulingUpdateClassTemplateResponse,
+    ClassSchedulingUpdateClassTemplateError,
+    Options<ClassSchedulingUpdateClassTemplateData>
+  > = {
+    mutationFn: async (localOptions) => {
+      const { data } = await classSchedulingUpdateClassTemplate({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const classSchedulingListClassSessionsQueryKey = (
+  options?: Options<ClassSchedulingListClassSessionsData>,
+) => createQueryKey("classSchedulingListClassSessions", options);
+
+export const classSchedulingListClassSessionsOptions = (
+  options?: Options<ClassSchedulingListClassSessionsData>,
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await classSchedulingListClassSessions({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: classSchedulingListClassSessionsQueryKey(options),
+  });
+};
+
+const createInfiniteParams = <
+  K extends Pick<QueryKey<Options>[0], "body" | "headers" | "path" | "query">,
+>(
+  queryKey: QueryKey<Options>,
+  page: K,
+) => {
+  const params = queryKey[0];
+  if (page.body) {
+    params.body = {
+      ...(queryKey[0].body as any),
+      ...(page.body as any),
+    };
+  }
+  if (page.headers) {
+    params.headers = {
+      ...queryKey[0].headers,
+      ...page.headers,
+    };
+  }
+  if (page.path) {
+    params.path = {
+      ...(queryKey[0].path as any),
+      ...(page.path as any),
+    };
+  }
+  if (page.query) {
+    params.query = {
+      ...(queryKey[0].query as any),
+      ...(page.query as any),
+    };
+  }
+  return params as unknown as typeof page;
+};
+
+export const classSchedulingListClassSessionsInfiniteQueryKey = (
+  options?: Options<ClassSchedulingListClassSessionsData>,
+): QueryKey<Options<ClassSchedulingListClassSessionsData>> =>
+  createQueryKey("classSchedulingListClassSessions", options, true);
+
+export const classSchedulingListClassSessionsInfiniteOptions = (
+  options?: Options<ClassSchedulingListClassSessionsData>,
+) => {
+  return infiniteQueryOptions<
+    ClassSchedulingListClassSessionsResponse,
+    ClassSchedulingListClassSessionsError,
+    InfiniteData<ClassSchedulingListClassSessionsResponse>,
+    QueryKey<Options<ClassSchedulingListClassSessionsData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ClassSchedulingListClassSessionsData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ClassSchedulingListClassSessionsData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  offset: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await classSchedulingListClassSessions({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: classSchedulingListClassSessionsInfiniteQueryKey(options),
+    },
+  );
+};
+
+export const classSchedulingCreateClassSessionQueryKey = (
+  options: Options<ClassSchedulingCreateClassSessionData>,
+) => createQueryKey("classSchedulingCreateClassSession", options);
+
+export const classSchedulingCreateClassSessionOptions = (
+  options: Options<ClassSchedulingCreateClassSessionData>,
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await classSchedulingCreateClassSession({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: classSchedulingCreateClassSessionQueryKey(options),
+  });
+};
+
+export const classSchedulingCreateClassSessionMutation = (
+  options?: Partial<Options<ClassSchedulingCreateClassSessionData>>,
+): UseMutationOptions<
+  ClassSchedulingCreateClassSessionResponse,
+  ClassSchedulingCreateClassSessionError,
+  Options<ClassSchedulingCreateClassSessionData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClassSchedulingCreateClassSessionResponse,
+    ClassSchedulingCreateClassSessionError,
+    Options<ClassSchedulingCreateClassSessionData>
+  > = {
+    mutationFn: async (localOptions) => {
+      const { data } = await classSchedulingCreateClassSession({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const classSchedulingCreateRecurringSessionsQueryKey = (
+  options: Options<ClassSchedulingCreateRecurringSessionsData>,
+) => createQueryKey("classSchedulingCreateRecurringSessions", options);
+
+export const classSchedulingCreateRecurringSessionsOptions = (
+  options: Options<ClassSchedulingCreateRecurringSessionsData>,
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await classSchedulingCreateRecurringSessions({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: classSchedulingCreateRecurringSessionsQueryKey(options),
+  });
+};
+
+export const classSchedulingCreateRecurringSessionsMutation = (
+  options?: Partial<Options<ClassSchedulingCreateRecurringSessionsData>>,
+): UseMutationOptions<
+  ClassSchedulingCreateRecurringSessionsResponse,
+  ClassSchedulingCreateRecurringSessionsError,
+  Options<ClassSchedulingCreateRecurringSessionsData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClassSchedulingCreateRecurringSessionsResponse,
+    ClassSchedulingCreateRecurringSessionsError,
+    Options<ClassSchedulingCreateRecurringSessionsData>
+  > = {
+    mutationFn: async (localOptions) => {
+      const { data } = await classSchedulingCreateRecurringSessions({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const classSchedulingAssignInstructorMutation = (
+  options?: Partial<Options<ClassSchedulingAssignInstructorData>>,
+): UseMutationOptions<
+  ClassSchedulingAssignInstructorResponse,
+  ClassSchedulingAssignInstructorError,
+  Options<ClassSchedulingAssignInstructorData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClassSchedulingAssignInstructorResponse,
+    ClassSchedulingAssignInstructorError,
+    Options<ClassSchedulingAssignInstructorData>
+  > = {
+    mutationFn: async (localOptions) => {
+      const { data } = await classSchedulingAssignInstructor({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const classSchedulingListPendingSessionsQueryKey = (
+  options?: Options<ClassSchedulingListPendingSessionsData>,
+) => createQueryKey("classSchedulingListPendingSessions", options);
+
+export const classSchedulingListPendingSessionsOptions = (
+  options?: Options<ClassSchedulingListPendingSessionsData>,
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await classSchedulingListPendingSessions({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: classSchedulingListPendingSessionsQueryKey(options),
+  });
+};
+
+export const classSchedulingUpdateApprovalMutation = (
+  options?: Partial<Options<ClassSchedulingUpdateApprovalData>>,
+): UseMutationOptions<
+  ClassSchedulingUpdateApprovalResponse,
+  ClassSchedulingUpdateApprovalError,
+  Options<ClassSchedulingUpdateApprovalData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClassSchedulingUpdateApprovalResponse,
+    ClassSchedulingUpdateApprovalError,
+    Options<ClassSchedulingUpdateApprovalData>
+  > = {
+    mutationFn: async (localOptions) => {
+      const { data } = await classSchedulingUpdateApproval({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const classSchedulingCancelClassSessionQueryKey = (
+  options: Options<ClassSchedulingCancelClassSessionData>,
+) => createQueryKey("classSchedulingCancelClassSession", options);
+
+export const classSchedulingCancelClassSessionOptions = (
+  options: Options<ClassSchedulingCancelClassSessionData>,
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await classSchedulingCancelClassSession({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: classSchedulingCancelClassSessionQueryKey(options),
+  });
+};
+
+export const classSchedulingCancelClassSessionMutation = (
+  options?: Partial<Options<ClassSchedulingCancelClassSessionData>>,
+): UseMutationOptions<
+  ClassSchedulingCancelClassSessionResponse,
+  ClassSchedulingCancelClassSessionError,
+  Options<ClassSchedulingCancelClassSessionData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClassSchedulingCancelClassSessionResponse,
+    ClassSchedulingCancelClassSessionError,
+    Options<ClassSchedulingCancelClassSessionData>
+  > = {
+    mutationFn: async (localOptions) => {
+      const { data } = await classSchedulingCancelClassSession({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const classSchedulingUpdateCapacityMutation = (
+  options?: Partial<Options<ClassSchedulingUpdateCapacityData>>,
+): UseMutationOptions<
+  ClassSchedulingUpdateCapacityResponse,
+  ClassSchedulingUpdateCapacityError,
+  Options<ClassSchedulingUpdateCapacityData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClassSchedulingUpdateCapacityResponse,
+    ClassSchedulingUpdateCapacityError,
+    Options<ClassSchedulingUpdateCapacityData>
+  > = {
+    mutationFn: async (localOptions) => {
+      const { data } = await classSchedulingUpdateCapacity({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const classSchedulingUpdatePricingMutation = (
+  options?: Partial<Options<ClassSchedulingUpdatePricingData>>,
+): UseMutationOptions<
+  ClassSchedulingUpdatePricingResponse,
+  ClassSchedulingUpdatePricingError,
+  Options<ClassSchedulingUpdatePricingData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClassSchedulingUpdatePricingResponse,
+    ClassSchedulingUpdatePricingError,
+    Options<ClassSchedulingUpdatePricingData>
+  > = {
+    mutationFn: async (localOptions) => {
+      const { data } = await classSchedulingUpdatePricing({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const classSchedulingGetCalendarQueryKey = (
+  options: Options<ClassSchedulingGetCalendarData>,
+) => createQueryKey("classSchedulingGetCalendar", options);
+
+export const classSchedulingGetCalendarOptions = (
+  options: Options<ClassSchedulingGetCalendarData>,
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await classSchedulingGetCalendar({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: classSchedulingGetCalendarQueryKey(options),
+  });
+};
+
+export const classSchedulingGetClassSessionQueryKey = (
+  options: Options<ClassSchedulingGetClassSessionData>,
+) => createQueryKey("classSchedulingGetClassSession", options);
+
+export const classSchedulingGetClassSessionOptions = (
+  options: Options<ClassSchedulingGetClassSessionData>,
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await classSchedulingGetClassSession({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: classSchedulingGetClassSessionQueryKey(options),
   });
 };
 
@@ -2200,6 +2707,114 @@ export const staffAuthUpdateStaffProfileMutation = (
   > = {
     mutationFn: async (localOptions) => {
       const { data } = await staffAuthUpdateStaffProfile({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const staffAuthStaffGoogleLoginQueryKey = (
+  options?: Options<StaffAuthStaffGoogleLoginData>,
+) => createQueryKey("staffAuthStaffGoogleLogin", options);
+
+export const staffAuthStaffGoogleLoginOptions = (
+  options?: Options<StaffAuthStaffGoogleLoginData>,
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await staffAuthStaffGoogleLogin({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: staffAuthStaffGoogleLoginQueryKey(options),
+  });
+};
+
+export const staffAuthStaffGoogleCallbackQueryKey = (
+  options?: Options<StaffAuthStaffGoogleCallbackData>,
+) => createQueryKey("staffAuthStaffGoogleCallback", options);
+
+export const staffAuthStaffGoogleCallbackOptions = (
+  options?: Options<StaffAuthStaffGoogleCallbackData>,
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await staffAuthStaffGoogleCallback({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: staffAuthStaffGoogleCallbackQueryKey(options),
+  });
+};
+
+export const staffAuthStaffAppleLoginQueryKey = (
+  options?: Options<StaffAuthStaffAppleLoginData>,
+) => createQueryKey("staffAuthStaffAppleLogin", options);
+
+export const staffAuthStaffAppleLoginOptions = (
+  options?: Options<StaffAuthStaffAppleLoginData>,
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await staffAuthStaffAppleLogin({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: staffAuthStaffAppleLoginQueryKey(options),
+  });
+};
+
+export const staffAuthStaffAppleCallbackQueryKey = (
+  options?: Options<StaffAuthStaffAppleCallbackData>,
+) => createQueryKey("staffAuthStaffAppleCallback", options);
+
+export const staffAuthStaffAppleCallbackOptions = (
+  options?: Options<StaffAuthStaffAppleCallbackData>,
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await staffAuthStaffAppleCallback({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: staffAuthStaffAppleCallbackQueryKey(options),
+  });
+};
+
+export const staffAuthStaffAppleCallbackMutation = (
+  options?: Partial<Options<StaffAuthStaffAppleCallbackData>>,
+): UseMutationOptions<
+  unknown,
+  DefaultError,
+  Options<StaffAuthStaffAppleCallbackData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DefaultError,
+    Options<StaffAuthStaffAppleCallbackData>
+  > = {
+    mutationFn: async (localOptions) => {
+      const { data } = await staffAuthStaffAppleCallback({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -3060,40 +3675,6 @@ export const bookingsListConsumerBookingsOptions = (
     },
     queryKey: bookingsListConsumerBookingsQueryKey(options),
   });
-};
-
-const createInfiniteParams = <
-  K extends Pick<QueryKey<Options>[0], "body" | "headers" | "path" | "query">,
->(
-  queryKey: QueryKey<Options>,
-  page: K,
-) => {
-  const params = queryKey[0];
-  if (page.body) {
-    params.body = {
-      ...(queryKey[0].body as any),
-      ...(page.body as any),
-    };
-  }
-  if (page.headers) {
-    params.headers = {
-      ...queryKey[0].headers,
-      ...page.headers,
-    };
-  }
-  if (page.path) {
-    params.path = {
-      ...(queryKey[0].path as any),
-      ...(page.path as any),
-    };
-  }
-  if (page.query) {
-    params.query = {
-      ...(queryKey[0].query as any),
-      ...(page.query as any),
-    };
-  }
-  return params as unknown as typeof page;
 };
 
 export const bookingsListConsumerBookingsInfiniteQueryKey = (
@@ -4352,6 +4933,93 @@ export const paymentsInitiatePaymentFlowMutation = (
   return mutationOptions;
 };
 
+export const paymentsCreateSubscriptionQueryKey = (
+  options: Options<PaymentsCreateSubscriptionData>,
+) => createQueryKey("paymentsCreateSubscription", options);
+
+export const paymentsCreateSubscriptionOptions = (
+  options: Options<PaymentsCreateSubscriptionData>,
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await paymentsCreateSubscription({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: paymentsCreateSubscriptionQueryKey(options),
+  });
+};
+
+export const paymentsCreateSubscriptionMutation = (
+  options?: Partial<Options<PaymentsCreateSubscriptionData>>,
+): UseMutationOptions<
+  PaymentsCreateSubscriptionResponse,
+  PaymentsCreateSubscriptionError,
+  Options<PaymentsCreateSubscriptionData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    PaymentsCreateSubscriptionResponse,
+    PaymentsCreateSubscriptionError,
+    Options<PaymentsCreateSubscriptionData>
+  > = {
+    mutationFn: async (localOptions) => {
+      const { data } = await paymentsCreateSubscription({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const paymentsGetPaymentStatusQueryKey = (
+  options: Options<PaymentsGetPaymentStatusData>,
+) => createQueryKey("paymentsGetPaymentStatus", options);
+
+export const paymentsGetPaymentStatusOptions = (
+  options: Options<PaymentsGetPaymentStatusData>,
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await paymentsGetPaymentStatus({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: paymentsGetPaymentStatusQueryKey(options),
+  });
+};
+
+export const paymentsListPaymentsForGymQueryKey = (
+  options: Options<PaymentsListPaymentsForGymData>,
+) => createQueryKey("paymentsListPaymentsForGym", options);
+
+export const paymentsListPaymentsForGymOptions = (
+  options: Options<PaymentsListPaymentsForGymData>,
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await paymentsListPaymentsForGym({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: paymentsListPaymentsForGymQueryKey(options),
+  });
+};
+
 export const paymentsProcessPaymentWebhookQueryKey = (
   options: Options<PaymentsProcessPaymentWebhookData>,
 ) => createQueryKey("paymentsProcessPaymentWebhook", options);
@@ -4387,6 +5055,51 @@ export const paymentsProcessPaymentWebhookMutation = (
   > = {
     mutationFn: async (localOptions) => {
       const { data } = await paymentsProcessPaymentWebhook({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const paymentsProcessPaymentWebhook2QueryKey = (
+  options: Options<PaymentsProcessPaymentWebhook2Data>,
+) => createQueryKey("paymentsProcessPaymentWebhook2", options);
+
+export const paymentsProcessPaymentWebhook2Options = (
+  options: Options<PaymentsProcessPaymentWebhook2Data>,
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await paymentsProcessPaymentWebhook2({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: paymentsProcessPaymentWebhook2QueryKey(options),
+  });
+};
+
+export const paymentsProcessPaymentWebhook2Mutation = (
+  options?: Partial<Options<PaymentsProcessPaymentWebhook2Data>>,
+): UseMutationOptions<
+  PaymentsProcessPaymentWebhook2Response,
+  PaymentsProcessPaymentWebhook2Error,
+  Options<PaymentsProcessPaymentWebhook2Data>
+> => {
+  const mutationOptions: UseMutationOptions<
+    PaymentsProcessPaymentWebhook2Response,
+    PaymentsProcessPaymentWebhook2Error,
+    Options<PaymentsProcessPaymentWebhook2Data>
+  > = {
+    mutationFn: async (localOptions) => {
+      const { data } = await paymentsProcessPaymentWebhook2({
         ...options,
         ...localOptions,
         throwOnError: true,

@@ -132,6 +132,22 @@ class Settings(BaseSettings):
         "http://localhost:8000/api/v1/auth/consumer/apple/callback"
     )
 
+    # Staff OAuth redirect URIs
+    GOOGLE_STAFF_REDIRECT_URI: str = (
+        "http://localhost:8000/api/v1/auth/staff/google/callback"
+    )
+    APPLE_STAFF_REDIRECT_URI: str = (
+        "http://localhost:8000/api/v1/auth/staff/apple/callback"
+    )
+
+    # Allowed frontend redirect URIs for OAuth flows (comma-separated)
+    OAUTH_ALLOWED_REDIRECT_URIS: str = (
+        "http://localhost:5175/auth/oauth-callback,"
+        "http://localhost:5174/auth/oauth-callback,"
+        "studioloop-consumer://oauth-callback,"
+        "studioloop-gym://oauth-callback"
+    )
+
     # Payments (Epic 8)
     PAYMENT_PROVIDER: str = "ozow"
     PAYMENT_RETRY_INTERVAL_DAYS: str = "1,3,7"
@@ -143,7 +159,9 @@ class Settings(BaseSettings):
     STITCH_CLIENT_SECRET: str = ""
     STITCH_API_URL: str = "https://api.stitch.money/graphql"
     STITCH_TOKEN_URL: str = "https://secure.stitch.money/connect/token"
-    STITCH_REDIRECT_BASE_URL: str = "https://secure.stitch.money/connect/payment-request"
+    STITCH_REDIRECT_BASE_URL: str = (
+        "https://secure.stitch.money/connect/payment-request"
+    )
     STITCH_WEBHOOK_SECRET: str = ""  # Svix signing secret (whsec_...)
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:

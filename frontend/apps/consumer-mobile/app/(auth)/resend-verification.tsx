@@ -42,11 +42,11 @@ export default function ResendVerificationScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-gray-50"
+      className="flex-1 bg-[#0a0a0a]"
     >
       <ScrollView contentContainerClassName="flex-grow justify-center px-6 py-12">
         <View className="w-full max-w-md mx-auto space-y-4">
-          <Text className="text-2xl font-bold text-gray-900 text-center">Resend verification email</Text>
+          <Text className="text-2xl font-bold text-gray-50 text-center">Resend verification email</Text>
 
           {submitted && (
             <View className="bg-green-50 p-4 rounded-md">
@@ -63,7 +63,7 @@ export default function ResendVerificationScreen() {
           ) : null}
 
           <TextInput
-            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-[#1a1a1a]"
             placeholder="you@example.com"
             value={email}
             onChangeText={setEmail}
@@ -73,7 +73,7 @@ export default function ResendVerificationScreen() {
           />
 
           <Pressable
-            className={`w-full py-3 rounded-md ${isLoading ? 'bg-primary-400' : 'bg-primary-600'}`}
+            className={`w-full py-3 rounded-md ${isLoading ? 'bg-coral-400' : 'bg-coral-600'}`}
             onPress={handleSubmit}
             disabled={isLoading}
           >
@@ -85,7 +85,7 @@ export default function ResendVerificationScreen() {
           </Pressable>
 
           <Pressable onPress={() => router.push('/(auth)/login')}>
-            <Text className="text-primary-600 text-center text-sm font-medium">Back to sign in</Text>
+            <Text className="text-coral-600 text-center text-sm font-medium">Back to sign in</Text>
           </Pressable>
         </View>
       </ScrollView>

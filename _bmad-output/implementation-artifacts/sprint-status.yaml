@@ -109,18 +109,18 @@ development_status:
   epic-4-retrospective: optional
 
   # Epic 5: Class Scheduling System (11 stories)
-  epic-5: backlog
-  5-1-create-class-template: backlog
-  5-2-schedule-individual-class-session: backlog
-  5-3-schedule-recurring-class-sessions: backlog
-  5-4-assign-instructor-to-class: backlog
-  5-5-class-approval-workflow-instructor-creates: backlog
-  5-6-class-approval-workflow-manager-approves: backlog
-  5-7-class-approval-workflow-manager-creates: backlog
-  5-8-cancel-class-session: backlog
-  5-9-set-class-capacity-and-waitlist: backlog
-  5-10-set-marketplace-pricing-for-class: backlog
-  5-11-view-class-schedule-calendar: backlog
+  epic-5: done
+  5-1-create-class-template: done
+  5-2-schedule-individual-class-session: done
+  5-3-schedule-recurring-class-sessions: done
+  5-4-assign-instructor-to-class: done
+  5-5-class-approval-workflow-instructor-creates: done
+  5-6-class-approval-workflow-manager-approves: done
+  5-7-class-approval-workflow-manager-creates: done
+  5-8-cancel-class-session: done
+  5-9-set-class-capacity-and-waitlist: done
+  5-10-set-marketplace-pricing-for-class: done
+  5-11-view-class-schedule-calendar: done
   epic-5-retrospective: optional
 
   # Epic 6: Booking & Check-in (13 stories)

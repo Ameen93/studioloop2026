@@ -99,7 +99,7 @@ export function Login() {
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Don't have an account?{' '}
-            <Link to="/auth/register" className="font-medium text-primary-600 hover:text-primary-500">
+            <Link to="/auth/register" className="font-medium text-gray-700 hover:text-gray-500">
               Create one
             </Link>
           </p>
@@ -123,7 +123,7 @@ export function Login() {
                 type="email"
                 autoComplete="email"
                 required
-                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${
+                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm ${
                   errors.email ? 'border-red-300' : 'border-gray-300'
                 }`}
                 placeholder="john@example.com"
@@ -141,7 +141,7 @@ export function Login() {
                 type="password"
                 autoComplete="current-password"
                 required
-                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${
+                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm ${
                   errors.password ? 'border-red-300' : 'border-gray-300'
                 }`}
                 placeholder="Enter your password"
@@ -152,7 +152,7 @@ export function Login() {
 
           <div className="flex items-center justify-between">
             <div className="text-sm">
-              <Link to="/auth/forgot-password" className="font-medium text-primary-600 hover:text-primary-500">
+              <Link to="/auth/forgot-password" className="font-medium text-gray-700 hover:text-gray-500">
                 Forgot your password?
               </Link>
             </div>
@@ -162,7 +162,7 @@ export function Login() {
             <button
               type="submit"
               disabled={loginMutation.isPending}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gray-700 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loginMutation.isPending ? 'Signing in...' : 'Sign in'}
             </button>

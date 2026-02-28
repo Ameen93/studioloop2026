@@ -6,6 +6,7 @@ import { View, Text, ScrollView, Pressable, RefreshControl } from 'react-native'
 import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
+import { MetricCard } from '@sl/ui';
 import { analyticsGymOwnerDashboard } from '@sl/api-client';
 import { getStaffProfile } from '../../lib/auth';
 import { getAuthHeaders } from '../../lib/apiAuth';
@@ -78,7 +79,7 @@ export default function DashboardTab() {
 
   return (
     <ScrollView
-      className="flex-1 bg-gray-50"
+      className="flex-1 bg-[#0a0a0a]"
       contentContainerClassName="pb-8"
       refreshControl={
         <RefreshControl
@@ -87,7 +88,7 @@ export default function DashboardTab() {
         />
       }
     >
-      <View className="bg-emerald-600 px-4 pt-6 pb-8">
+      <View className="bg-gold-600 px-4 pt-6 pb-8">
         <Text className="text-white text-sm opacity-80">
           {new Date().toLocaleDateString('en-ZA', {
             weekday: 'long',
@@ -106,30 +107,34 @@ export default function DashboardTab() {
 
       <View className="px-4 -mt-4">
         <View className="flex-row flex-wrap -mx-1.5">
-          <MetricCard
-            icon="people"
-            label="Check-ins Today"
-            value={String(metrics?.checkinsToday ?? 0)}
-            color="#059669"
-          />
-          <MetricCard
-            icon="person"
-            label="Active Members"
-            value={String(metrics?.activeMembers ?? 0)}
-            color="#6366f1"
-          />
-          <MetricCard
-            icon="calendar"
-            label="Classes Today"
-            value={String(metrics?.upcomingClasses ?? 0)}
-            color="#f59e0b"
-          />
-          <MetricCard
-            icon="cash"
-            label="Revenue Today"
-            value={formatCurrency(metrics?.revenueToday ?? 0)}
-            color="#ef4444"
-          />
+          <View className="w-1/2 px-1.5 mb-3">
+            <MetricCard
+              icon={<Ionicons name="people" size={24} color="#d4a855" />}
+              label="Check-ins Today"
+              value={metrics?.checkinsToday ?? 0}
+            />
+          </View>
+          <View className="w-1/2 px-1.5 mb-3">
+            <MetricCard
+              icon={<Ionicons name="person" size={24} color="#d4a855" />}
+              label="Active Members"
+              value={metrics?.activeMembers ?? 0}
+            />
+          </View>
+          <View className="w-1/2 px-1.5 mb-3">
+            <MetricCard
+              icon={<Ionicons name="calendar" size={24} color="#f59e0b" />}
+              label="Classes Today"
+              value={metrics?.upcomingClasses ?? 0}
+            />
+          </View>
+          <View className="w-1/2 px-1.5 mb-3">
+            <MetricCard
+              icon={<Ionicons name="cash" size={24} color="#ef4444" />}
+              label="Revenue Today"
+              value={formatCurrency(metrics?.revenueToday ?? 0)}
+            />
+          </View>
         </View>
       </View>
 
@@ -151,69 +156,47 @@ export default function DashboardTab() {
         </Text>
 
         <Pressable
-          className="bg-white rounded-lg p-4 mb-3 border border-gray-200 flex-row items-center"
+          className="bg-[#1a1a1a] rounded-lg p-4 mb-3 border border-[#2a2a2a] flex-row items-center"
           onPress={() => router.push('/(tabs)/checkin')}
         >
-          <View className="w-10 h-10 rounded-lg bg-emerald-100 items-center justify-center">
-            <Ionicons name="qr-code" size={22} color="#059669" />
+          <View className="w-10 h-10 rounded-lg bg-gold-100 items-center justify-center">
+            <Ionicons name="qr-code" size={22} color="#d4a855" />
           </View>
           <View className="flex-1 ml-3">
-            <Text className="text-gray-900 font-semibold">Scan QR Check-in</Text>
+            <Text className="text-gray-50 font-semibold">Scan QR Check-in</Text>
             <Text className="text-gray-500 text-sm">Scan a member's QR code</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color="#d1d5db" />
         </Pressable>
 
         <Pressable
-          className="bg-white rounded-lg p-4 mb-3 border border-gray-200 flex-row items-center"
+          className="bg-[#1a1a1a] rounded-lg p-4 mb-3 border border-[#2a2a2a] flex-row items-center"
           onPress={() => router.push('/(tabs)/members')}
         >
-          <View className="w-10 h-10 rounded-lg bg-indigo-100 items-center justify-center">
-            <Ionicons name="people" size={22} color="#6366f1" />
+          <View className="w-10 h-10 rounded-lg bg-gold-100 items-center justify-center">
+            <Ionicons name="people" size={22} color="#d4a855" />
           </View>
           <View className="flex-1 ml-3">
-            <Text className="text-gray-900 font-semibold">View Members</Text>
+            <Text className="text-gray-50 font-semibold">View Members</Text>
             <Text className="text-gray-500 text-sm">Search membership roster</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color="#d1d5db" />
         </Pressable>
 
         <Pressable
-          className="bg-white rounded-lg p-4 mb-3 border border-gray-200 flex-row items-center"
+          className="bg-[#1a1a1a] rounded-lg p-4 mb-3 border border-[#2a2a2a] flex-row items-center"
           onPress={() => router.push('/reports')}
         >
           <View className="w-10 h-10 rounded-lg bg-amber-100 items-center justify-center">
             <Ionicons name="bar-chart" size={22} color="#f59e0b" />
           </View>
           <View className="flex-1 ml-3">
-            <Text className="text-gray-900 font-semibold">Reports</Text>
+            <Text className="text-gray-50 font-semibold">Reports</Text>
             <Text className="text-gray-500 text-sm">Revenue, attendance, memberships</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color="#d1d5db" />
         </Pressable>
       </View>
     </ScrollView>
-  );
-}
-
-function MetricCard({
-  icon,
-  label,
-  value,
-  color,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  value: string;
-  color: string;
-}) {
-  return (
-    <View className="w-1/2 px-1.5 mb-3">
-      <View className="bg-white rounded-lg p-4 border border-gray-200">
-        <Ionicons name={icon} size={24} color={color} />
-        <Text className="text-2xl font-bold text-gray-900 mt-2">{value}</Text>
-        <Text className="text-xs text-gray-500 mt-1">{label}</Text>
-      </View>
-    </View>
   );
 }

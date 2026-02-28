@@ -11,7 +11,7 @@ import { getAuthHeaders } from '../../lib/apiAuth';
 
 const roleStyles: Record<StaffRole, string> = {
   owner: 'bg-purple-100 text-purple-800',
-  manager: 'bg-blue-100 text-blue-800',
+  manager: 'bg-gold-100 text-gold-800',
   front_desk: 'bg-gray-100 text-gray-800',
   instructor: 'bg-green-100 text-green-800',
 };
@@ -141,7 +141,7 @@ export function StaffManagement() {
         <h1 className="text-2xl font-bold text-gray-900">Staff Management</h1>
         <button
           onClick={() => setShowAddForm((v) => !v)}
-          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+          className="px-4 py-2 bg-gold-600 text-white text-sm font-medium rounded-md hover:bg-gold-700 transition-colors"
         >
           {showAddForm ? 'Close' : 'Invite Staff'}
         </button>
@@ -176,7 +176,7 @@ export function StaffManagement() {
               <input
                 name="fullName"
                 type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gold-500 focus:border-gold-500 sm:text-sm"
                 placeholder="Jane Doe"
                 required
               />
@@ -186,7 +186,7 @@ export function StaffManagement() {
               <input
                 name="email"
                 type="email"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gold-500 focus:border-gold-500 sm:text-sm"
                 placeholder="jane@gym.co.za"
                 required
               />
@@ -196,7 +196,7 @@ export function StaffManagement() {
               <input
                 name="phone"
                 type="tel"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gold-500 focus:border-gold-500 sm:text-sm"
                 placeholder="+27 82 000 0000"
               />
             </div>
@@ -204,7 +204,7 @@ export function StaffManagement() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
               <select
                 name="role"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gold-500 focus:border-gold-500 sm:text-sm"
               >
                 <option value="instructor">Instructor</option>
                 <option value="front_desk">Front Desk</option>
@@ -215,7 +215,7 @@ export function StaffManagement() {
               <button
                 type="submit"
                 disabled={addStaffMutation.isPending}
-                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                className="px-4 py-2 bg-gold-600 text-white text-sm font-medium rounded-md hover:bg-gold-700 transition-colors disabled:opacity-50"
               >
                 {addStaffMutation.isPending ? 'Sending...' : 'Send Invite'}
               </button>

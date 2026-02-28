@@ -16,7 +16,7 @@ SEED_GYMS: list[dict[str, Any]] = [
     {
         "name": "FitZone Sandton",
         "slug": "fitzone-sandton",
-        "description": "Premium fitness center in the heart of Sandton with state-of-the-art equipment and expert trainers.",
+        "description": "Sandton's premier fitness destination, featuring a 500sqm open-plan gym floor, dedicated group training studios, and a rooftop recovery lounge. Home to 12 certified trainers and over 400 active members.",
         "is_marketplace_enabled": True,
         "email": "info@fitzone-sandton.co.za",
         "phone": "+27 11 784 5632",
@@ -32,7 +32,7 @@ SEED_GYMS: list[dict[str, Any]] = [
     {
         "name": "Oxygen Fitness Cape Town",
         "slug": "oxygen-cape-town",
-        "description": "Breathe life into your fitness journey at our stunning Sea Point location with ocean views.",
+        "description": "Cape Town's most-loved seaside studio, known for sunrise yoga with ocean views and high-energy evening HIIT. Two floors, four studios, and a smoothie bar. Proudly community-driven since 2019.",
         "is_marketplace_enabled": True,
         "email": "hello@oxygenfitness.co.za",
         "phone": "+27 21 434 8901",
@@ -48,7 +48,7 @@ SEED_GYMS: list[dict[str, Any]] = [
     {
         "name": "Pure Energy Pretoria",
         "slug": "pure-energy-pretoria",
-        "description": "Unleash your potential at Pretoria's most energetic fitness studio.",
+        "description": "Brooklyn's go-to fitness hub with group classes, personal training, and a welcoming vibe for all fitness levels. Specialising in strength training and functional fitness for busy professionals.",
         "is_marketplace_enabled": True,
         "email": "admin@pureenergy.co.za",
         "phone": "+27 12 346 7890",
@@ -64,7 +64,7 @@ SEED_GYMS: list[dict[str, Any]] = [
     {
         "name": "The Sweat Box Durban",
         "slug": "sweat-box-durban",
-        "description": "High-intensity training in Durban's premier boutique fitness studio.",
+        "description": "Durban's original boutique HIIT studio on Florida Road. Small classes, big energy, real results. Known for our 30-minute lunchtime express sessions and Saturday morning community workouts.",
         "is_marketplace_enabled": True,
         "email": "sweat@thesweatbox.co.za",
         "phone": "+27 31 572 3456",
@@ -80,7 +80,7 @@ SEED_GYMS: list[dict[str, Any]] = [
     {
         "name": "CrossFit Centurion",
         "slug": "crossfit-centurion",
-        "description": "Forge your strength at Centurion's original CrossFit affiliate box.",
+        "description": "Centurion's first CrossFit affiliate, built by athletes for athletes. Structured programming, Olympic lifting coaching, and a tight-knit community of 80+ members who push each other daily.",
         "is_marketplace_enabled": False,  # Not on marketplace
         "email": "wod@crossfitcenturion.co.za",
         "phone": "+27 12 664 1234",

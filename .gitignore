@@ -1,10 +1,43 @@
+# IDE
 .vscode
+.idea
+
+# Dependencies
 node_modules/
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Test
 /test-results/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Turbo
+.turbo/
+
+# Env
 .env
 .env.*
-.turbo/
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+
+# Expo
+.expo/
+
+# Vercel
 .vercel
+
+# OS
+.DS_Store
+Thumbs.db

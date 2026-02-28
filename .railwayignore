@@ -1,0 +1,39 @@
+# Frontend (not deployed to Railway)
+frontend/
+
+# Python virtual environments
+**/.venv/
+**/__pycache__/
+
+# Node
+**/node_modules/
+
+# Git
+.git/
+
+# Dev/docs
+_bmad*/
+docs/
+design-mockups*/
+*.md
+!backend/README.md
+
+# IDE
+.vscode/
+.idea/
+
+# Test artifacts
+test-results/
+playwright-report/
+.turbo/
+.vercel/
+
+# Local env files
+.env
+.env.*
+!.env.staging.example
+
+# Scripts not needed in deploy
+scripts/comfyui_client.py
+scripts/generate_assets.py
+public/

@@ -20,6 +20,7 @@ import { router } from 'expo-router';
 import { useMutation } from '@tanstack/react-query';
 import { gymsGetMyGymProfile, staffAuthLoginStaff } from '@sl/api-client';
 import { setStaffProfile, setTokens } from '../../lib/auth';
+import { startGoogleLogin, startAppleLogin } from '../../lib/oauth';
 
 interface FormData {
   email: string;
@@ -120,10 +121,48 @@ export default function StaffLoginScreen() {
     }
   };
 
+  const [oauthLoading, setOauthLoading] = useState(false);
+
+  const handleOAuthLogin = async (provider: 'google' | 'apple') => {
+    setOauthLoading(true);
+    try {
+      const result = provider === 'google' ? await startGoogleLogin() : await startAppleLogin();
+
+      if (result.type === 'dismiss') {
+        return;
+      }
+
+      if (result.type === 'error') {
+        setErrors({ general: result.error_message || 'OAuth sign-in failed. Please try again.' });
+        return;
+      }
+
+      setTokens({
+        access_token: result.access_token,
+        refresh_token: result.refresh_token,
+      });
+
+      setStaffProfile({
+        id: result.staff_id,
+        email: '', // Not included in OAuth redirect, will be fetched later
+        name: '',
+        role: result.role,
+        gymId: result.gym_id,
+        gymName: result.gym_name,
+      });
+
+      router.replace('/(tabs)');
+    } catch {
+      setErrors({ general: 'OAuth sign-in failed. Please try again.' });
+    } finally {
+      setOauthLoading(false);
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-gray-50"
+      className="flex-1 bg-[#0a0a0a]"
     >
       <ScrollView
         contentContainerClassName="flex-grow justify-center px-6 py-12"
@@ -132,14 +171,14 @@ export default function StaffLoginScreen() {
         <View className="w-full max-w-md mx-auto">
           {/* Logo / branding area */}
           <View className="items-center mb-8">
-            <View className="w-16 h-16 rounded-2xl bg-emerald-600 items-center justify-center mb-4">
+            <View className="w-16 h-16 rounded-2xl bg-gold-600 items-center justify-center mb-4">
               <Text className="text-3xl font-bold text-white">SL</Text>
             </View>
-            <Text className="text-3xl font-bold text-gray-900 text-center">StudioLoop Gym</Text>
+            <Text className="text-3xl font-bold text-gray-50 text-center">StudioLoop Gym</Text>
             <Text className="text-gray-500 text-center mt-1">Staff Portal</Text>
           </View>
 
-          <Text className="text-xl font-semibold text-gray-900 text-center mb-6">
+          <Text className="text-xl font-semibold text-gray-50 text-center mb-6">
             Sign in to your account
           </Text>
 
@@ -154,7 +193,7 @@ export default function StaffLoginScreen() {
             <View>
               <Text className="text-sm font-medium text-gray-700 mb-1">Email address</Text>
               <TextInput
-                className={`w-full px-3 py-2 border rounded-md bg-white ${
+                className={`w-full px-3 py-2 border rounded-md bg-[#1a1a1a] ${
                   errors.email ? 'border-red-300' : 'border-gray-300'
                 }`}
                 placeholder="staff@gym.co.za"
@@ -171,7 +210,7 @@ export default function StaffLoginScreen() {
             <View>
               <Text className="text-sm font-medium text-gray-700 mb-1">Password</Text>
               <TextInput
-                className={`w-full px-3 py-2 border rounded-md bg-white ${
+                className={`w-full px-3 py-2 border rounded-md bg-[#1a1a1a] ${
                   errors.password ? 'border-red-300' : 'border-gray-300'
                 }`}
                 placeholder="Enter your password"
@@ -188,10 +227,10 @@ export default function StaffLoginScreen() {
             {/* Submit */}
             <Pressable
               className={`w-full py-3 rounded-md mt-6 ${
-                loginMutation.isPending ? 'bg-emerald-400' : 'bg-emerald-600'
+                loginMutation.isPending ? 'bg-gold-400' : 'bg-gold-600'
               }`}
               onPress={handleSubmit}
-              disabled={loginMutation.isPending}
+              disabled={loginMutation.isPending || oauthLoading}
             >
               {loginMutation.isPending ? (
                 <ActivityIndicator color="#fff" />
@@ -199,6 +238,39 @@ export default function StaffLoginScreen() {
                 <Text className="text-white text-center font-semibold">Sign in</Text>
               )}
             </Pressable>
+
+            {/* OAuth divider */}
+            <View className="flex-row items-center my-4">
+              <View className="flex-1 h-px bg-gray-300" />
+              <Text className="px-3 text-gray-500 text-sm">Or continue with</Text>
+              <View className="flex-1 h-px bg-gray-300" />
+            </View>
+
+            {/* OAuth buttons */}
+            <View className="flex-row gap-3">
+              <Pressable
+                className="flex-1 flex-row items-center justify-center py-3 border border-gray-300 rounded-md bg-[#1a1a1a]"
+                onPress={() => handleOAuthLogin('google')}
+                disabled={loginMutation.isPending || oauthLoading}
+              >
+                {oauthLoading ? (
+                  <ActivityIndicator size="small" color="#d4a855" />
+                ) : (
+                  <Text className="text-gray-700 font-medium">Google</Text>
+                )}
+              </Pressable>
+              <Pressable
+                className="flex-1 flex-row items-center justify-center py-3 border border-gray-300 rounded-md bg-[#1a1a1a]"
+                onPress={() => handleOAuthLogin('apple')}
+                disabled={loginMutation.isPending || oauthLoading}
+              >
+                {oauthLoading ? (
+                  <ActivityIndicator size="small" color="#d4a855" />
+                ) : (
+                  <Text className="text-gray-700 font-medium">Apple</Text>
+                )}
+              </Pressable>
+            </View>
           </View>
 
           <Text className="text-xs text-gray-400 text-center mt-8">

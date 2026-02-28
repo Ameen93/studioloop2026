@@ -24,25 +24,25 @@ function ProfileSettings() {
     <form className="space-y-4 max-w-lg">
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Gym Name</label>
-        <input type="text" defaultValue="FitZone Sandton" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
+        <input type="text" defaultValue="FitZone Sandton" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gold-500 focus:border-gold-500 sm:text-sm" />
       </div>
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-        <input type="email" defaultValue="info@fitzone.co.za" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
+        <input type="email" defaultValue="info@fitzone.co.za" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gold-500 focus:border-gold-500 sm:text-sm" />
       </div>
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-        <input type="tel" defaultValue="+27 11 234 5678" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
+        <input type="tel" defaultValue="+27 11 234 5678" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gold-500 focus:border-gold-500 sm:text-sm" />
       </div>
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-        <textarea defaultValue="123 Rivonia Road, Sandton, 2196" rows={2} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
+        <textarea defaultValue="123 Rivonia Road, Sandton, 2196" rows={2} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gold-500 focus:border-gold-500 sm:text-sm" />
       </div>
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-        <textarea defaultValue="Premium fitness studio in the heart of Sandton." rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
+        <textarea defaultValue="Premium fitness studio in the heart of Sandton." rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gold-500 focus:border-gold-500 sm:text-sm" />
       </div>
-      <button type="submit" className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700">
+      <button type="submit" className="px-4 py-2 bg-gold-600 text-white text-sm font-medium rounded-md hover:bg-gold-700">
         Save Changes
       </button>
     </form>
@@ -61,7 +61,7 @@ function HoursSettings() {
           <input type="time" defaultValue={day === 'Sunday' ? '14:00' : '21:00'} className="px-2 py-1.5 border border-gray-300 rounded-md text-sm" />
         </div>
       ))}
-      <button className="mt-4 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700">
+      <button className="mt-4 px-4 py-2 bg-gold-600 text-white text-sm font-medium rounded-md hover:bg-gold-700">
         Save Hours
       </button>
     </div>
@@ -92,7 +92,7 @@ function PoliciesSettings() {
           <option>No freezes allowed</option>
         </select>
       </div>
-      <button className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700">
+      <button className="px-4 py-2 bg-gold-600 text-white text-sm font-medium rounded-md hover:bg-gold-700">
         Save Policies
       </button>
     </div>
@@ -108,7 +108,7 @@ function PlansSettings() {
   ];
   return (
     <div className="space-y-4">
-      <button className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700">
+      <button className="px-4 py-2 bg-gold-600 text-white text-sm font-medium rounded-md hover:bg-gold-700">
         Create Plan
       </button>
       <div className="border border-gray-200 rounded-lg overflow-hidden">
@@ -128,7 +128,7 @@ function PlansSettings() {
                 <td className="px-6 py-3 text-sm text-gray-700 text-right">{plan.price}</td>
                 <td className="px-6 py-3 text-sm text-gray-500 text-right">{plan.members}</td>
                 <td className="px-6 py-3 text-sm text-right">
-                  <button className="text-blue-600 hover:text-blue-800 mr-3">Edit</button>
+                  <button className="text-gold-600 hover:text-gold-800 mr-3">Edit</button>
                   <button className="text-red-600 hover:text-red-800">Archive</button>
                 </td>
               </tr>
@@ -149,7 +149,7 @@ function SpacesSettings() {
   ];
   return (
     <div className="space-y-4">
-      <button className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700">
+      <button className="px-4 py-2 bg-gold-600 text-white text-sm font-medium rounded-md hover:bg-gold-700">
         Add Space
       </button>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -158,7 +158,7 @@ function SpacesSettings() {
             <h3 className="font-medium text-gray-900">{space.name}</h3>
             <p className="text-sm text-gray-500">Capacity: {space.capacity}</p>
             <p className="text-sm text-gray-500">Type: {space.type}</p>
-            <button className="mt-2 text-sm text-blue-600 hover:text-blue-800">Edit</button>
+            <button className="mt-2 text-sm text-gold-600 hover:text-gold-800">Edit</button>
           </div>
         ))}
       </div>
@@ -176,7 +176,7 @@ function MarketplaceSettings() {
         </div>
         <label className="relative inline-flex items-center cursor-pointer">
           <input type="checkbox" defaultChecked className="sr-only peer" />
-          <div className="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          <div className="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-gold-500 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gold-600"></div>
         </label>
       </div>
       <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
@@ -186,14 +186,14 @@ function MarketplaceSettings() {
         </div>
         <label className="relative inline-flex items-center cursor-pointer">
           <input type="checkbox" defaultChecked className="sr-only peer" />
-          <div className="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          <div className="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-gold-500 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gold-600"></div>
         </label>
       </div>
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Drop-in Class Price (ZAR)</label>
         <input type="number" defaultValue={150} className="w-32 px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm" />
       </div>
-      <button className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700">
+      <button className="px-4 py-2 bg-gold-600 text-white text-sm font-medium rounded-md hover:bg-gold-700">
         Save Marketplace Settings
       </button>
     </div>
@@ -206,7 +206,7 @@ function WebhooksSettings() {
       <p className="text-sm text-gray-500">
         Configure webhook endpoints to receive real-time notifications about events in your gym.
       </p>
-      <button className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700">
+      <button className="px-4 py-2 bg-gold-600 text-white text-sm font-medium rounded-md hover:bg-gold-700">
         Add Webhook
       </button>
       <div className="border border-gray-200 rounded-lg p-6 text-center text-sm text-gray-500">
@@ -232,7 +232,7 @@ export function Settings() {
               onClick={() => setActiveTab(tab.key)}
               className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === tab.key
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-gold-500 text-gold-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >

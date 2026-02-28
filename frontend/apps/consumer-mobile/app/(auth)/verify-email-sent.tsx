@@ -10,14 +10,14 @@ import { router } from 'expo-router';
 
 export default function VerifyEmailSentScreen() {
   return (
-    <View className="flex-1 bg-gray-50 justify-center items-center px-6">
+    <View className="flex-1 bg-[#0a0a0a] justify-center items-center px-6">
       <View className="w-full max-w-md items-center">
         {/* Email icon */}
         <View className="w-16 h-16 rounded-full bg-green-100 items-center justify-center mb-6">
           <Text className="text-3xl">✉️</Text>
         </View>
 
-        <Text className="text-3xl font-bold text-gray-900 text-center mb-2">
+        <Text className="text-3xl font-bold text-gray-50 text-center mb-2">
           Check your email
         </Text>
 
@@ -30,11 +30,11 @@ export default function VerifyEmailSentScreen() {
           The verification link will expire in 24 hours.
         </Text>
 
-        <View className="w-full border-t border-gray-200 pt-6">
+        <View className="w-full border-t border-[#2a2a2a] pt-6">
           <Text className="text-sm text-gray-600 text-center mb-4">
             Didn't receive the email?{' '}
             <Text
-              className="text-primary-600 font-medium"
+              className="text-coral-600 font-medium"
               onPress={() => router.push('/(auth)/resend-verification')}
             >
               Click here to resend

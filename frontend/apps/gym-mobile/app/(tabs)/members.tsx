@@ -64,13 +64,13 @@ export default function MembersTab() {
     const statusStyle = getStatusStyle(item.status);
 
     return (
-      <Pressable className="bg-white rounded-lg p-4 mb-2 border border-gray-200">
+      <Pressable className="bg-[#1a1a1a] rounded-lg p-4 mb-2 border border-[#2a2a2a]">
         <View className="flex-row items-center">
-          <View className="w-12 h-12 rounded-full bg-emerald-100 items-center justify-center">
-            <Text className="text-emerald-700 font-bold">{initials}</Text>
+          <View className="w-12 h-12 rounded-full bg-gold-100 items-center justify-center">
+            <Text className="text-gold-700 font-bold">{initials}</Text>
           </View>
           <View className="flex-1 ml-3">
-            <Text className="text-gray-900 font-semibold">{nameFromEmail}</Text>
+            <Text className="text-gray-50 font-semibold">{nameFromEmail}</Text>
             <Text className="text-gray-500 text-sm mt-0.5">{item.consumer_email}</Text>
           </View>
           <View className={`${statusStyle.bg} px-2.5 py-1 rounded-full`}>
@@ -95,12 +95,12 @@ export default function MembersTab() {
   };
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-[#0a0a0a]">
       <View className="px-4 pt-4 pb-2">
-        <View className="flex-row items-center bg-white border border-gray-300 rounded-lg px-3">
+        <View className="flex-row items-center bg-[#1a1a1a] border border-gray-300 rounded-lg px-3">
           <Ionicons name="search" size={20} color="#9ca3af" />
           <TextInput
-            className="flex-1 py-3 px-2 text-gray-900"
+            className="flex-1 py-3 px-2 text-gray-50"
             placeholder="Search by name, phone, or email..."
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -128,7 +128,7 @@ export default function MembersTab() {
         }
         ListEmptyComponent={
           membersQuery.isLoading ? (
-            <ActivityIndicator size="large" color="#059669" className="mt-8" />
+            <ActivityIndicator size="large" color="#d4a855" className="mt-8" />
           ) : (
             <View className="items-center py-12">
               <Ionicons name="people-outline" size={48} color="#d1d5db" />

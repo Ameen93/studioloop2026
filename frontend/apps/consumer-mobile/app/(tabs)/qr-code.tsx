@@ -40,7 +40,7 @@ export default function QrCodeTab() {
 
   if (!profile) {
     return (
-      <View className="flex-1 bg-gray-50 items-center justify-center px-6">
+      <View className="flex-1 bg-[#0a0a0a] items-center justify-center px-6">
         <Text className="text-gray-500 text-lg text-center">
           Please log in to view your QR code
         </Text>
@@ -49,26 +49,26 @@ export default function QrCodeTab() {
   }
 
   return (
-    <View className="flex-1 bg-gray-50 items-center justify-center px-6">
-      <View className="bg-white rounded-2xl p-8 shadow-sm border border-gray-200 items-center">
-        <Text className="text-xl font-bold text-gray-900 mb-2">Your Check-in Code</Text>
+    <View className="flex-1 bg-[#0a0a0a] items-center justify-center px-6">
+      <View className="bg-[#1a1a1a] rounded-2xl p-8 shadow-sm border border-[#2a2a2a] items-center">
+        <Text className="text-xl font-bold text-gray-50 mb-2">Your Check-in Code</Text>
         <Text className="text-gray-500 text-sm mb-6 text-center">
           Show this QR code at the gym for check-in
         </Text>
 
         {qrValue ? (
-          <View className="p-4 bg-white rounded-lg">
+          <View className="p-4 bg-[#1a1a1a] rounded-lg">
             <QRCode value={qrValue} size={220} backgroundColor="#ffffff" color="#1f2937" />
           </View>
         ) : (
           <View className="w-56 h-56 items-center justify-center">
-            <ActivityIndicator size="large" color="#6366f1" />
+            <ActivityIndicator size="large" color="#FF6B4A" />
             <Text className="text-gray-400 text-sm mt-4">Loading QR code...</Text>
           </View>
         )}
 
         <View className="mt-6 items-center">
-          <Text className="text-gray-900 font-semibold">{profile.name}</Text>
+          <Text className="text-gray-50 font-semibold">{profile.name}</Text>
           <Text className="text-gray-500 text-sm">{profile.email}</Text>
         </View>
 

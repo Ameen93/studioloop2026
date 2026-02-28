@@ -183,7 +183,7 @@ export function Memberships() {
               <div className="mt-3">
                 <div className="w-full bg-gray-100 rounded-full h-2">
                   <div
-                    className="bg-indigo-500 rounded-full h-2 transition-all"
+                    className="bg-coral-500 rounded-full h-2 transition-all"
                     style={{
                       width: `${(marketplaceSubscription.classes_remaining / Math.max(1, marketplaceSubscription.classes_total)) * 100}%`,
                     }}

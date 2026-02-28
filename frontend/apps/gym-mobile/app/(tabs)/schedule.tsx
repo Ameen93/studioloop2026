@@ -44,10 +44,10 @@ export default function ScheduleTab() {
     const isFull = item.spots_booked >= item.capacity;
 
     return (
-      <View className="bg-white rounded-lg p-4 mb-3 border border-gray-200">
+      <View className="bg-[#1a1a1a] rounded-lg p-4 mb-3 border border-[#2a2a2a]">
         <View className="flex-row justify-between items-start">
           <View className="flex-1 mr-3">
-            <Text className="text-lg font-semibold text-gray-900">{item.title}</Text>
+            <Text className="text-lg font-semibold text-gray-50">{item.title}</Text>
             <View className="flex-row items-center mt-1">
               <Ionicons name="business-outline" size={14} color="#6b7280" />
               <Text className="text-sm text-gray-600 ml-1">{item.gym_name}</Text>
@@ -85,7 +85,7 @@ export default function ScheduleTab() {
   });
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-[#0a0a0a]">
       <FlatList
         data={scheduleQuery.data ?? []}
         renderItem={renderClass}
@@ -100,12 +100,12 @@ export default function ScheduleTab() {
         ListHeaderComponent={
           <View className="mb-4">
             <Text className="text-sm text-gray-500">{today}</Text>
-            <Text className="text-xl font-bold text-gray-900 mt-1">Today's Schedule</Text>
+            <Text className="text-xl font-bold text-gray-50 mt-1">Today's Schedule</Text>
           </View>
         }
         ListEmptyComponent={
           scheduleQuery.isLoading ? (
-            <ActivityIndicator size="large" color="#059669" className="mt-8" />
+            <ActivityIndicator size="large" color="#d4a855" className="mt-8" />
           ) : (
             <View className="items-center py-12">
               <Ionicons name="calendar-outline" size={48} color="#d1d5db" />

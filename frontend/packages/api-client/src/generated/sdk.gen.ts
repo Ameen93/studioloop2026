@@ -52,14 +52,14 @@ import type {
   ConsumerAuthUpdateConsumerProfileResponse,
   ConsumerAuthUpdateConsumerProfileError,
   ConsumerAuthGoogleLoginData,
+  ConsumerAuthGoogleLoginError,
   ConsumerAuthGoogleCallbackData,
-  ConsumerAuthGoogleCallbackResponse,
   ConsumerAuthSetPasswordData,
   ConsumerAuthSetPasswordResponse,
   ConsumerAuthSetPasswordError,
   ConsumerAuthAppleLoginData,
+  ConsumerAuthAppleLoginError,
   ConsumerAuthAppleCallbackData,
-  ConsumerAuthAppleCallbackResponse,
   GymsRegisterGymData,
   GymsRegisterGymResponse,
   GymsRegisterGymError,
@@ -107,12 +107,6 @@ import type {
   GymsUpdateMySpaceAmenitiesData,
   GymsUpdateMySpaceAmenitiesResponse,
   GymsUpdateMySpaceAmenitiesError,
-  GymsCreateMyClassSessionData,
-  GymsCreateMyClassSessionResponse,
-  GymsCreateMyClassSessionError,
-  GymsCancelMyClassSessionData,
-  GymsCancelMyClassSessionResponse,
-  GymsCancelMyClassSessionError,
   GymsPreviewMemberImportCsvData,
   GymsPreviewMemberImportCsvResponse,
   GymsPreviewMemberImportCsvError,
@@ -122,6 +116,52 @@ import type {
   GymsGetPublicGymProfileData,
   GymsGetPublicGymProfileResponse,
   GymsGetPublicGymProfileError,
+  ClassSchedulingListClassTemplatesData,
+  ClassSchedulingListClassTemplatesResponse,
+  ClassSchedulingCreateClassTemplateData,
+  ClassSchedulingCreateClassTemplateResponse,
+  ClassSchedulingCreateClassTemplateError,
+  ClassSchedulingDeleteClassTemplateData,
+  ClassSchedulingDeleteClassTemplateResponse,
+  ClassSchedulingDeleteClassTemplateError,
+  ClassSchedulingGetClassTemplateData,
+  ClassSchedulingGetClassTemplateResponse,
+  ClassSchedulingGetClassTemplateError,
+  ClassSchedulingUpdateClassTemplateData,
+  ClassSchedulingUpdateClassTemplateResponse,
+  ClassSchedulingUpdateClassTemplateError,
+  ClassSchedulingListClassSessionsData,
+  ClassSchedulingListClassSessionsResponse,
+  ClassSchedulingListClassSessionsError,
+  ClassSchedulingCreateClassSessionData,
+  ClassSchedulingCreateClassSessionResponse,
+  ClassSchedulingCreateClassSessionError,
+  ClassSchedulingCreateRecurringSessionsData,
+  ClassSchedulingCreateRecurringSessionsResponse,
+  ClassSchedulingCreateRecurringSessionsError,
+  ClassSchedulingAssignInstructorData,
+  ClassSchedulingAssignInstructorResponse,
+  ClassSchedulingAssignInstructorError,
+  ClassSchedulingListPendingSessionsData,
+  ClassSchedulingListPendingSessionsResponse,
+  ClassSchedulingUpdateApprovalData,
+  ClassSchedulingUpdateApprovalResponse,
+  ClassSchedulingUpdateApprovalError,
+  ClassSchedulingCancelClassSessionData,
+  ClassSchedulingCancelClassSessionResponse,
+  ClassSchedulingCancelClassSessionError,
+  ClassSchedulingUpdateCapacityData,
+  ClassSchedulingUpdateCapacityResponse,
+  ClassSchedulingUpdateCapacityError,
+  ClassSchedulingUpdatePricingData,
+  ClassSchedulingUpdatePricingResponse,
+  ClassSchedulingUpdatePricingError,
+  ClassSchedulingGetCalendarData,
+  ClassSchedulingGetCalendarResponse,
+  ClassSchedulingGetCalendarError,
+  ClassSchedulingGetClassSessionData,
+  ClassSchedulingGetClassSessionResponse,
+  ClassSchedulingGetClassSessionError,
   StaffAuthLoginStaffData,
   StaffAuthLoginStaffResponse,
   StaffAuthLoginStaffError,
@@ -139,6 +179,12 @@ import type {
   StaffAuthUpdateStaffProfileData,
   StaffAuthUpdateStaffProfileResponse,
   StaffAuthUpdateStaffProfileError,
+  StaffAuthStaffGoogleLoginData,
+  StaffAuthStaffGoogleLoginError,
+  StaffAuthStaffGoogleCallbackData,
+  StaffAuthStaffAppleLoginData,
+  StaffAuthStaffAppleLoginError,
+  StaffAuthStaffAppleCallbackData,
   StaffMembershipsListStaffData,
   StaffMembershipsListStaffResponse,
   StaffMembershipsAddStaffMemberData,
@@ -322,9 +368,21 @@ import type {
   PaymentsInitiatePaymentFlowData,
   PaymentsInitiatePaymentFlowResponse,
   PaymentsInitiatePaymentFlowError,
+  PaymentsCreateSubscriptionData,
+  PaymentsCreateSubscriptionResponse,
+  PaymentsCreateSubscriptionError,
+  PaymentsGetPaymentStatusData,
+  PaymentsGetPaymentStatusResponse,
+  PaymentsGetPaymentStatusError,
+  PaymentsListPaymentsForGymData,
+  PaymentsListPaymentsForGymResponse,
+  PaymentsListPaymentsForGymError,
   PaymentsProcessPaymentWebhookData,
   PaymentsProcessPaymentWebhookResponse,
   PaymentsProcessPaymentWebhookError,
+  PaymentsProcessPaymentWebhook2Data,
+  PaymentsProcessPaymentWebhook2Response,
+  PaymentsProcessPaymentWebhook2Error,
   PaymentsGymPaymentDashboardData,
   PaymentsGymPaymentDashboardResponse,
   PaymentsGymPaymentDashboardError,
@@ -968,6 +1026,7 @@ export const consumerAuthUpdateConsumerProfile = <
  *
  * Args:
  * request: FastAPI request object (needed for Authlib)
+ * redirect_uri: Optional frontend URL to redirect to after OAuth completes
  *
  * Returns:
  * RedirectResponse to Google's authorization endpoint
@@ -978,12 +1037,14 @@ export const consumerAuthUpdateConsumerProfile = <
 export const consumerAuthGoogleLogin = <ThrowOnError extends boolean = false>(
   options?: Options<ConsumerAuthGoogleLoginData, ThrowOnError>,
 ) => {
-  return (options?.client ?? _heyApiClient).get<unknown, unknown, ThrowOnError>(
-    {
-      url: "/api/v1/auth/consumer/google",
-      ...options,
-    },
-  );
+  return (options?.client ?? _heyApiClient).get<
+    unknown,
+    ConsumerAuthGoogleLoginError,
+    ThrowOnError
+  >({
+    url: "/api/v1/auth/consumer/google",
+    ...options,
+  });
 };
 
 /**
@@ -991,16 +1052,15 @@ export const consumerAuthGoogleLogin = <ThrowOnError extends boolean = false>(
  * Handle Google OAuth callback (Story 1.9, AC #1, #2, #3, #5).
  *
  * Validates OAuth response, creates/links user account, and returns JWT tokens.
- * - If google_id exists: Login existing user
- * - If email exists but no google_id: Link Google to existing account
- * - If neither: Create new consumer
+ * If a redirect_uri was stored in session, redirects with tokens in URL fragment.
+ * Otherwise returns JSON (backward compatibility).
  *
  * Args:
  * request: FastAPI request object (contains OAuth callback params)
  * session: Database session
  *
  * Returns:
- * ConsumerToken with access_token and refresh_token
+ * ConsumerToken or RedirectResponse with tokens in fragment
  *
  * Raises:
  * HTTPException: 400 if OAuth validation fails
@@ -1011,14 +1071,12 @@ export const consumerAuthGoogleCallback = <
 >(
   options?: Options<ConsumerAuthGoogleCallbackData, ThrowOnError>,
 ) => {
-  return (options?.client ?? _heyApiClient).get<
-    ConsumerAuthGoogleCallbackResponse,
-    unknown,
-    ThrowOnError
-  >({
-    url: "/api/v1/auth/consumer/google/callback",
-    ...options,
-  });
+  return (options?.client ?? _heyApiClient).get<unknown, unknown, ThrowOnError>(
+    {
+      url: "/api/v1/auth/consumer/google/callback",
+      ...options,
+    },
+  );
 };
 
 /**
@@ -1071,6 +1129,7 @@ export const consumerAuthSetPassword = <ThrowOnError extends boolean = false>(
  *
  * Args:
  * request: FastAPI request object (needed for Authlib)
+ * redirect_uri: Optional frontend URL to redirect to after OAuth completes
  *
  * Returns:
  * RedirectResponse to Apple's authorization endpoint
@@ -1081,12 +1140,14 @@ export const consumerAuthSetPassword = <ThrowOnError extends boolean = false>(
 export const consumerAuthAppleLogin = <ThrowOnError extends boolean = false>(
   options?: Options<ConsumerAuthAppleLoginData, ThrowOnError>,
 ) => {
-  return (options?.client ?? _heyApiClient).get<unknown, unknown, ThrowOnError>(
-    {
-      url: "/api/v1/auth/consumer/apple",
-      ...options,
-    },
-  );
+  return (options?.client ?? _heyApiClient).get<
+    unknown,
+    ConsumerAuthAppleLoginError,
+    ThrowOnError
+  >({
+    url: "/api/v1/auth/consumer/apple",
+    ...options,
+  });
 };
 
 /**
@@ -1095,18 +1156,14 @@ export const consumerAuthAppleLogin = <ThrowOnError extends boolean = false>(
  *
  * Apple uses response_mode=form_post, so this is a POST endpoint.
  * Validates OAuth response, creates/links user account, and returns JWT tokens.
- * - If apple_id exists: Login existing user
- * - If email exists but no apple_id: Link Apple to existing account
- * - If neither: Create new consumer
- *
- * Supports Apple's Hide My Email relay addresses (AC #3).
+ * If a redirect_uri was stored in session, redirects with tokens in URL fragment.
  *
  * Args:
  * request: FastAPI request object (contains OAuth callback form data)
  * session: Database session
  *
  * Returns:
- * ConsumerToken with access_token and refresh_token
+ * ConsumerToken or RedirectResponse with tokens in fragment
  *
  * Raises:
  * HTTPException: 400 if OAuth validation fails
@@ -1117,7 +1174,7 @@ export const consumerAuthAppleCallback = <ThrowOnError extends boolean = false>(
   options?: Options<ConsumerAuthAppleCallbackData, ThrowOnError>,
 ) => {
   return (options?.client ?? _heyApiClient).post<
-    ConsumerAuthAppleCallbackResponse,
+    unknown,
     unknown,
     ThrowOnError
   >({
@@ -1577,54 +1634,6 @@ export const gymsUpdateMySpaceAmenities = <
 };
 
 /**
- * Create My Class Session
- */
-export const gymsCreateMyClassSession = <ThrowOnError extends boolean = false>(
-  options: Options<GymsCreateMyClassSessionData, ThrowOnError>,
-) => {
-  return (options.client ?? _heyApiClient).post<
-    GymsCreateMyClassSessionResponse,
-    GymsCreateMyClassSessionError,
-    ThrowOnError
-  >({
-    security: [
-      {
-        scheme: "bearer",
-        type: "http",
-      },
-    ],
-    url: "/api/v1/gyms/me/class_sessions",
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options?.headers,
-    },
-  });
-};
-
-/**
- * Cancel My Class Session
- */
-export const gymsCancelMyClassSession = <ThrowOnError extends boolean = false>(
-  options: Options<GymsCancelMyClassSessionData, ThrowOnError>,
-) => {
-  return (options.client ?? _heyApiClient).post<
-    GymsCancelMyClassSessionResponse,
-    GymsCancelMyClassSessionError,
-    ThrowOnError
-  >({
-    security: [
-      {
-        scheme: "bearer",
-        type: "http",
-      },
-    ],
-    url: "/api/v1/gyms/me/class_sessions/{class_session_id}/cancel",
-    ...options,
-  });
-};
-
-/**
  * Preview Member Import Csv
  */
 export const gymsPreviewMemberImportCsv = <
@@ -1692,6 +1701,426 @@ export const gymsGetPublicGymProfile = <ThrowOnError extends boolean = false>(
     ThrowOnError
   >({
     url: "/api/v1/gyms/{gym_slug}/profile",
+    ...options,
+  });
+};
+
+/**
+ * List Class Templates
+ */
+export const classSchedulingListClassTemplates = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<ClassSchedulingListClassTemplatesData, ThrowOnError>,
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    ClassSchedulingListClassTemplatesResponse,
+    unknown,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
+    url: "/api/v1/gyms/me/class_templates",
+    ...options,
+  });
+};
+
+/**
+ * Create Class Template
+ */
+export const classSchedulingCreateClassTemplate = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ClassSchedulingCreateClassTemplateData, ThrowOnError>,
+) => {
+  return (options.client ?? _heyApiClient).post<
+    ClassSchedulingCreateClassTemplateResponse,
+    ClassSchedulingCreateClassTemplateError,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
+    url: "/api/v1/gyms/me/class_templates",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options?.headers,
+    },
+  });
+};
+
+/**
+ * Delete Class Template
+ */
+export const classSchedulingDeleteClassTemplate = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ClassSchedulingDeleteClassTemplateData, ThrowOnError>,
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    ClassSchedulingDeleteClassTemplateResponse,
+    ClassSchedulingDeleteClassTemplateError,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
+    url: "/api/v1/gyms/me/class_templates/{template_id}",
+    ...options,
+  });
+};
+
+/**
+ * Get Class Template
+ */
+export const classSchedulingGetClassTemplate = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ClassSchedulingGetClassTemplateData, ThrowOnError>,
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ClassSchedulingGetClassTemplateResponse,
+    ClassSchedulingGetClassTemplateError,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
+    url: "/api/v1/gyms/me/class_templates/{template_id}",
+    ...options,
+  });
+};
+
+/**
+ * Update Class Template
+ */
+export const classSchedulingUpdateClassTemplate = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ClassSchedulingUpdateClassTemplateData, ThrowOnError>,
+) => {
+  return (options.client ?? _heyApiClient).patch<
+    ClassSchedulingUpdateClassTemplateResponse,
+    ClassSchedulingUpdateClassTemplateError,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
+    url: "/api/v1/gyms/me/class_templates/{template_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options?.headers,
+    },
+  });
+};
+
+/**
+ * List Class Sessions
+ */
+export const classSchedulingListClassSessions = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<ClassSchedulingListClassSessionsData, ThrowOnError>,
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    ClassSchedulingListClassSessionsResponse,
+    ClassSchedulingListClassSessionsError,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
+    url: "/api/v1/gyms/me/class_sessions",
+    ...options,
+  });
+};
+
+/**
+ * Create Class Session
+ */
+export const classSchedulingCreateClassSession = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ClassSchedulingCreateClassSessionData, ThrowOnError>,
+) => {
+  return (options.client ?? _heyApiClient).post<
+    ClassSchedulingCreateClassSessionResponse,
+    ClassSchedulingCreateClassSessionError,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
+    url: "/api/v1/gyms/me/class_sessions",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options?.headers,
+    },
+  });
+};
+
+/**
+ * Create Recurring Sessions
+ */
+export const classSchedulingCreateRecurringSessions = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ClassSchedulingCreateRecurringSessionsData, ThrowOnError>,
+) => {
+  return (options.client ?? _heyApiClient).post<
+    ClassSchedulingCreateRecurringSessionsResponse,
+    ClassSchedulingCreateRecurringSessionsError,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
+    url: "/api/v1/gyms/me/class_sessions/recurring",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options?.headers,
+    },
+  });
+};
+
+/**
+ * Assign Instructor
+ */
+export const classSchedulingAssignInstructor = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ClassSchedulingAssignInstructorData, ThrowOnError>,
+) => {
+  return (options.client ?? _heyApiClient).patch<
+    ClassSchedulingAssignInstructorResponse,
+    ClassSchedulingAssignInstructorError,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
+    url: "/api/v1/gyms/me/class_sessions/{class_session_id}/instructor",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options?.headers,
+    },
+  });
+};
+
+/**
+ * List Pending Sessions
+ */
+export const classSchedulingListPendingSessions = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<ClassSchedulingListPendingSessionsData, ThrowOnError>,
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    ClassSchedulingListPendingSessionsResponse,
+    unknown,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
+    url: "/api/v1/gyms/me/class_sessions/pending",
+    ...options,
+  });
+};
+
+/**
+ * Update Approval
+ */
+export const classSchedulingUpdateApproval = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ClassSchedulingUpdateApprovalData, ThrowOnError>,
+) => {
+  return (options.client ?? _heyApiClient).patch<
+    ClassSchedulingUpdateApprovalResponse,
+    ClassSchedulingUpdateApprovalError,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
+    url: "/api/v1/gyms/me/class_sessions/{class_session_id}/approval",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options?.headers,
+    },
+  });
+};
+
+/**
+ * Cancel Class Session
+ */
+export const classSchedulingCancelClassSession = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ClassSchedulingCancelClassSessionData, ThrowOnError>,
+) => {
+  return (options.client ?? _heyApiClient).post<
+    ClassSchedulingCancelClassSessionResponse,
+    ClassSchedulingCancelClassSessionError,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
+    url: "/api/v1/gyms/me/class_sessions/{class_session_id}/cancel",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options?.headers,
+    },
+  });
+};
+
+/**
+ * Update Capacity
+ */
+export const classSchedulingUpdateCapacity = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ClassSchedulingUpdateCapacityData, ThrowOnError>,
+) => {
+  return (options.client ?? _heyApiClient).patch<
+    ClassSchedulingUpdateCapacityResponse,
+    ClassSchedulingUpdateCapacityError,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
+    url: "/api/v1/gyms/me/class_sessions/{class_session_id}/capacity",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options?.headers,
+    },
+  });
+};
+
+/**
+ * Update Pricing
+ */
+export const classSchedulingUpdatePricing = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ClassSchedulingUpdatePricingData, ThrowOnError>,
+) => {
+  return (options.client ?? _heyApiClient).patch<
+    ClassSchedulingUpdatePricingResponse,
+    ClassSchedulingUpdatePricingError,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
+    url: "/api/v1/gyms/me/class_sessions/{class_session_id}/pricing",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options?.headers,
+    },
+  });
+};
+
+/**
+ * Get Calendar
+ */
+export const classSchedulingGetCalendar = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ClassSchedulingGetCalendarData, ThrowOnError>,
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ClassSchedulingGetCalendarResponse,
+    ClassSchedulingGetCalendarError,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
+    url: "/api/v1/gyms/me/class_sessions/calendar",
+    ...options,
+  });
+};
+
+/**
+ * Get Class Session
+ */
+export const classSchedulingGetClassSession = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ClassSchedulingGetClassSessionData, ThrowOnError>,
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ClassSchedulingGetClassSessionResponse,
+    ClassSchedulingGetClassSessionError,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
+    url: "/api/v1/gyms/me/class_sessions/{class_session_id}",
     ...options,
   });
 };
@@ -1903,6 +2332,89 @@ export const staffAuthUpdateStaffProfile = <
       "Content-Type": "application/json",
       ...options?.headers,
     },
+  });
+};
+
+/**
+ * Staff Google Login
+ * Initiate Google OAuth flow for staff.
+ *
+ * Args:
+ * request: FastAPI request object
+ * redirect_uri: Frontend URL to redirect to after OAuth completes
+ */
+export const staffAuthStaffGoogleLogin = <ThrowOnError extends boolean = false>(
+  options?: Options<StaffAuthStaffGoogleLoginData, ThrowOnError>,
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    unknown,
+    StaffAuthStaffGoogleLoginError,
+    ThrowOnError
+  >({
+    url: "/api/v1/auth/staff/google",
+    ...options,
+  });
+};
+
+/**
+ * Staff Google Callback
+ * Handle Google OAuth callback for staff (link-only, no auto-creation).
+ *
+ * Staff must already exist (created by gym owner). This endpoint:
+ * - Finds staff by google_id or email
+ * - Links google_id if not already linked
+ * - Returns tokens with role/gym_id claims
+ * - Errors if no staff account found
+ */
+export const staffAuthStaffGoogleCallback = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<StaffAuthStaffGoogleCallbackData, ThrowOnError>,
+) => {
+  return (options?.client ?? _heyApiClient).get<unknown, unknown, ThrowOnError>(
+    {
+      url: "/api/v1/auth/staff/google/callback",
+      ...options,
+    },
+  );
+};
+
+/**
+ * Staff Apple Login
+ * Initiate Apple OAuth flow for staff.
+ */
+export const staffAuthStaffAppleLogin = <ThrowOnError extends boolean = false>(
+  options?: Options<StaffAuthStaffAppleLoginData, ThrowOnError>,
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    unknown,
+    StaffAuthStaffAppleLoginError,
+    ThrowOnError
+  >({
+    url: "/api/v1/auth/staff/apple",
+    ...options,
+  });
+};
+
+/**
+ * Staff Apple Callback
+ * Handle Apple OAuth callback for staff (link-only, no auto-creation).
+ *
+ * Apple uses response_mode=form_post, so this is a POST endpoint.
+ * Staff must already exist. Links apple_id if not already linked.
+ */
+export const staffAuthStaffAppleCallback = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<StaffAuthStaffAppleCallbackData, ThrowOnError>,
+) => {
+  return (options?.client ?? _heyApiClient).post<
+    unknown,
+    unknown,
+    ThrowOnError
+  >({
+    url: "/api/v1/auth/staff/apple/callback",
+    ...options,
   });
 };
 
@@ -3556,6 +4068,80 @@ export const paymentsInitiatePaymentFlow = <
 };
 
 /**
+ * Create Subscription
+ */
+export const paymentsCreateSubscription = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<PaymentsCreateSubscriptionData, ThrowOnError>,
+) => {
+  return (options.client ?? _heyApiClient).post<
+    PaymentsCreateSubscriptionResponse,
+    PaymentsCreateSubscriptionError,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
+    url: "/api/v1/payments/subscriptions",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options?.headers,
+    },
+  });
+};
+
+/**
+ * Get Payment Status
+ */
+export const paymentsGetPaymentStatus = <ThrowOnError extends boolean = false>(
+  options: Options<PaymentsGetPaymentStatusData, ThrowOnError>,
+) => {
+  return (options.client ?? _heyApiClient).get<
+    PaymentsGetPaymentStatusResponse,
+    PaymentsGetPaymentStatusError,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
+    url: "/api/v1/payments/{payment_id}",
+    ...options,
+  });
+};
+
+/**
+ * List Payments For Gym
+ */
+export const paymentsListPaymentsForGym = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<PaymentsListPaymentsForGymData, ThrowOnError>,
+) => {
+  return (options.client ?? _heyApiClient).get<
+    PaymentsListPaymentsForGymResponse,
+    PaymentsListPaymentsForGymError,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: "bearer",
+        type: "http",
+      },
+    ],
+    url: "/api/v1/payments/",
+    ...options,
+  });
+};
+
+/**
  * Process Payment Webhook
  */
 export const paymentsProcessPaymentWebhook = <
@@ -3566,6 +4152,28 @@ export const paymentsProcessPaymentWebhook = <
   return (options.client ?? _heyApiClient).post<
     PaymentsProcessPaymentWebhookResponse,
     PaymentsProcessPaymentWebhookError,
+    ThrowOnError
+  >({
+    url: "/api/v1/payments/webhook",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options?.headers,
+    },
+  });
+};
+
+/**
+ * Process Payment Webhook
+ */
+export const paymentsProcessPaymentWebhook2 = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<PaymentsProcessPaymentWebhook2Data, ThrowOnError>,
+) => {
+  return (options.client ?? _heyApiClient).post<
+    PaymentsProcessPaymentWebhook2Response,
+    PaymentsProcessPaymentWebhook2Error,
     ThrowOnError
   >({
     url: "/api/v1/payments/webhooks/{provider}",

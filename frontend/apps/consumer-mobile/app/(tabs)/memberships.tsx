@@ -49,10 +49,10 @@ export default function MembershipsTab() {
     const style = STATUS_STYLES[item.status] ?? STATUS_STYLES.inactive;
 
     return (
-      <View className="bg-white rounded-lg p-4 mb-3 border border-gray-200">
+      <View className="bg-[#1a1a1a] rounded-lg p-4 mb-3 border border-[#2a2a2a]">
         <View className="flex-row justify-between items-start">
           <View className="flex-1 mr-3">
-            <Text className="text-lg font-semibold text-gray-900">{item.membership_tier}</Text>
+            <Text className="text-lg font-semibold text-gray-50">{item.membership_tier}</Text>
             <Text className="text-sm text-gray-600 mt-1">Gym ID: {item.gym_id}</Text>
           </View>
           <View className={`${style.bg} px-3 py-1 rounded-full`}>
@@ -68,20 +68,20 @@ export default function MembershipsTab() {
   };
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-[#0a0a0a]">
       <View className="px-4 pt-4 pb-2">
         <View className="flex-row bg-gray-100 rounded-lg p-1">
           <Pressable
-            className={`flex-1 py-2 rounded-md ${activeTab === 'gym' ? 'bg-white' : ''}`}
+            className={`flex-1 py-2 rounded-md ${activeTab === 'gym' ? 'bg-[#1a1a1a]' : ''}`}
             onPress={() => setActiveTab('gym')}
           >
-            <Text className="text-center text-sm font-medium text-gray-900">Gym</Text>
+            <Text className="text-center text-sm font-medium text-gray-50">Gym</Text>
           </Pressable>
           <Pressable
-            className={`flex-1 py-2 rounded-md ${activeTab === 'marketplace' ? 'bg-white' : ''}`}
+            className={`flex-1 py-2 rounded-md ${activeTab === 'marketplace' ? 'bg-[#1a1a1a]' : ''}`}
             onPress={() => setActiveTab('marketplace')}
           >
-            <Text className="text-center text-sm font-medium text-gray-900">Marketplace</Text>
+            <Text className="text-center text-sm font-medium text-gray-50">Marketplace</Text>
           </Pressable>
         </View>
       </View>
@@ -100,7 +100,7 @@ export default function MembershipsTab() {
           }
           ListEmptyComponent={
             gymMembershipsQuery.isLoading ? (
-              <ActivityIndicator size="large" color="#6366f1" className="mt-8" />
+              <ActivityIndicator size="large" color="#FF6B4A" className="mt-8" />
             ) : (
               <View className="items-center py-12">
                 <Ionicons name="card-outline" size={48} color="#d1d5db" />
@@ -112,15 +112,15 @@ export default function MembershipsTab() {
       ) : (
         <View className="px-4 pt-2">
           {marketplaceSubscriptionQuery.isLoading ? (
-            <ActivityIndicator size="large" color="#6366f1" className="mt-8" />
+            <ActivityIndicator size="large" color="#FF6B4A" className="mt-8" />
           ) : !marketplaceSubscriptionQuery.data ? (
             <View className="items-center py-12">
               <Ionicons name="layers-outline" size={48} color="#d1d5db" />
               <Text className="text-gray-500 text-lg mt-4 mb-2">No marketplace subscription</Text>
             </View>
           ) : (
-            <View className="bg-white rounded-lg p-4 border border-gray-200">
-              <Text className="text-lg font-semibold text-gray-900 capitalize">
+            <View className="bg-[#1a1a1a] rounded-lg p-4 border border-[#2a2a2a]">
+              <Text className="text-lg font-semibold text-gray-50 capitalize">
                 {marketplaceSubscriptionQuery.data.plan_tier} plan
               </Text>
               <Text className="text-sm text-gray-600 mt-1">

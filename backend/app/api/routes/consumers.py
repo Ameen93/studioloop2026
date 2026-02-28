@@ -671,7 +671,10 @@ class SetPasswordRequest(SQLModel):
 
 
 @router.get("/google")
-async def google_login(request: Request) -> Response:
+async def google_login(
+    request: Request,
+    redirect_uri: str | None = None,
+) -> Response:
     """Initiate Google OAuth flow (Story 1.9, AC #1).
 
     Redirects to Google's authorization endpoint with proper scopes.
@@ -679,6 +682,7 @@ async def google_login(request: Request) -> Response:
 
     Args:
         request: FastAPI request object (needed for Authlib)
+        redirect_uri: Optional frontend URL to redirect to after OAuth completes
 
     Returns:
         RedirectResponse to Google's authorization endpoint
@@ -698,28 +702,33 @@ async def google_login(request: Request) -> Response:
 
     from app.core.oauth import oauth
 
-    redirect_uri = settings.GOOGLE_REDIRECT_URI
-    return await oauth.google.authorize_redirect(request, redirect_uri)  # type: ignore[no-any-return]
+    if redirect_uri:
+        from app.core.oauth_utils import validate_oauth_redirect_uri
+
+        validate_oauth_redirect_uri(redirect_uri)
+        request.session["oauth_redirect_uri"] = redirect_uri
+
+    google_redirect = settings.GOOGLE_REDIRECT_URI
+    return await oauth.google.authorize_redirect(request, google_redirect)  # type: ignore[no-any-return]
 
 
-@router.get("/google/callback", response_model=ConsumerToken)
+@router.get("/google/callback", response_model=None)
 async def google_callback(
     request: Request,
     session: SessionDep,
-) -> ConsumerToken:
+) -> ConsumerToken | Response:
     """Handle Google OAuth callback (Story 1.9, AC #1, #2, #3, #5).
 
     Validates OAuth response, creates/links user account, and returns JWT tokens.
-    - If google_id exists: Login existing user
-    - If email exists but no google_id: Link Google to existing account
-    - If neither: Create new consumer
+    If a redirect_uri was stored in session, redirects with tokens in URL fragment.
+    Otherwise returns JSON (backward compatibility).
 
     Args:
         request: FastAPI request object (contains OAuth callback params)
         session: Database session
 
     Returns:
-        ConsumerToken with access_token and refresh_token
+        ConsumerToken or RedirectResponse with tokens in fragment
 
     Raises:
         HTTPException: 400 if OAuth validation fails
@@ -736,30 +745,29 @@ async def google_callback(
         )
 
     from app.core.oauth import oauth
+    from app.core.oauth_utils import build_oauth_redirect_response
 
-    try:
-        # Exchange code for tokens and get user info
-        token = await oauth.google.authorize_access_token(request)
-    except Exception:
+    # Helper: redirect errors to frontend if redirect_uri was set, else raise HTTP
+    def _oauth_error(code: str, message: str, http_status: int = 400) -> Response:
+        frontend_redirect = request.session.pop("oauth_redirect_uri", None)
+        if frontend_redirect:
+            return build_oauth_redirect_response(
+                frontend_redirect, {"error": code, "error_message": message}
+            )
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "code": "INVALID_OAUTH_STATE",
-                "message": "Invalid or expired OAuth state",
-                "details": {},
-            },
+            status_code=http_status,
+            detail={"code": code, "message": message, "details": {}},
         )
 
-    # Get user info from ID token (Google returns it with the token)
+    try:
+        token = await oauth.google.authorize_access_token(request)
+    except Exception:
+        return _oauth_error("INVALID_OAUTH_STATE", "Invalid or expired OAuth state")
+
     user_info = token.get("userinfo")
     if not user_info:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "code": "OAUTH_USER_INFO_FAILED",
-                "message": "Failed to get user info from Google",
-                "details": {},
-            },
+        return _oauth_error(
+            "OAUTH_USER_INFO_FAILED", "Failed to get user info from Google"
         )
 
     google_id = user_info.get("sub")
@@ -768,13 +776,8 @@ async def google_callback(
     picture = user_info.get("picture")
 
     if not email:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "code": "OAUTH_NO_EMAIL",
-                "message": "Google account does not have an email address",
-                "details": {},
-            },
+        return _oauth_error(
+            "OAUTH_NO_EMAIL", "Google account does not have an email address"
         )
 
     # Parse name into first/last
@@ -790,15 +793,9 @@ async def google_callback(
     ).first()
 
     if consumer:
-        # Block login for inactive/deactivated accounts (same as email login)
         if not consumer.is_active:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail={
-                    "code": "ACCOUNT_DEACTIVATED",
-                    "message": "This account has been deactivated",
-                    "details": {},
-                },
+            return _oauth_error(
+                "ACCOUNT_DEACTIVATED", "This account has been deactivated", 403
             )
 
         # Existing user - link Google if not already linked
@@ -844,6 +841,20 @@ async def google_callback(
         expires_delta=timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
         token_version=consumer.token_version,
     )
+
+    # Redirect to frontend if redirect_uri was stored in session
+    frontend_redirect = request.session.pop("oauth_redirect_uri", None)
+    if frontend_redirect:
+        from app.core.oauth_utils import build_oauth_redirect_response
+
+        return build_oauth_redirect_response(
+            frontend_redirect,
+            {
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "token_type": "bearer",
+            },
+        )
 
     return ConsumerToken(
         access_token=access_token,
@@ -897,7 +908,10 @@ def set_password(
 
 
 @router.get("/apple")
-async def apple_login(request: Request) -> Response:
+async def apple_login(
+    request: Request,
+    redirect_uri: str | None = None,
+) -> Response:
     """Initiate Apple OAuth flow (Story 1.10, AC #1, #4).
 
     Redirects user to Apple's authorization endpoint for Sign in with Apple.
@@ -905,6 +919,7 @@ async def apple_login(request: Request) -> Response:
 
     Args:
         request: FastAPI request object (needed for Authlib)
+        redirect_uri: Optional frontend URL to redirect to after OAuth completes
 
     Returns:
         RedirectResponse to Apple's authorization endpoint
@@ -924,31 +939,33 @@ async def apple_login(request: Request) -> Response:
 
     from app.core.oauth import oauth
 
-    redirect_uri = settings.APPLE_REDIRECT_URI
-    return await oauth.apple.authorize_redirect(request, redirect_uri)  # type: ignore[no-any-return]
+    if redirect_uri:
+        from app.core.oauth_utils import validate_oauth_redirect_uri
+
+        validate_oauth_redirect_uri(redirect_uri)
+        request.session["oauth_redirect_uri"] = redirect_uri
+
+    apple_redirect = settings.APPLE_REDIRECT_URI
+    return await oauth.apple.authorize_redirect(request, apple_redirect)  # type: ignore[no-any-return]
 
 
-@router.post("/apple/callback", response_model=ConsumerToken)
+@router.post("/apple/callback", response_model=None)
 async def apple_callback(
     request: Request,
     session: SessionDep,
-) -> ConsumerToken:
+) -> ConsumerToken | Response:
     """Handle Apple OAuth callback (Story 1.10, AC #1, #2, #3, #5).
 
     Apple uses response_mode=form_post, so this is a POST endpoint.
     Validates OAuth response, creates/links user account, and returns JWT tokens.
-    - If apple_id exists: Login existing user
-    - If email exists but no apple_id: Link Apple to existing account
-    - If neither: Create new consumer
-
-    Supports Apple's Hide My Email relay addresses (AC #3).
+    If a redirect_uri was stored in session, redirects with tokens in URL fragment.
 
     Args:
         request: FastAPI request object (contains OAuth callback form data)
         session: Database session
 
     Returns:
-        ConsumerToken with access_token and refresh_token
+        ConsumerToken or RedirectResponse with tokens in fragment
 
     Raises:
         HTTPException: 400 if OAuth validation fails
@@ -960,15 +977,23 @@ async def apple_callback(
     import jwt as pyjwt
 
     from app.core.oauth import generate_apple_client_secret, oauth
+    from app.core.oauth_utils import build_oauth_redirect_response
+
+    # Helper: redirect errors to frontend if redirect_uri was set, else raise HTTP
+    def _oauth_error(code: str, message: str, http_status: int = 400) -> Response:
+        frontend_redirect = request.session.pop("oauth_redirect_uri", None)
+        if frontend_redirect:
+            return build_oauth_redirect_response(
+                frontend_redirect, {"error": code, "error_message": message}
+            )
+        raise HTTPException(
+            status_code=http_status,
+            detail={"code": code, "message": message, "details": {}},
+        )
 
     if not settings.APPLE_CLIENT_ID or not settings.APPLE_PRIVATE_KEY:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail={
-                "code": "OAUTH_NOT_CONFIGURED",
-                "message": "Apple Sign In is not configured",
-                "details": {},
-            },
+        return _oauth_error(
+            "OAUTH_NOT_CONFIGURED", "Apple Sign In is not configured", 503
         )
 
     # Get form data (Apple uses form_post response mode)
@@ -976,74 +1001,34 @@ async def apple_callback(
     user_data_str = form_data.get("user")  # JSON string, only on first auth
 
     try:
-        # Generate client secret JWT for Apple
         client_secret = generate_apple_client_secret()
-
-        # Override the client secret for this request
         oauth.apple.client_secret = client_secret
-
-        # Exchange code for tokens
         token = await oauth.apple.authorize_access_token(request)
     except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "code": "INVALID_OAUTH_STATE",
-                "message": "Invalid or expired OAuth state",
-                "details": {},
-            },
-        )
+        return _oauth_error("INVALID_OAUTH_STATE", "Invalid or expired OAuth state")
 
-    # Get ID token and decode it (Apple returns user info in the ID token)
     id_token = token.get("id_token")
     if not id_token:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "code": "OAUTH_USER_INFO_FAILED",
-                "message": "Failed to get ID token from Apple",
-                "details": {},
-            },
+        return _oauth_error(
+            "OAUTH_USER_INFO_FAILED", "Failed to get ID token from Apple"
         )
 
-    # Decode Apple ID token (signature verification skipped - public keys rotate)
     try:
-        decoded = pyjwt.decode(
-            id_token,
-            options={"verify_signature": False},
-        )
+        decoded = pyjwt.decode(id_token, options={"verify_signature": False})
     except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "code": "OAUTH_USER_INFO_FAILED",
-                "message": "Failed to decode Apple ID token",
-                "details": {},
-            },
-        )
+        return _oauth_error("OAUTH_USER_INFO_FAILED", "Failed to decode Apple ID token")
 
     apple_id = decoded.get("sub")
     email = decoded.get("email")
 
-    # Validate required claims before account lookup
     if not apple_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "code": "OAUTH_USER_INFO_FAILED",
-                "message": "Apple ID token missing required 'sub' claim",
-                "details": {},
-            },
+        return _oauth_error(
+            "OAUTH_USER_INFO_FAILED", "Apple ID token missing required 'sub' claim"
         )
 
     if not email:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "code": "OAUTH_NO_EMAIL",
-                "message": "Apple account does not have an email address",
-                "details": {},
-            },
+        return _oauth_error(
+            "OAUTH_NO_EMAIL", "Apple account does not have an email address"
         )
 
     # Handle first-login name extraction (Apple only sends name on first auth)
@@ -1067,15 +1052,9 @@ async def apple_callback(
     ).first()
 
     if consumer:
-        # Block login for inactive/deactivated accounts (same as email/Google login)
         if not consumer.is_active:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail={
-                    "code": "ACCOUNT_DEACTIVATED",
-                    "message": "This account has been deactivated",
-                    "details": {},
-                },
+            return _oauth_error(
+                "ACCOUNT_DEACTIVATED", "This account has been deactivated", 403
             )
 
         # Existing user - link Apple if not already linked
@@ -1117,6 +1096,20 @@ async def apple_callback(
         expires_delta=timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
         token_version=consumer.token_version,
     )
+
+    # Redirect to frontend if redirect_uri was stored in session
+    frontend_redirect = request.session.pop("oauth_redirect_uri", None)
+    if frontend_redirect:
+        from app.core.oauth_utils import build_oauth_redirect_response
+
+        return build_oauth_redirect_response(
+            frontend_redirect,
+            {
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "token_type": "bearer",
+            },
+        )
 
     return ConsumerToken(
         access_token=access_token,

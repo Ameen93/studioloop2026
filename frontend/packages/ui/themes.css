@@ -1,0 +1,72 @@
+/**
+ * StudioLoop Theme Overrides
+ * Uses data-theme attribute on <html> to switch between light and dark themes.
+ *
+ * Key insight: Tailwind v4 resolves bg-gray-900 as var(--color-gray-900).
+ * By redefining --color-gray-* inside [data-theme="dark"], existing classes
+ * automatically adapt — most component files need zero changes for basic theming.
+ */
+
+[data-theme='light'] {
+  /* Surfaces */
+  --color-surface-0: #ffffff;
+  --color-surface-1: #f9fafb;
+  --color-surface-2: #f3f4f6;
+  --color-surface-3: #e5e7eb;
+
+  /* Text */
+  --color-text-primary: #111827;
+  --color-text-secondary: #4b5563;
+  --color-text-muted: #9ca3af;
+
+  /* Borders */
+  --color-border-default: #e5e7eb;
+
+  /* Gray scale: normal direction (50=lightest, 900=darkest) */
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+
+  /* White stays white */
+  --color-white: #ffffff;
+}
+
+[data-theme='dark'] {
+  /* Surfaces */
+  --color-surface-0: #0a0a0a;
+  --color-surface-1: #1a1a1a;
+  --color-surface-2: #2a2a2a;
+  --color-surface-3: #3a3a3a;
+
+  /* Text */
+  --color-text-primary: #f9fafb;
+  --color-text-secondary: #d1d5db;
+  --color-text-muted: #6b7280;
+
+  /* Borders */
+  --color-border-default: #3a3a3a;
+
+  /* Gray scale: INVERTED for dark theme
+     bg-gray-50 → darkest surface, bg-gray-900 → lightest text
+     This means existing bg-gray-50 (light bg) becomes dark bg automatically */
+  --color-gray-50: #0a0a0a;
+  --color-gray-100: #1a1a1a;
+  --color-gray-200: #2a2a2a;
+  --color-gray-300: #3a3a3a;
+  --color-gray-400: #6b7280;
+  --color-gray-500: #9ca3af;
+  --color-gray-600: #d1d5db;
+  --color-gray-700: #e5e7eb;
+  --color-gray-800: #f3f4f6;
+  --color-gray-900: #f9fafb;
+
+  /* White maps to dark surface for bg-white usage */
+  --color-white: #1a1a1a;
+}

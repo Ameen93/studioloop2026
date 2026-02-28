@@ -28,7 +28,7 @@ export function AppLayout() {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <NavLink to="/" className="flex items-center gap-2">
-              <span className="text-xl font-bold text-indigo-600">StudioLoop</span>
+              <span className="text-xl font-bold text-coral-600">StudioLoop</span>
             </NavLink>
 
             {/* Desktop nav */}
@@ -41,7 +41,7 @@ export function AppLayout() {
                   className={({ isActive }) =>
                     `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       isActive
-                        ? 'bg-indigo-50 text-indigo-700'
+                        ? 'bg-coral-50 text-coral-700'
                         : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                     }`
                   }
@@ -78,7 +78,7 @@ export function AppLayout() {
               end={to === '/'}
               className={({ isActive }) =>
                 `flex flex-col items-center gap-0.5 px-3 py-1 text-xs font-medium transition-colors ${
-                  isActive ? 'text-indigo-600' : 'text-gray-500'
+                  isActive ? 'text-coral-600' : 'text-gray-500'
                 }`
               }
             >
