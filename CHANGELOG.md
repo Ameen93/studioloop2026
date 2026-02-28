@@ -1,12 +1,55 @@
 # Changelog
 
-## Unreleased
+## 2026-02-28 — Unified Design System + Live Deployment
+
+### Added
+- **Complete UX overhaul** — Outfit typeface, coral/gold accent palette, dark/light themes across all 5 frontend apps
+- **9 new shared UI components**: MetricCard, ClassCard, FilterChips, PriceBadge, StickyBottomCTA, SearchInput, SkeletonLoader, ActionItemCard, StatusFlash
+- **4 updated primitives** with semantic tokens: Button, Card, Input, Modal
+- **CSS theme system** via `data-theme` attribute with Tailwind v4 CSS var overrides
+- **OAuth staff login** — Google/Apple ID support with migration for `google_id`/`apple_id` on Staff model
+- **GitHub Actions deploy workflow** — auto-deploys all frontend apps to Vercel on push to master
+- **EAS config** for both mobile apps (consumer + gym)
+- **Demo walkthrough doc** with live URLs and login credentials
+- **Pitch one-pager** for gym owner outreach
+- **UX design specification** (2,068 lines) — comprehensive design system reference
+- `.railwayignore` for clean backend deploys
 
 ### Changed
-- Stabilized Epic 5 class scheduling merge into `master` and re-verified backend coverage after merge conflict/regression fixes.
+- Consumer-web: dark theme with coral accents
+- Gym-web: light theme with gold accents
+- Both mobile apps: dark backgrounds, updated tab bars
+- Accent replacement: indigo→coral (consumer), blue→gold (gym), emerald→gold (gym-mobile)
+- OpenAPI client regenerated with full schema (2,763+ lines)
+- Cleaned `.gitignore`, removed tracked `dist/` directories
 
-### Risks & Mitigations (Epic 5 Merge)
-- **Risk:** Persistent test DB state caused false regression in private user creation (`duplicate key` on fixed email test data).
-  - **Mitigation:** Updated `test_private.py` to generate a unique email per run (`uuid4`) so test outcomes remain deterministic across reused local DB state.
-- **Risk:** Scheduling feature merge could silently impact unrelated auth/private routes.
-  - **Mitigation:** Executed full backend test suite (`uv run pytest`) after stabilization and confirmed all tests pass.
+### Live URLs
+- Gym Web: https://sl-gym.vercel.app
+- Consumer Web: https://sl-consumer.vercel.app
+- Marketing (Gyms): https://sl-marketing-gyms.vercel.app
+- Marketing (Consumers): https://sl-marketing-consumers.vercel.app
+- Admin: https://sl-admin-eta.vercel.app
+- Backend API: https://backend-production-e3cc8.up.railway.app
+- API Docs: https://backend-production-e3cc8.up.railway.app/docs
+
+## 2026-02-27 — Railway Deploy + Stitch Payments
+
+### Added
+- Stitch payments API routes and tests
+- Stitch sandbox webhook callback verification
+- Railway deployment config (Dockerfile, railway.toml, healthchecks)
+
+### Fixed
+- Docker build (python:3.12-slim, build deps, cache mounts)
+- Healthcheck timeout increased to 300s
+- Migration-on-start for Railway
+
+## 2026-02-26 — Epic 5 Merge
+
+### Added
+- Epic 5: Class Scheduling — models, routes, tests, calendar UI (stories 5-1..5-11)
+
+### Fixed
+- Stabilized merge — resolved class scheduling and account deletion regressions
+- Staff performance report test fix
+- Unique email per test run to prevent duplicate key errors
