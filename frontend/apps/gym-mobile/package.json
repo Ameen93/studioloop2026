@@ -20,7 +20,7 @@
     "@sl/ui": "workspace:*",
     "@sl/utils": "workspace:*",
     "@tanstack/react-query": "^5.90.19",
-    "expo-dev-client": "~5.0.22",
+    "expo-dev-client": "~4.0.22",
     "expo": "~54.0.31",
     "expo-camera": "~16.1.6",
     "expo-constants": "~18.0.5",
