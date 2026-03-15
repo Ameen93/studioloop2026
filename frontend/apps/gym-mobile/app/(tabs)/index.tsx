@@ -49,6 +49,7 @@ export default function DashboardTab() {
       const response = await analyticsGymOwnerDashboard({
         path: { gym_id: staff.gymId },
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
 
       const dashboard = response.data;

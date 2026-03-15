@@ -53,7 +53,7 @@ cd backend && uv sync --dev && uv run alembic upgrade head && uv run python scri
 ### Backend (`backend/app/`)
 
 - **Framework:** FastAPI + SQLModel (Pydantic v2 + SQLAlchemy) + PostgreSQL 17
-- **Package manager:** `uv` (not pip/poetry). Python 3.12 (pinned via `mise.toml`).
+- **Package manager:** `uv` (not pip/poetry). Python 3.12 locally (pinned via `mise.toml`), CI uses 3.11. `pyproject.toml` requires `>=3.11`.
 - **API prefix:** `/api/v1`
 - **Security:** Argon2 passwords (via `pwdlib`), bcrypt fallback for legacy hashes. JWT HS256 (access: 24h, refresh: 7d). OAuth2 via Google and Apple Sign-In.
 
@@ -112,7 +112,9 @@ Additional deps: `GymDep` (validates gym_id path param + staff access), `StaffGy
 - Web apps: tokens in `localStorage`, 401 interceptor with automatic refresh
 - Mobile apps: tokens in MMKV (`react-native-mmkv`), session expiry event emitter
 
-**Vite proxy:** All web apps proxy `/api` to backend (configurable via `VITE_API_PROXY_TARGET`).
+**Vite proxy:** All web apps proxy `/api` to backend. Fallback chain: `VITE_API_PROXY_TARGET` → `VITE_API_BASE_URL` → `http://localhost:8000`.
+
+**Design system:** Outfit typeface, coral accent (consumer apps, `#FF6B4A`), gold accent (gym apps). Dark & light themes via CSS `data-theme` attribute. Tailwind v4 CSS variable overrides. Full spec in `_bmad-output/planning-artifacts/ux-design-specification.md`.
 
 ### Multi-Tenancy (Critical)
 
@@ -152,12 +154,19 @@ Additional deps: `GymDep` (validates gym_id path param + staff access), `StaffGy
 ## Environment
 
 The `.env` file lives at the repo root (parent of `backend/`). Key variables:
-- `DATABASE_URL` or individual `POSTGRES_*` vars
+- `DATABASE_URL` or individual `POSTGRES_*` vars (auto-converts `postgresql://` to `postgresql+psycopg://`)
 - `SECRET_KEY`, `FIRST_SUPERUSER`, `FIRST_SUPERUSER_PASSWORD`
 - `ENVIRONMENT` (`local`|`staging`|`production`) — gates dev-only routes and Sentry
 - OAuth: `GOOGLE_CLIENT_ID`/`SECRET`, `APPLE_CLIENT_ID`/`TEAM_ID`/`KEY_ID`/`PRIVATE_KEY`
 - Payments: `STITCH_CLIENT_ID`/`SECRET`/`WEBHOOK_SECRET`
 - Frontend: `VITE_API_BASE_URL`, mobile: `EXPO_PUBLIC_API_BASE_URL`
+
+## Deployment
+
+- **Frontend (web apps):** Vercel — auto-deploys gym-web, consumer-web, and web on push to `master` via `.github/workflows/deploy.yml`
+- **Backend:** Railway — Docker auto-deploy via GitHub integration
+- **Live URLs:** gym → `sl-gym.vercel.app`, consumer → `sl-consumer.vercel.app`, admin → `sl-admin-eta.vercel.app`, API docs → `backend-production-e3cc8.up.railway.app/docs`
+- **CI:** `.github/workflows/ci.yml` runs lint, type-check, and tests with concurrency groups (cancels in-progress on new push)
 
 ## Commit Style
 
@@ -170,3 +179,9 @@ fix(auth): validate Apple token sub claim
 ## Project Planning
 
 BMAD artifacts live in `_bmad-output/`. Current implementation status is tracked in `_bmad-output/implementation-artifacts/sprint-status.yaml`. Story specs are in `_bmad-output/implementation-artifacts/{story-id}-{name}.md`.
+
+## Obsidian Vault Context
+
+This project is tracked in the Obsidian vault at `/home/ameen/projects/`:
+- **Project note:** `_notes/studioloop2026.md` — high-level status and notes
+- **Dashboard:** `_index.md` — overview of all projects

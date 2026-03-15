@@ -14,7 +14,7 @@ const API_BASE_URL = Constants.expoConfig?.extra?.apiBaseUrl
 
 const REDIRECT_URI = 'studioloop-consumer://oauth-callback';
 
-interface OAuthResult {
+type OAuthResult = {
   type: 'success';
   access_token: string;
   refresh_token: string;

@@ -12069,6 +12069,17 @@
             "format": "uuid",
             "title": "Gym Id"
           },
+          "gym_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gym Name"
+          },
           "instructor_name": {
             "anyOf": [
               {

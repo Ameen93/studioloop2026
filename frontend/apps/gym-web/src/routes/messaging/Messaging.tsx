@@ -39,6 +39,7 @@ export function Messaging() {
           recipient_ids: [],
         },
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return response.data;
     },

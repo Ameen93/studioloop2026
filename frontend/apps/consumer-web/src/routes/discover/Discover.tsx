@@ -39,6 +39,7 @@ export function Discover() {
           limit: 100,
           class_type: selectedType === 'All' ? null : selectedType,
         },
+        throwOnError: true,
       });
       return response.data ?? [];
     },

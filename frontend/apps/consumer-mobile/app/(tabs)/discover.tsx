@@ -28,6 +28,7 @@ export default function DiscoverTab() {
       const response = await marketplaceBrowseMarketplaceClasses({
         headers: getAuthHeaders(),
         query: { limit: 100 },
+        throwOnError: true,
       });
       return response.data ?? [];
     },

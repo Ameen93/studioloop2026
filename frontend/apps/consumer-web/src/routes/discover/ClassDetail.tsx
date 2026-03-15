@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   bookingsBookPayPerClass,
   bookingsBookWithMembership,
@@ -31,6 +31,7 @@ function formatTime(dateStr: string): string {
 
 export function ClassDetail() {
   const { classId } = useParams();
+  const queryClient = useQueryClient();
   const [bookingMethod, setBookingMethod] = useState<BookingMethod>('pay_per_class');
   const [booked, setBooked] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
@@ -44,6 +45,7 @@ export function ClassDetail() {
       const response = await marketplaceViewMarketplaceClassDetails({
         path: { session_id: classId },
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return response.data;
     },
@@ -67,6 +69,7 @@ export function ClassDetail() {
             session_id: sessionId,
           },
           headers,
+          throwOnError: true,
         });
         return waitlistResponse.data;
       }
@@ -78,6 +81,7 @@ export function ClassDetail() {
             session_id: sessionId,
           },
           headers,
+          throwOnError: true,
         });
         return response.data;
       }
@@ -88,6 +92,7 @@ export function ClassDetail() {
             session_id: sessionId,
           },
           headers,
+          throwOnError: true,
         });
         return response.data;
       }
@@ -99,12 +104,16 @@ export function ClassDetail() {
           amount_cents: classDetail.price_cents,
         },
         headers,
+        throwOnError: true,
       });
       return response.data;
     },
     onSuccess: () => {
       setBookingError(null);
       setBooked(true);
+      void queryClient.invalidateQueries({ queryKey: ['consumer-bookings'] });
+      void queryClient.invalidateQueries({ queryKey: ['consumer-class-history'] });
+      void queryClient.invalidateQueries({ queryKey: ['consumer-qr-info'] });
     },
     onError: () => {
       setBookingError('Booking failed. Please verify your membership/subscription and try again.');

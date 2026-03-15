@@ -22,6 +22,7 @@ export function MemberList() {
     queryFn: async () => {
       const result = await staffMembershipsListGymMembers({
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return result.data ?? [];
     },

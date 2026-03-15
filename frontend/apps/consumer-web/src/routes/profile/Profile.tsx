@@ -37,6 +37,7 @@ export function Profile() {
     queryFn: async () => {
       const response = await consumerAuthGetCurrentConsumerProfile({
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return response.data;
     },
@@ -47,6 +48,7 @@ export function Profile() {
     queryFn: async () => {
       const response = await analyticsConsumerClassHistory({
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return response.data?.items ?? [];
     },

@@ -23,6 +23,7 @@ export default function ScheduleTab() {
           end_date: new Date().toISOString().slice(0, 10),
           limit: 200,
         },
+        throwOnError: true,
       });
 
       const rows = response.data ?? [];

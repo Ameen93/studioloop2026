@@ -41,6 +41,7 @@ export function Payments() {
       const response = await paymentsGymPaymentDashboard({
         path: { gym_id: gymId },
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return response.data;
     },
@@ -56,6 +57,7 @@ export function Payments() {
       const response = await paymentsFailedPaymentActionItems({
         path: { gym_id: gymId },
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return response.data ?? [];
     },
@@ -71,6 +73,7 @@ export function Payments() {
       const response = await paymentsMarketplacePayoutReport({
         path: { gym_id: gymId },
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return response.data;
     },

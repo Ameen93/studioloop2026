@@ -109,7 +109,7 @@ def test_story_10_3_membership_health_report(client: TestClient, db: Session) ->
     _headers_2, consumer_2 = _consumer_headers(client, db)
 
     active = GymMembership(gym_id=gym.id, consumer_id=consumer_1.id, status=GymMembershipStatus.ACTIVE, started_at=datetime.now(UTC) - timedelta(days=3), membership_tier=GymMembershipTier.BASIC)
-    cancelled = GymMembership(gym_id=gym.id, consumer_id=consumer_2.id, status=GymMembershipStatus.CANCELLED, started_at=datetime.now(UTC) - timedelta(days=30), ended_at=datetime.now(UTC) - timedelta(days=2), membership_tier=GymMembershipTier.PREMIUM)
+    cancelled = GymMembership(gym_id=gym.id, consumer_id=consumer_2.id, status=GymMembershipStatus.CANCELLED, started_at=datetime.now(UTC) - timedelta(days=30), ended_at=datetime.now(UTC) - timedelta(hours=1), membership_tier=GymMembershipTier.PREMIUM)
     db.add(active)
     db.add(cancelled)
     db.commit()

@@ -30,6 +30,7 @@ export function ShareClass() {
       const response = await marketplaceShareClassDetails({
         path: { session_id: classId },
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return response.data;
     },
@@ -41,6 +42,7 @@ export function ShareClass() {
     queryFn: async () => {
       const response = await marketplaceGetReferralLink({
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return response.data;
     },
@@ -58,6 +60,7 @@ export function ShareClass() {
           referral_code: referralCode,
           email,
         },
+        throwOnError: true,
       });
     },
     onSuccess: () => {

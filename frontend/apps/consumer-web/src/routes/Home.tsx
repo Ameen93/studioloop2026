@@ -21,6 +21,7 @@ export function Home() {
     queryFn: async () => {
       const response = await analyticsConsumerStats({
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return response.data;
     },
@@ -31,6 +32,7 @@ export function Home() {
     queryFn: async () => {
       const response = await analyticsConsumerClassHistory({
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return response.data;
     },
@@ -41,6 +43,7 @@ export function Home() {
     queryFn: async () => {
       const response = await bookingsGetConsumerQr({
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return response.data;
     },
@@ -113,7 +116,7 @@ export function Home() {
               >
                 <div>
                   <p className="text-sm font-medium text-gray-900">{item.class_name}</p>
-                  <p className="text-xs text-gray-500">{item.gym_id}</p>
+                  <p className="text-xs text-gray-500">{item.gym_name ?? item.gym_id}</p>
                 </div>
                 <p className="text-xs text-gray-500">{formatDate(item.attended_at)}</p>
               </div>

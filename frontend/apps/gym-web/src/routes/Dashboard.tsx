@@ -33,6 +33,7 @@ export function Dashboard() {
       const result = await analyticsGymOwnerDashboard({
         path: { gym_id: gymId },
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return result.data;
     },
@@ -48,6 +49,7 @@ export function Dashboard() {
       const result = await paymentsFailedPaymentActionItems({
         path: { gym_id: gymId },
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return result.data ?? [];
     },

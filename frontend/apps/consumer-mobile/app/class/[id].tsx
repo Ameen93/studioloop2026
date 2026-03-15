@@ -33,6 +33,7 @@ export default function ClassDetailScreen() {
       const response = await marketplaceViewMarketplaceClassDetails({
         path: { session_id: id },
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return response.data ?? null;
     },
@@ -55,6 +56,7 @@ export default function ClassDetailScreen() {
             session_id: classData.session_id,
           },
           headers,
+          throwOnError: true,
         });
         return 'waitlist';
       }
@@ -66,6 +68,7 @@ export default function ClassDetailScreen() {
             session_id: classData.session_id,
           },
           headers,
+          throwOnError: true,
         });
         return 'booked';
       }
@@ -76,6 +79,7 @@ export default function ClassDetailScreen() {
             session_id: classData.session_id,
           },
           headers,
+          throwOnError: true,
         });
         return 'booked';
       }
@@ -87,6 +91,7 @@ export default function ClassDetailScreen() {
           amount_cents: classData.price_cents,
         },
         headers,
+        throwOnError: true,
       });
       return 'booked';
     },

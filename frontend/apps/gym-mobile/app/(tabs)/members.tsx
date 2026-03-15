@@ -26,6 +26,7 @@ export default function MembersTab() {
     queryFn: async () => {
       const response = await staffMembershipsListGymMembers({
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return response.data ?? [];
     },

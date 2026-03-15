@@ -47,6 +47,7 @@ export function Memberships() {
     queryFn: async () => {
       const response = await staffMembershipsListConsumerMemberships({
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return response.data ?? [];
     },
@@ -57,6 +58,7 @@ export function Memberships() {
     queryFn: async () => {
       const response = await marketplaceViewMarketplaceSubscriptionStatus({
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return response.data ?? null;
     },

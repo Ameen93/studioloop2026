@@ -17,7 +17,7 @@ export default function HomeTab() {
   const statsQuery = useQuery({
     queryKey: ['consumer', 'stats'],
     queryFn: async () => {
-      const response = await analyticsConsumerStats({ headers: getAuthHeaders() });
+      const response = await analyticsConsumerStats({ headers: getAuthHeaders(), throwOnError: true });
       return response.data ?? null;
     },
   });
@@ -25,7 +25,7 @@ export default function HomeTab() {
   const historyQuery = useQuery({
     queryKey: ['consumer', 'class-history'],
     queryFn: async () => {
-      const response = await analyticsConsumerClassHistory({ headers: getAuthHeaders() });
+      const response = await analyticsConsumerClassHistory({ headers: getAuthHeaders(), throwOnError: true });
       return response.data?.items ?? [];
     },
   });
@@ -36,7 +36,7 @@ export default function HomeTab() {
       onPress={() => router.push(`/class/${item.session_id}`)}
     >
       <Text className="text-lg font-semibold text-gray-50">{item.class_name}</Text>
-      <Text className="text-sm text-gray-600 mt-1">Gym: {item.gym_id}</Text>
+      <Text className="text-sm text-gray-600 mt-1">{item.gym_name ?? item.gym_id}</Text>
       <Text className="text-sm text-gray-500 mt-2">
         {new Date(item.attended_at).toLocaleDateString('en-ZA', {
           day: '2-digit',

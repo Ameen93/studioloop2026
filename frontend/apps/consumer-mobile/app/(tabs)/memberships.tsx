@@ -30,6 +30,7 @@ export default function MembershipsTab() {
     queryFn: async () => {
       const response = await staffMembershipsListConsumerMemberships({
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return response.data ?? [];
     },
@@ -40,6 +41,7 @@ export default function MembershipsTab() {
     queryFn: async () => {
       const response = await marketplaceViewMarketplaceSubscriptionStatus({
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return response.data ?? null;
     },

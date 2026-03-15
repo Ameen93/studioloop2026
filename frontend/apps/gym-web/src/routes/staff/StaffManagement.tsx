@@ -33,6 +33,7 @@ export function StaffManagement() {
     queryFn: async () => {
       const response = await staffMembershipsListStaff({
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return response.data ?? [];
     },
@@ -53,6 +54,7 @@ export function StaffManagement() {
       await staffMembershipsAddStaffMember({
         body: payload,
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
     },
     onSuccess: () => {
@@ -71,6 +73,7 @@ export function StaffManagement() {
         path: { staff_id: staffId },
         body: { role },
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
     },
     onSuccess: () => {
@@ -87,6 +90,7 @@ export function StaffManagement() {
       await staffMembershipsDeactivateStaffMember({
         path: { staff_id: staffId },
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
     },
     onSuccess: () => {

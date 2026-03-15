@@ -434,6 +434,7 @@ export type ConsumerClassHistoryItem = {
   session_id: string;
   class_name: string;
   gym_id: string;
+  gym_name?: string | null;
   instructor_name: string | null;
   attended_at: string;
 };

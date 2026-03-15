@@ -60,6 +60,7 @@ export function Bookings() {
       const response = await bookingsListConsumerBookings({
         query: { status: tabToStatus[activeTab], limit: 50 },
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return response.data;
     },
@@ -70,6 +71,7 @@ export function Bookings() {
       await bookingsCancelBooking({
         path: { booking_id: bookingId },
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
     },
     onSuccess: () => {

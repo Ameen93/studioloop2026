@@ -46,6 +46,7 @@ export default function CheckinTab() {
       const response = await bookingsSearchMembersForCheckIn({
         headers: getAuthHeaders(),
         query: { q: searchQuery },
+        throwOnError: true,
       });
       return response.data ?? [];
     },
@@ -59,6 +60,7 @@ export default function CheckinTab() {
           await bookingsScanQr({
             headers: getAuthHeaders(),
             body: { token: params.qrToken },
+            throwOnError: true,
           });
           return { offline: false };
         }
@@ -70,6 +72,7 @@ export default function CheckinTab() {
         await bookingsManualCheckIn({
           headers: getAuthHeaders(),
           body: { consumer_id: params.consumerId },
+          throwOnError: true,
         });
         return { offline: false };
       } catch {

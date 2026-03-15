@@ -19,7 +19,7 @@ export default function QrCodeTab() {
   const qrQuery = useQuery({
     queryKey: ['consumer', 'qr-data'],
     queryFn: async () => {
-      const response = await bookingsGetConsumerQr({ headers: getAuthHeaders() });
+      const response = await bookingsGetConsumerQr({ headers: getAuthHeaders(), throwOnError: true });
       return response.data ?? null;
     },
     enabled: !!profile,

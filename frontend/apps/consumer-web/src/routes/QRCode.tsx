@@ -74,6 +74,7 @@ export function QRCode() {
     queryFn: async () => {
       const response = await bookingsGetConsumerQr({
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return response.data;
     },

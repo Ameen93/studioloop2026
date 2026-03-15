@@ -16,6 +16,7 @@ from app.models.booking import Booking, BookingStatus
 from app.models.check_in_record import CheckInRecord
 from app.models.class_session import ClassSession
 from app.models.consumer import Consumer
+from app.models.gym import Gym
 from app.models.gym_membership import GymMembership, GymMembershipStatus
 from app.models.payment import Payment, PaymentStatus, PaymentType
 from app.models.staff import Staff, StaffRole
@@ -99,6 +100,7 @@ class ConsumerClassHistoryItem(BaseModel):
     session_id: UUID
     class_name: str
     gym_id: UUID
+    gym_name: str | None = None
     instructor_name: str | None
     attended_at: datetime
 
@@ -550,6 +552,8 @@ def consumer_class_history(
         for _b, s in rows
         if s.instructor_staff_id
     }
+    gym_ids = {s.gym_id for _b, s in rows}
+    gyms = {g.id: g for g in session.exec(select(Gym).where(col(Gym.id).in_(list(gym_ids)))).all()} if gym_ids else {}
     items: list[ConsumerClassHistoryItem] = []
     for b, s in rows:
         instructor_name: str | None = None
@@ -557,11 +561,13 @@ def consumer_class_history(
             inst = instructors.get(s.instructor_staff_id)
             if inst:
                 instructor_name = f"{inst.first_name} {inst.last_name}".strip()
+        gym = gyms.get(s.gym_id)
         items.append(
             ConsumerClassHistoryItem(
                 session_id=s.id,
                 class_name=s.title,
                 gym_id=s.gym_id,
+                gym_name=gym.name if gym else None,
                 instructor_name=instructor_name,
                 attended_at=(b.checked_in_at or s.start_time),
             )

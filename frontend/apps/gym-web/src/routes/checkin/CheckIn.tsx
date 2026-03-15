@@ -29,6 +29,7 @@ export function CheckIn() {
       const response = await bookingsSearchMembersForCheckIn({
         query: { q },
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return response.data ?? [];
     },
@@ -49,6 +50,7 @@ export function CheckIn() {
       const response = await bookingsManualCheckIn({
         body: { consumer_id: consumerId },
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return response.data;
     },

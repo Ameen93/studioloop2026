@@ -28,6 +28,7 @@ export default function ReportsScreen() {
       const response = await analyticsRevenueReport({
         path: { gym_id: gymId },
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return response.data ?? null;
     },
@@ -42,6 +43,7 @@ export default function ReportsScreen() {
       const response = await analyticsAttendanceReport({
         path: { gym_id: gymId },
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return response.data ?? null;
     },
@@ -56,6 +58,7 @@ export default function ReportsScreen() {
       const response = await analyticsMembershipHealthReport({
         path: { gym_id: gymId },
         headers: getAuthHeaders(),
+        throwOnError: true,
       });
       return response.data ?? null;
     },

@@ -56,6 +56,7 @@ export default function StaffLoginScreen() {
         headers: {
           Authorization: `Bearer ${authData.access_token}`,
         },
+        throwOnError: true,
       });
 
       return {
