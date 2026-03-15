@@ -49,6 +49,7 @@ class UpcomingGymClass(BaseModel):
 
 class GymProfileResponse(BaseModel):
     gym_id: UUID
+    slug: str
     name: str
     description: str | None
     tagline: str | None
@@ -332,6 +333,7 @@ def view_marketplace_gym_profile(
 
     return GymProfileResponse(
         gym_id=gym.id,
+        slug=gym.slug,
         name=gym.name,
         description=gym.description,
         tagline=gym.tagline,

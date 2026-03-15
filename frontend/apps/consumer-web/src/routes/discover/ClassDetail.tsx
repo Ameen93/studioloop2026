@@ -7,6 +7,7 @@ import {
   bookingsJoinWaitlist,
   marketplaceBookMarketplaceClassWithSubscription,
   marketplaceViewMarketplaceClassDetails,
+  staffMembershipsListConsumerMemberships,
 } from '@sl/api-client';
 import { getAuthHeaders } from '../../lib/apiAuth';
 
@@ -120,8 +121,22 @@ export function ClassDetail() {
     },
   });
 
+  const myMembershipsQuery = useQuery({
+    queryKey: ['consumer-memberships'],
+    queryFn: async () => {
+      const response = await staffMembershipsListConsumerMemberships({
+        headers: getAuthHeaders(),
+        throwOnError: true,
+      });
+      return response.data ?? [];
+    },
+  });
+
   const classDetail = classDetailQuery.data;
   const isFull = (classDetail?.spots_remaining ?? 0) === 0;
+  const hasMembershipAtGym = (myMembershipsQuery.data ?? []).some(
+    (m) => m.gym_id === classDetail?.gym_id && m.status === 'active',
+  );
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
@@ -168,10 +183,13 @@ export function ClassDetail() {
             </p>
 
             <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-gray-50 rounded-lg p-3">
+              <Link
+                to={`/discover/studio/${classDetail.gym_id}`}
+                className="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors"
+              >
                 <p className="text-xs text-gray-500 uppercase tracking-wider">Studio</p>
-                <p className="font-medium text-gray-900">{classDetail.gym_name}</p>
-              </div>
+                <p className="font-medium text-coral-600">{classDetail.gym_name}</p>
+              </Link>
               <div className="bg-gray-50 rounded-lg p-3">
                 <p className="text-xs text-gray-500 uppercase tracking-wider">Instructor</p>
                 <p className="font-medium text-gray-900">{classDetail.instructor_name ?? 'TBA'}</p>
@@ -227,12 +245,22 @@ export function ClassDetail() {
                     ? `We'll notify you if a spot opens for ${classDetail.title}.`
                     : `You're all set for ${classDetail.title}.`}
                 </p>
-                <Link
-                  to="/"
-                  className="mt-4 inline-flex items-center px-4 py-2 text-sm font-medium text-green-700 bg-green-100 rounded-lg hover:bg-green-200 transition-colors"
-                >
-                  Go to Home
-                </Link>
+                <div className="mt-4 flex items-center justify-center gap-3">
+                  <Link
+                    to="/"
+                    className="inline-flex items-center px-4 py-2 text-sm font-medium text-green-700 bg-green-100 rounded-lg hover:bg-green-200 transition-colors"
+                  >
+                    Go to Home
+                  </Link>
+                  {!hasMembershipAtGym && (
+                    <Link
+                      to={`/discover/studio/${classDetail.gym_id}`}
+                      className="inline-flex items-center px-4 py-2 text-sm font-medium text-coral-700 bg-coral-50 rounded-lg hover:bg-coral-100 transition-colors"
+                    >
+                      Become a member at {classDetail.gym_name}
+                    </Link>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="border-t border-gray-100 pt-6">
@@ -307,6 +335,35 @@ export function ClassDetail() {
                         ? `Book for R ${(classDetail.price_cents / 100).toFixed(2)}`
                         : 'Confirm booking'}
                 </button>
+              </div>
+            )}
+
+            {/* Membership CTA */}
+            {!hasMembershipAtGym && (
+              <div className="border-t border-gray-100 pt-4 mt-4">
+                <Link
+                  to={`/discover/studio/${classDetail.gym_id}`}
+                  className="flex items-center justify-between p-3 rounded-lg bg-coral-50 hover:bg-coral-100 transition-colors"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-coral-700">
+                      Join {classDetail.gym_name} to book regularly
+                    </p>
+                    <p className="text-xs text-coral-600">
+                      View membership plans &rarr;
+                    </p>
+                  </div>
+                </Link>
+              </div>
+            )}
+            {hasMembershipAtGym && (
+              <div className="border-t border-gray-100 pt-4 mt-4">
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-green-50">
+                  <span className="text-green-600 text-sm">&#10003;</span>
+                  <p className="text-sm text-green-700 font-medium">
+                    You're a member at {classDetail.gym_name}
+                  </p>
+                </div>
               </div>
             )}
           </div>

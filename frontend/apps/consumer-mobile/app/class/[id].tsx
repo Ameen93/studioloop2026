@@ -13,6 +13,7 @@ import {
   bookingsJoinWaitlist,
   marketplaceBookMarketplaceClassWithSubscription,
   marketplaceViewMarketplaceClassDetails,
+  staffMembershipsListConsumerMemberships,
 } from '@sl/api-client';
 import { getAuthHeaders } from '../../lib/apiAuth';
 
@@ -38,6 +39,17 @@ export default function ClassDetailScreen() {
       return response.data ?? null;
     },
     enabled: !!id,
+  });
+
+  const myMembershipsQuery = useQuery({
+    queryKey: ['consumer', 'memberships'],
+    queryFn: async () => {
+      const response = await staffMembershipsListConsumerMemberships({
+        headers: getAuthHeaders(),
+        throwOnError: true,
+      });
+      return response.data ?? [];
+    },
   });
 
   const bookMutation = useMutation({
@@ -148,6 +160,9 @@ export default function ClassDetailScreen() {
   }
 
   const classData = classQuery.data;
+  const hasMembershipAtGym = (myMembershipsQuery.data ?? []).some(
+    (m) => m.gym_id === classData?.gym_id && m.status === 'active',
+  );
 
   return (
     <View className="flex-1 bg-[#0a0a0a]">
@@ -207,6 +222,30 @@ export default function ClassDetailScreen() {
               Cancellation Policy
             </Text>
             <Text className="text-gray-700 leading-5">{classData.cancellation_policy}</Text>
+          </View>
+        )}
+
+        {/* Membership CTA */}
+        {!hasMembershipAtGym ? (
+          <Pressable
+            className="bg-coral-900/20 mx-4 mt-2 rounded-lg p-4 border border-coral-800"
+            onPress={() => router.push(`/studio/${classData.gym_id}`)}
+          >
+            <Text className="text-coral-400 font-medium">
+              Join {classData.gym_name} to book regularly
+            </Text>
+            <Text className="text-coral-500 text-sm mt-1">
+              View membership plans →
+            </Text>
+          </Pressable>
+        ) : (
+          <View className="bg-green-900/20 mx-4 mt-2 rounded-lg p-4 border border-green-800">
+            <View className="flex-row items-center">
+              <Ionicons name="checkmark-circle" size={16} color="#22c55e" />
+              <Text className="text-green-400 font-medium ml-2">
+                You're a member at {classData.gym_name}
+              </Text>
+            </View>
           </View>
         )}
 

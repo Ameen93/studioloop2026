@@ -45,11 +45,11 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="qr-code"
+        name="wallet"
         options={{
-          title: 'QR Code',
+          title: 'Wallet',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="qr-code-outline" size={size} color={color} />
+            <Ionicons name="wallet-outline" size={size} color={color} />
           ),
         }}
       />
@@ -60,6 +60,12 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="card-outline" size={size} color={color} />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="qr-code"
+        options={{
+          href: null, // Hidden from tab bar, accessible via Wallet quick actions
         }}
       />
       <Tabs.Screen

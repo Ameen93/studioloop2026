@@ -10,7 +10,9 @@ import { QRCode } from './routes/QRCode';
 import { Discover } from './routes/discover/Discover';
 import { ClassDetail } from './routes/discover/ClassDetail';
 import { ShareClass } from './routes/discover/ShareClass';
+import { StudioProfile } from './routes/discover/StudioProfile';
 import { Bookings } from './routes/bookings/Bookings';
+import { Wallet } from './routes/wallet/Wallet';
 import { Memberships } from './routes/memberships/Memberships';
 import { Profile } from './routes/profile/Profile';
 import { AppLayout } from './components/layout/AppLayout';
@@ -48,7 +50,9 @@ function App() {
             <Route path="/discover" element={<Discover />} />
             <Route path="/discover/:classId" element={<ClassDetail />} />
             <Route path="/discover/:classId/share" element={<ShareClass />} />
+            <Route path="/discover/studio/:gymId" element={<StudioProfile />} />
             <Route path="/bookings" element={<Bookings />} />
+            <Route path="/wallet" element={<Wallet />} />
             <Route path="/memberships" element={<Memberships />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/qr-code" element={<QRCode />} />
