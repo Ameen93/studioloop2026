@@ -2,10 +2,19 @@
  * Reports page (Story 12.7).
  *
  * Tabbed report views: Revenue, Attendance, Membership,
- * Class Performance, and Staff reports.
+ * Class Performance, and Staff reports — all wired to real API endpoints.
  */
 
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import {
+  analyticsRevenueReport,
+  analyticsAttendanceReport,
+  analyticsMembershipHealthReport,
+  analyticsClassPerformanceReport,
+  analyticsStaffPerformanceReport,
+} from '@sl/api-client';
+import { getAuthHeaders, getStoredStaffInfo } from '../../lib/apiAuth';
 
 type ReportTab = 'revenue' | 'attendance' | 'membership' | 'class_performance' | 'staff';
 
@@ -17,22 +26,63 @@ const tabs: { key: ReportTab; label: string }[] = [
   { key: 'staff', label: 'Staff' },
 ];
 
-function RevenueReport() {
+function formatZar(cents: number): string {
+  return `R ${(cents / 100).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`;
+}
+
+function LoadingState() {
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-600">
+      Loading report data...
+    </div>
+  );
+}
+
+function ErrorState({ message }: { message: string }) {
+  return (
+    <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+      {message}
+    </div>
+  );
+}
+
+function RevenueReport({ gymId }: { gymId: string }) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['report-revenue', gymId],
+    queryFn: async () => {
+      const result = await analyticsRevenueReport({
+        path: { gym_id: gymId },
+        headers: getAuthHeaders(),
+        throwOnError: true,
+      });
+      return result.data;
+    },
+  });
+
+  if (isLoading) return <LoadingState />;
+  if (error) return <ErrorState message="Could not load revenue report." />;
+  if (!data) return <ErrorState message="No revenue data available." />;
+
+  const growthSign = data.growth_percent >= 0 ? '+' : '';
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-gray-50 rounded-lg p-4">
-          <p className="text-sm text-gray-500">This Month</p>
-          <p className="text-2xl font-bold text-gray-900">R 87,450.00</p>
-          <p className="text-sm text-green-600">+12.3% vs last month</p>
+          <p className="text-sm text-gray-500">This Period</p>
+          <p className="text-2xl font-bold text-gray-900">{formatZar(data.total_revenue_cents)}</p>
+          <p className={`text-sm ${data.growth_percent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {growthSign}{data.growth_percent.toFixed(1)}% vs previous period
+          </p>
         </div>
         <div className="bg-gray-50 rounded-lg p-4">
-          <p className="text-sm text-gray-500">Last Month</p>
-          <p className="text-2xl font-bold text-gray-900">R 77,890.00</p>
+          <p className="text-sm text-gray-500">Previous Period</p>
+          <p className="text-2xl font-bold text-gray-900">{formatZar(data.previous_period_total_cents)}</p>
         </div>
         <div className="bg-gray-50 rounded-lg p-4">
-          <p className="text-sm text-gray-500">Year to Date</p>
-          <p className="text-2xl font-bold text-gray-900">R 165,340.00</p>
+          <p className="text-sm text-gray-500">Period</p>
+          <p className="text-lg font-semibold text-gray-900">{data.period}</p>
+          <p className="text-xs text-gray-500">{data.start_date} to {data.end_date}</p>
         </div>
       </div>
       <div className="border border-gray-200 rounded-lg overflow-hidden">
@@ -41,22 +91,25 @@ function RevenueReport() {
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Source</th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Transactions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {[
-              { source: 'Membership Subscriptions', amount: 'R 62,300.00', count: 104 },
-              { source: 'Class Packs', amount: 'R 12,500.00', count: 25 },
-              { source: 'Drop-in Classes', amount: 'R 8,400.00', count: 56 },
-              { source: 'Merchandise', amount: 'R 4,250.00', count: 34 },
-            ].map((row, i) => (
-              <tr key={i}>
-                <td className="px-6 py-3 text-sm text-gray-900">{row.source}</td>
-                <td className="px-6 py-3 text-sm text-gray-700 text-right">{row.amount}</td>
-                <td className="px-6 py-3 text-sm text-gray-500 text-right">{row.count}</td>
-              </tr>
-            ))}
+            {data.source_breakdown && (
+              <>
+                <tr>
+                  <td className="px-6 py-3 text-sm text-gray-900">Memberships</td>
+                  <td className="px-6 py-3 text-sm text-gray-700 text-right">{formatZar(data.source_breakdown.memberships_cents)}</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-3 text-sm text-gray-900">Classes</td>
+                  <td className="px-6 py-3 text-sm text-gray-700 text-right">{formatZar(data.source_breakdown.classes_cents)}</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-3 text-sm text-gray-900">Marketplace</td>
+                  <td className="px-6 py-3 text-sm text-gray-700 text-right">{formatZar(data.source_breakdown.marketplace_cents)}</td>
+                </tr>
+              </>
+            )}
           </tbody>
         </table>
       </div>
@@ -64,15 +117,31 @@ function RevenueReport() {
   );
 }
 
-function AttendanceReport() {
+function AttendanceReport({ gymId }: { gymId: string }) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['report-attendance', gymId],
+    queryFn: async () => {
+      const result = await analyticsAttendanceReport({
+        path: { gym_id: gymId },
+        headers: getAuthHeaders(),
+        throwOnError: true,
+      });
+      return result.data;
+    },
+  });
+
+  if (isLoading) return <LoadingState />;
+  if (error) return <ErrorState message="Could not load attendance report." />;
+  if (!data) return <ErrorState message="No attendance data available." />;
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         {[
-          { label: 'Today', value: '47' },
-          { label: 'This Week', value: '312' },
-          { label: 'This Month', value: '1,247' },
-          { label: 'Avg Daily', value: '42' },
+          { label: 'Total Check-ins', value: data.total_check_ins.toLocaleString() },
+          { label: 'Avg Daily', value: data.average_daily_attendance.toFixed(0) },
+          { label: 'Avg Weekly', value: data.average_weekly_attendance.toFixed(0) },
+          { label: 'Peak Hour', value: data.peak_hour !== null ? `${String(data.peak_hour).padStart(2, '0')}:00` : '-' },
         ].map((stat) => (
           <div key={stat.label} className="bg-gray-50 rounded-lg p-4">
             <p className="text-sm text-gray-500">{stat.label}</p>
@@ -80,45 +149,55 @@ function AttendanceReport() {
           </div>
         ))}
       </div>
-      <div className="border border-gray-200 rounded-lg overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time Slot</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Avg Check-ins</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Peak Day</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {[
-              { slot: '06:00 - 08:00', avg: 18, peak: 'Monday' },
-              { slot: '08:00 - 10:00', avg: 12, peak: 'Wednesday' },
-              { slot: '12:00 - 14:00', avg: 8, peak: 'Tuesday' },
-              { slot: '16:00 - 18:00', avg: 15, peak: 'Thursday' },
-              { slot: '18:00 - 20:00', avg: 10, peak: 'Monday' },
-            ].map((row, i) => (
-              <tr key={i}>
-                <td className="px-6 py-3 text-sm text-gray-900">{row.slot}</td>
-                <td className="px-6 py-3 text-sm text-gray-700 text-right">{row.avg}</td>
-                <td className="px-6 py-3 text-sm text-gray-500 text-right">{row.peak}</td>
+      {data.by_day_of_week && data.by_day_of_week.length > 0 && (
+        <div className="border border-gray-200 rounded-lg overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Day</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Check-ins</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {data.by_day_of_week.map((row, i) => (
+                <tr key={i}>
+                  <td className="px-6 py-3 text-sm text-gray-900">{row.day ?? row.day_of_week ?? `Day ${i}`}</td>
+                  <td className="px-6 py-3 text-sm text-gray-700 text-right">{row.count ?? row.check_ins ?? '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
 
-function MembershipReport() {
+function MembershipReport({ gymId }: { gymId: string }) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['report-membership', gymId],
+    queryFn: async () => {
+      const result = await analyticsMembershipHealthReport({
+        path: { gym_id: gymId },
+        headers: getAuthHeaders(),
+        throwOnError: true,
+      });
+      return result.data;
+    },
+  });
+
+  if (isLoading) return <LoadingState />;
+  if (error) return <ErrorState message="Could not load membership report." />;
+  if (!data) return <ErrorState message="No membership data available." />;
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         {[
-          { label: 'Active Members', value: '342' },
-          { label: 'New This Month', value: '28' },
-          { label: 'Churned', value: '8' },
-          { label: 'Retention Rate', value: '94.2%' },
+          { label: 'Active Members', value: data.total_active_members.toLocaleString() },
+          { label: 'New This Period', value: data.new_this_period.toLocaleString() },
+          { label: 'Cancelled', value: data.cancelled_this_period.toLocaleString() },
+          { label: 'Retention Rate', value: `${data.retention_rate_percent.toFixed(1)}%` },
         ].map((stat) => (
           <div key={stat.label} className="bg-gray-50 rounded-lg p-4">
             <p className="text-sm text-gray-500">{stat.label}</p>
@@ -126,64 +205,92 @@ function MembershipReport() {
           </div>
         ))}
       </div>
-      <div className="border border-gray-200 rounded-lg overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Plan</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Active</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">MRR</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {[
-              { plan: 'Premium Monthly', active: 145, mrr: 'R 86,855.00' },
-              { plan: 'Basic Monthly', active: 120, mrr: 'R 47,880.00' },
-              { plan: 'Premium Annual', active: 52, mrr: 'R 23,400.00' },
-              { plan: 'Class Pack (10)', active: 25, mrr: 'R 6,250.00' },
-            ].map((row, i) => (
-              <tr key={i}>
-                <td className="px-6 py-3 text-sm text-gray-900">{row.plan}</td>
-                <td className="px-6 py-3 text-sm text-gray-700 text-right">{row.active}</td>
-                <td className="px-6 py-3 text-sm text-gray-500 text-right">{row.mrr}</td>
+      {data.tier_breakdown && data.tier_breakdown.length > 0 && (
+        <div className="border border-gray-200 rounded-lg overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Plan / Tier</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Active</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {data.tier_breakdown.map((row, i) => (
+                <tr key={i}>
+                  <td className="px-6 py-3 text-sm text-gray-900">{row.tier ?? row.plan_name ?? row.name ?? `Tier ${i + 1}`}</td>
+                  <td className="px-6 py-3 text-sm text-gray-700 text-right">{row.count ?? row.active ?? '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <div className="text-sm text-gray-500">
+        Churn rate: {data.churn_rate_percent.toFixed(1)}% | Expiring soon: {data.expiring_soon_member_count}
       </div>
     </div>
   );
 }
 
-function ClassPerformanceReport() {
+function ClassPerformanceReport({ gymId }: { gymId: string }) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['report-class-performance', gymId],
+    queryFn: async () => {
+      const result = await analyticsClassPerformanceReport({
+        path: { gym_id: gymId },
+        headers: getAuthHeaders(),
+        throwOnError: true,
+      });
+      return result.data;
+    },
+  });
+
+  if (isLoading) return <LoadingState />;
+  if (error) return <ErrorState message="Could not load class performance report." />;
+  if (!data) return <ErrorState message="No class performance data available." />;
+
   return (
     <div className="space-y-6">
+      {data.popular_classes && data.popular_classes.length > 0 && (
+        <div className="bg-gray-50 rounded-lg p-4">
+          <p className="text-sm font-medium text-gray-500 mb-1">Popular Classes</p>
+          <p className="text-sm text-gray-900">{data.popular_classes.join(', ')}</p>
+        </div>
+      )}
+      {data.underperforming_sessions && data.underperforming_sessions.length > 0 && (
+        <div className="bg-yellow-50 rounded-lg p-4">
+          <p className="text-sm font-medium text-yellow-700 mb-1">Underperforming Sessions</p>
+          <p className="text-sm text-yellow-800">{data.underperforming_sessions.join(', ')}</p>
+        </div>
+      )}
       <div className="border border-gray-200 rounded-lg overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Class</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Avg Attendance</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Bookings</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Capacity</th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Fill Rate</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Revenue</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">No-Show Rate</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {[
-              { name: 'Morning HIIT', avg: 17, fill: '85%', revenue: 'R 12,400.00' },
-              { name: 'Spin Class', avg: 21, fill: '84%', revenue: 'R 9,800.00' },
-              { name: 'Yoga Flow', avg: 13, fill: '87%', revenue: 'R 7,200.00' },
-              { name: 'Boxing Fitness', avg: 16, fill: '80%', revenue: 'R 6,400.00' },
-              { name: 'CrossFit', avg: 14, fill: '70%', revenue: 'R 5,600.00' },
-              { name: 'Pilates', avg: 9, fill: '75%', revenue: 'R 4,100.00' },
-            ].map((row, i) => (
-              <tr key={i}>
-                <td className="px-6 py-3 text-sm text-gray-900">{row.name}</td>
-                <td className="px-6 py-3 text-sm text-gray-700 text-right">{row.avg}</td>
-                <td className="px-6 py-3 text-sm text-gray-700 text-right">{row.fill}</td>
-                <td className="px-6 py-3 text-sm text-gray-500 text-right">{row.revenue}</td>
+            {(data.items ?? []).map((item) => (
+              <tr key={item.session_id}>
+                <td className="px-6 py-3 text-sm text-gray-900">{item.class_name}</td>
+                <td className="px-6 py-3 text-sm text-gray-700 text-right">{item.bookings}</td>
+                <td className="px-6 py-3 text-sm text-gray-700 text-right">{item.capacity}</td>
+                <td className="px-6 py-3 text-sm text-gray-700 text-right">{item.fill_rate_percent.toFixed(0)}%</td>
+                <td className="px-6 py-3 text-sm text-gray-500 text-right">{item.no_show_rate_percent.toFixed(0)}%</td>
               </tr>
             ))}
+            {(!data.items || data.items.length === 0) && (
+              <tr>
+                <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-500">
+                  No class performance data for this period.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -191,7 +298,25 @@ function ClassPerformanceReport() {
   );
 }
 
-function StaffReport() {
+function StaffReport({ gymId }: { gymId: string }) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['report-staff-performance', gymId],
+    queryFn: async () => {
+      const result = await analyticsStaffPerformanceReport({
+        path: { gym_id: gymId },
+        headers: getAuthHeaders(),
+        throwOnError: true,
+      });
+      // Response is an array directly
+      return result.data ?? [];
+    },
+  });
+
+  if (isLoading) return <LoadingState />;
+  if (error) return <ErrorState message="Could not load staff performance report." />;
+
+  const staffItems = data ?? [];
+
   return (
     <div className="space-y-6">
       <div className="border border-gray-200 rounded-lg overflow-hidden">
@@ -201,23 +326,31 @@ function StaffReport() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Staff Member</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Classes Taught</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Avg Rating</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Avg Fill Rate</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Hours Worked</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Est. Earnings</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {[
-              { name: 'Coach Sipho', role: 'Instructor', classes: 24, rating: '4.8' },
-              { name: 'Lerato M.', role: 'Instructor', classes: 20, rating: '4.9' },
-              { name: 'Coach David', role: 'Instructor', classes: 18, rating: '4.7' },
-              { name: 'Zanele K.', role: 'Instructor', classes: 12, rating: '4.8' },
-            ].map((row, i) => (
-              <tr key={i}>
-                <td className="px-6 py-3 text-sm text-gray-900">{row.name}</td>
-                <td className="px-6 py-3 text-sm text-gray-500">{row.role}</td>
-                <td className="px-6 py-3 text-sm text-gray-700 text-right">{row.classes}</td>
-                <td className="px-6 py-3 text-sm text-gray-700 text-right">{row.rating}</td>
+            {staffItems.map((item) => (
+              <tr key={item.staff_id}>
+                <td className="px-6 py-3 text-sm text-gray-900">{item.full_name}</td>
+                <td className="px-6 py-3 text-sm text-gray-500 capitalize">{item.role.replace('_', ' ')}</td>
+                <td className="px-6 py-3 text-sm text-gray-700 text-right">{item.classes_taught}</td>
+                <td className="px-6 py-3 text-sm text-gray-700 text-right">{item.avg_fill_rate_percent.toFixed(0)}%</td>
+                <td className="px-6 py-3 text-sm text-gray-700 text-right">{item.total_hours_worked.toFixed(1)}</td>
+                <td className="px-6 py-3 text-sm text-gray-500 text-right">
+                  {item.estimated_earnings_cents !== null ? formatZar(item.estimated_earnings_cents) : '-'}
+                </td>
               </tr>
             ))}
+            {staffItems.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-6 py-8 text-center text-sm text-gray-500">
+                  No staff performance data for this period.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -227,6 +360,8 @@ function StaffReport() {
 
 export function Reports() {
   const [activeTab, setActiveTab] = useState<ReportTab>('revenue');
+  const staffInfo = getStoredStaffInfo();
+  const gymId = staffInfo?.gym_id ?? null;
 
   return (
     <div className="space-y-6">
@@ -236,6 +371,12 @@ export function Reports() {
           Export CSV
         </button>
       </div>
+
+      {!gymId && (
+        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
+          Missing staff session context. Please sign in again.
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="border-b border-gray-200">
@@ -258,11 +399,17 @@ export function Reports() {
 
       {/* Tab content */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        {activeTab === 'revenue' && <RevenueReport />}
-        {activeTab === 'attendance' && <AttendanceReport />}
-        {activeTab === 'membership' && <MembershipReport />}
-        {activeTab === 'class_performance' && <ClassPerformanceReport />}
-        {activeTab === 'staff' && <StaffReport />}
+        {!gymId ? (
+          <div className="text-sm text-gray-500">Sign in to view reports.</div>
+        ) : (
+          <>
+            {activeTab === 'revenue' && <RevenueReport gymId={gymId} />}
+            {activeTab === 'attendance' && <AttendanceReport gymId={gymId} />}
+            {activeTab === 'membership' && <MembershipReport gymId={gymId} />}
+            {activeTab === 'class_performance' && <ClassPerformanceReport gymId={gymId} />}
+            {activeTab === 'staff' && <StaffReport gymId={gymId} />}
+          </>
+        )}
       </div>
     </div>
   );

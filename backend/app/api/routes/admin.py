@@ -8,7 +8,7 @@ Implements:
 - Story 11.5: Platform Health Monitoring
 - Story 11.6: Gym-Level Data Access for Support (with audit logging)
 
-All endpoints require superuser authentication via CurrentUser.
+All endpoints require superuser authentication via CurrentSuperUser dependency.
 """
 
 from datetime import datetime, timezone
@@ -19,7 +19,7 @@ from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import func
 from sqlmodel import SQLModel, col, select
 
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import CurrentSuperUser, SessionDep
 from app.models.admin import (
     AuditLog,
     AuditLogPublic,
@@ -46,19 +46,6 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 # =============================================================================
 # Helpers
 # =============================================================================
-
-
-def _require_superuser(current_user: CurrentUser) -> None:
-    """Raise 403 if the current user is not a superuser."""
-    if not current_user.is_superuser:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "code": "FORBIDDEN",
-                "message": "Superuser access required",
-                "details": {},
-            },
-        )
 
 
 def _create_audit_log(
@@ -213,7 +200,7 @@ class AuditLogListResponse(SQLModel):
 @router.get("/gyms", response_model=AdminGymListResponse)
 def list_gyms(
     session: SessionDep,
-    current_user: CurrentUser,
+    _current_user: CurrentSuperUser,
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=200),
     search: str | None = Query(default=None, max_length=255),
@@ -227,7 +214,7 @@ def list_gyms(
     and marketplace participation. Search matches against
     gym name, slug, email, and city.
     """
-    _require_superuser(current_user)
+
 
     stmt = select(Gym)
 
@@ -286,11 +273,11 @@ def list_gyms(
 @router.post("/gyms/{gym_id}/approve", response_model=AdminGymActionResponse)
 def approve_gym(
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user: CurrentSuperUser,
     gym_id: UUID,
 ) -> AdminGymActionResponse:
     """Approve a gym application by setting is_active=True."""
-    _require_superuser(current_user)
+
 
     gym = session.get(Gym, gym_id)
     if not gym:
@@ -343,12 +330,12 @@ def approve_gym(
 @router.post("/gyms/{gym_id}/reject", response_model=AdminGymActionResponse)
 def reject_gym(
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user: CurrentSuperUser,
     gym_id: UUID,
     reason: str = Query(max_length=1000),
 ) -> AdminGymActionResponse:
     """Reject a gym application with a reason."""
-    _require_superuser(current_user)
+
 
     gym = session.get(Gym, gym_id)
     if not gym:
@@ -391,12 +378,12 @@ def reject_gym(
 @router.post("/gyms/{gym_id}/suspend", response_model=AdminGymActionResponse)
 def suspend_gym(
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user: CurrentSuperUser,
     gym_id: UUID,
     reason: str = Query(max_length=1000),
 ) -> AdminGymActionResponse:
     """Suspend an active gym."""
-    _require_superuser(current_user)
+
 
     gym = session.get(Gym, gym_id)
     if not gym:
@@ -450,11 +437,11 @@ def suspend_gym(
 @router.post("/gyms/{gym_id}/reactivate", response_model=AdminGymActionResponse)
 def reactivate_gym(
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user: CurrentSuperUser,
     gym_id: UUID,
 ) -> AdminGymActionResponse:
     """Reactivate a suspended gym."""
-    _require_superuser(current_user)
+
 
     gym = session.get(Gym, gym_id)
     if not gym:
@@ -516,7 +503,7 @@ def reactivate_gym(
 @router.get("/complaints", response_model=ComplaintListResponse)
 def list_complaints(
     session: SessionDep,
-    current_user: CurrentUser,
+    _current_user: CurrentSuperUser,
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=200),
     status_filter: ComplaintStatus | None = Query(default=None, alias="status"),
@@ -525,7 +512,7 @@ def list_complaints(
     assigned_to: UUID | None = Query(default=None),
 ) -> ComplaintListResponse:
     """List complaints with optional filters."""
-    _require_superuser(current_user)
+
 
     stmt = select(Complaint)
 
@@ -576,11 +563,11 @@ def list_complaints(
 )
 def create_complaint(
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user: CurrentSuperUser,
     payload: ComplaintCreate,
 ) -> ComplaintPublic:
     """Create a new complaint on behalf of a consumer."""
-    _require_superuser(current_user)
+
 
     # Validate consumer exists
     consumer = session.get(Consumer, payload.consumer_id)
@@ -644,11 +631,11 @@ def create_complaint(
 @router.get("/complaints/{complaint_id}", response_model=ComplaintPublic)
 def get_complaint(
     session: SessionDep,
-    current_user: CurrentUser,
+    _current_user: CurrentSuperUser,
     complaint_id: UUID,
 ) -> ComplaintPublic:
     """Get a specific complaint by ID."""
-    _require_superuser(current_user)
+
 
     complaint = session.get(Complaint, complaint_id)
     if not complaint:
@@ -678,12 +665,12 @@ def get_complaint(
 @router.put("/complaints/{complaint_id}", response_model=ComplaintPublic)
 def update_complaint(
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user: CurrentSuperUser,
     complaint_id: UUID,
     payload: ComplaintUpdate,
 ) -> ComplaintPublic:
     """Update a complaint: assign, change status, add notes, resolve."""
-    _require_superuser(current_user)
+
 
     complaint = session.get(Complaint, complaint_id)
     if not complaint:
@@ -766,7 +753,7 @@ def update_complaint(
 )
 def issue_credits(
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user: CurrentSuperUser,
     consumer_id: UUID,
     payload: CreditLogCreate,
 ) -> CreditIssueResponse:
@@ -775,7 +762,7 @@ def issue_credits(
     If marketplace_subscription_id is not provided, credits are applied
     to the consumer's active marketplace subscription (if any).
     """
-    _require_superuser(current_user)
+
 
     # Validate consumer exists
     consumer = session.get(Consumer, consumer_id)
@@ -875,14 +862,14 @@ def issue_credits(
 @router.get("/health", response_model=PlatformHealthResponse)
 def platform_health(
     session: SessionDep,
-    current_user: CurrentUser,
+    _current_user: CurrentSuperUser,
 ) -> PlatformHealthResponse:
     """Platform health statistics dashboard.
 
     Returns aggregate counts for gyms, consumers, bookings,
     subscriptions, complaints, and payments.
     """
-    _require_superuser(current_user)
+
 
     total_gyms = session.exec(select(func.count()).select_from(Gym)).one()
 
@@ -938,7 +925,7 @@ def platform_health(
 @router.get("/gyms/{gym_id}/data", response_model=GymDataResponse)
 def get_gym_data(
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user: CurrentSuperUser,
     gym_id: UUID,
     members_limit: int = Query(default=50, ge=1, le=200),
     bookings_limit: int = Query(default=50, ge=1, le=200),
@@ -949,7 +936,7 @@ def get_gym_data(
     Returns members, recent bookings, and recent payments
     for the specified gym. Creates an audit log entry.
     """
-    _require_superuser(current_user)
+
 
     gym = session.get(Gym, gym_id)
     if not gym:
@@ -1072,7 +1059,7 @@ def get_gym_data(
 @router.get("/audit_logs", response_model=AuditLogListResponse)
 def list_audit_logs(
     session: SessionDep,
-    current_user: CurrentUser,
+    _current_user: CurrentSuperUser,
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=200),
     admin_user_id: UUID | None = Query(default=None),
@@ -1081,7 +1068,7 @@ def list_audit_logs(
     gym_id: UUID | None = Query(default=None),
 ) -> AuditLogListResponse:
     """List audit logs with optional filters."""
-    _require_superuser(current_user)
+
 
     stmt = select(AuditLog)
 

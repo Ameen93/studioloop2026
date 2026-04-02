@@ -9,11 +9,12 @@ from datetime import datetime
 from enum import Enum
 from uuid import UUID
 
-from pydantic import EmailStr
+from pydantic import EmailStr, field_validator
 from sqlalchemy import Column
 from sqlalchemy import Enum as SAEnum
 from sqlmodel import Field, SQLModel
 
+from app.core.security import validate_password_strength
 from app.models.base import BaseModel, SoftDeleteMixin
 
 
@@ -183,6 +184,11 @@ class ConsumerCreate(SQLModel):
     first_name: str = Field(min_length=1, max_length=100)
     last_name: str = Field(min_length=1, max_length=100)
     phone: str | None = Field(default=None, max_length=50)
+
+    @field_validator("password")
+    @classmethod
+    def check_password_strength(cls, v: str) -> str:
+        return validate_password_strength(v)
 
 
 class ConsumerUpdate(SQLModel):

@@ -136,7 +136,7 @@ class TestAppleOAuthCallback:
 
     @patch("app.core.oauth.oauth")
     @patch("app.core.oauth.generate_apple_client_secret")
-    @patch("jwt.decode")
+    @patch("app.core.apple_token.verify_apple_id_token")
     def test_callback_creates_new_user(
         self, mock_jwt_decode, mock_gen_secret, mock_oauth, client, db: Session
     ):
@@ -191,7 +191,7 @@ class TestAppleOAuthCallback:
 
     @patch("app.core.oauth.oauth")
     @patch("app.core.oauth.generate_apple_client_secret")
-    @patch("jwt.decode")
+    @patch("app.core.apple_token.verify_apple_id_token")
     def test_callback_links_existing_email_user(
         self, mock_jwt_decode, mock_gen_secret, mock_oauth, client, db: Session
     ):
@@ -239,7 +239,7 @@ class TestAppleOAuthCallback:
 
     @patch("app.core.oauth.oauth")
     @patch("app.core.oauth.generate_apple_client_secret")
-    @patch("jwt.decode")
+    @patch("app.core.apple_token.verify_apple_id_token")
     def test_callback_logs_in_existing_apple_user(
         self, mock_jwt_decode, mock_gen_secret, mock_oauth, client, db: Session
     ):
@@ -281,7 +281,7 @@ class TestAppleOAuthCallback:
 
     @patch("app.core.oauth.oauth")
     @patch("app.core.oauth.generate_apple_client_secret")
-    @patch("jwt.decode")
+    @patch("app.core.apple_token.verify_apple_id_token")
     def test_callback_marks_email_verified(
         self, mock_jwt_decode, mock_gen_secret, mock_oauth, client, db: Session
     ):
@@ -325,7 +325,7 @@ class TestAppleOAuthCallback:
 
     @patch("app.core.oauth.oauth")
     @patch("app.core.oauth.generate_apple_client_secret")
-    @patch("jwt.decode")
+    @patch("app.core.apple_token.verify_apple_id_token")
     def test_callback_accepts_hide_my_email_relay(
         self, mock_jwt_decode, mock_gen_secret, mock_oauth, client, db: Session
     ):
@@ -367,7 +367,7 @@ class TestAppleOAuthCallback:
 
     @patch("app.core.oauth.oauth")
     @patch("app.core.oauth.generate_apple_client_secret")
-    @patch("jwt.decode")
+    @patch("app.core.apple_token.verify_apple_id_token")
     def test_callback_no_email_returns_400(
         self, mock_jwt_decode, mock_gen_secret, mock_oauth, client
     ):
@@ -397,7 +397,7 @@ class TestAppleOAuthCallback:
 
     @patch("app.core.oauth.oauth")
     @patch("app.core.oauth.generate_apple_client_secret")
-    @patch("jwt.decode")
+    @patch("app.core.apple_token.verify_apple_id_token")
     def test_callback_no_sub_claim_returns_400(
         self, mock_jwt_decode, mock_gen_secret, mock_oauth, client
     ):
@@ -448,7 +448,7 @@ class TestAppleOAuthCallback:
 
     @patch("app.core.oauth.oauth")
     @patch("app.core.oauth.generate_apple_client_secret")
-    @patch("jwt.decode")
+    @patch("app.core.apple_token.verify_apple_id_token")
     def test_callback_rejects_inactive_consumer(
         self, mock_jwt_decode, mock_gen_secret, mock_oauth, client, db: Session
     ):
@@ -489,7 +489,7 @@ class TestAppleOAuthCallback:
 
     @patch("app.core.oauth.oauth")
     @patch("app.core.oauth.generate_apple_client_secret")
-    @patch("jwt.decode")
+    @patch("app.core.apple_token.verify_apple_id_token")
     def test_callback_uses_default_name_without_user_data(
         self, mock_jwt_decode, mock_gen_secret, mock_oauth, client, db: Session
     ):
@@ -530,7 +530,7 @@ class TestAppleOAuthCallback:
 
     @patch("app.core.oauth.oauth")
     @patch("app.core.oauth.generate_apple_client_secret")
-    @patch("jwt.decode")
+    @patch("app.core.apple_token.verify_apple_id_token")
     def test_callback_handles_malformed_user_data(
         self, mock_jwt_decode, mock_gen_secret, mock_oauth, client, db: Session
     ):
@@ -575,7 +575,7 @@ class TestAppleOAuthCallback:
 
     @patch("app.core.oauth.oauth")
     @patch("app.core.oauth.generate_apple_client_secret")
-    @patch("jwt.decode")
+    @patch("app.core.apple_token.verify_apple_id_token")
     def test_callback_jwt_decode_error_returns_400(
         self, mock_jwt_decode, mock_gen_secret, mock_oauth, client
     ):

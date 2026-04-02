@@ -28,4 +28,11 @@ COPY ./app /app/app
 # Sync the project
 RUN uv sync --frozen
 
+# Add non-root user for production security
+RUN adduser --disabled-password --no-create-home appuser
+USER appuser
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:${PORT:-8000}/health')" || exit 1
+
 CMD ["bash", "-c", "bash scripts/prestart.sh && fastapi run --host 0.0.0.0 --port ${PORT:-8000} --workers 4 app/main.py"]

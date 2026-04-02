@@ -9,6 +9,7 @@ from app.models.base import BaseModel, SoftDeleteMixin
 
 
 class GymMembershipStatus(StrEnum):
+    PENDING_PAYMENT = "pending_payment"
     ACTIVE = "active"
     INACTIVE = "inactive"
     CANCELLED = "cancelled"

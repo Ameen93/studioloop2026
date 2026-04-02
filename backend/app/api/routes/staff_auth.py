@@ -17,6 +17,7 @@ from starlette.responses import Response
 from app.api.deps import CurrentStaff, SessionDep
 from app.core import security
 from app.core.config import settings
+from app.core.rate_limit import RATE_AUTH, limiter
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -50,7 +51,9 @@ router = APIRouter(prefix="/auth/staff", tags=["staff-auth"])
 
 
 @router.post("/login", response_model=StaffToken)
+@limiter.limit(RATE_AUTH)
 def login_staff(
+    request: Request,  # noqa: ARG001 — required by slowapi limiter
     session: SessionDep,
     login_data: StaffLoginRequest,
 ) -> StaffToken:
@@ -614,7 +617,6 @@ async def staff_apple_callback(
     Apple uses response_mode=form_post, so this is a POST endpoint.
     Staff must already exist. Links apple_id if not already linked.
     """
-    import jwt as pyjwt
 
     from app.core.oauth import generate_apple_client_secret, oauth
     from app.core.oauth_utils import build_oauth_redirect_response
@@ -649,9 +651,11 @@ async def staff_apple_callback(
         )
 
     try:
-        decoded = pyjwt.decode(id_token, options={"verify_signature": False})
+        from app.core.apple_token import verify_apple_id_token
+
+        decoded = verify_apple_id_token(id_token)
     except Exception:
-        return _oauth_error("OAUTH_USER_INFO_FAILED", "Failed to decode Apple ID token")
+        return _oauth_error("OAUTH_USER_INFO_FAILED", "Failed to verify Apple ID token")
 
     apple_id = decoded.get("sub")
     email = decoded.get("email")

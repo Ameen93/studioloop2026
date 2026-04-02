@@ -38,6 +38,10 @@ __pycache__/
 # Vercel
 .vercel
 
+# Sensitive/private docs
+docs/cape-town-prospects.csv
+docs/demo-walkthrough.md
+
 # OS
 .DS_Store
 Thumbs.db

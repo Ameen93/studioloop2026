@@ -1,4 +1,4 @@
-from datetime import date, datetime, time, timezone
+from datetime import date, datetime, time, timedelta, timezone
 from hashlib import sha256
 from math import asin, cos, radians, sin, sqrt
 from uuid import UUID
@@ -23,6 +23,11 @@ from app.models import (
     ReferralInvite,
     Space,
     Staff,
+)
+from app.models.payment import Payment, PaymentStatus, PaymentType
+from app.services.payments.providers import (
+    get_default_payment_provider,
+    get_payment_provider,
 )
 
 router = APIRouter(prefix="/marketplace", tags=["marketplace"])
@@ -107,6 +112,17 @@ class MarketplaceClassDetailResponse(BaseModel):
 
 class SubscribeRequest(BaseModel):
     plan_tier: MarketplacePlanTier
+    return_url: str
+    cancel_url: str
+
+
+class MarketplaceSubscribeResponse(BaseModel):
+    subscription_id: UUID
+    payment_id: UUID
+    redirect_url: str
+    status: MarketplaceSubscriptionStatus
+    plan_tier: MarketplacePlanTier
+    classes_total: int
 
 
 class MarketplaceSubscriptionResponse(BaseModel):
@@ -150,6 +166,12 @@ _PLAN_ALLOCATIONS: dict[MarketplacePlanTier, int] = {
     MarketplacePlanTier.EIGHT: 8,
     MarketplacePlanTier.TWELVE: 12,
     MarketplacePlanTier.UNLIMITED: 999_999,
+}
+
+_PLAN_PRICES: dict[MarketplacePlanTier, int] = {
+    MarketplacePlanTier.EIGHT: 79900,      # R799/month
+    MarketplacePlanTier.TWELVE: 99900,     # R999/month
+    MarketplacePlanTier.UNLIMITED: 149900,  # R1,499/month
 }
 
 
@@ -430,18 +452,37 @@ def view_marketplace_class_details(
     )
 
 
-@router.post("/subscriptions", response_model=MarketplaceSubscriptionResponse)
+@router.post(
+    "/subscriptions",
+    response_model=MarketplaceSubscribeResponse,
+    status_code=201,
+)
 def subscribe_to_marketplace_plan(
     payload: SubscribeRequest,
     current_consumer: CurrentConsumer,
     session: SessionDep,
-) -> MarketplaceSubscriptionResponse:
+) -> MarketplaceSubscribeResponse:
     allocation = _PLAN_ALLOCATIONS[payload.plan_tier]
     existing = _get_latest_subscription(session, current_consumer.id)
-    if existing and existing.status == MarketplaceSubscriptionStatus.ACTIVE:
-        raise HTTPException(
-            status_code=400, detail="Active marketplace subscription already exists"
-        )
+    if existing and existing.status in (
+        MarketplaceSubscriptionStatus.ACTIVE,
+        MarketplaceSubscriptionStatus.PENDING_PAYMENT,
+    ):
+        # Auto-expire stale PENDING_PAYMENT subscriptions (>1 hour old)
+        stale_cutoff = datetime.now(timezone.utc) - timedelta(hours=1)
+        if (
+            existing.status == MarketplaceSubscriptionStatus.PENDING_PAYMENT
+            and existing.created_at < stale_cutoff
+        ):
+            existing.status = MarketplaceSubscriptionStatus.CANCELLED
+            existing.cancelled_at = datetime.now(timezone.utc)
+            session.add(existing)
+            session.flush()
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="Active or pending marketplace subscription already exists",
+            )
 
     now = datetime.now(timezone.utc)
     subscription = MarketplaceSubscription(
@@ -450,19 +491,40 @@ def subscribe_to_marketplace_plan(
         classes_total=allocation,
         classes_remaining=allocation,
         reset_at=_next_month_reset_at(now),
-        status=MarketplaceSubscriptionStatus.ACTIVE,
+        status=MarketplaceSubscriptionStatus.PENDING_PAYMENT,
     )
     session.add(subscription)
+    session.flush()
+
+    amount_cents = _PLAN_PRICES[payload.plan_tier]
+    provider_name = get_default_payment_provider()
+    payment = Payment(
+        gym_id=None,  # Platform-level payment, no associated gym
+        consumer_id=current_consumer.id,
+        amount_cents=amount_cents,
+        currency="ZAR",
+        payment_type=PaymentType.MARKETPLACE_SUBSCRIPTION,
+        status=PaymentStatus.PENDING,
+        provider=provider_name,
+        description=f"Marketplace {payload.plan_tier.value} plan",
+        return_url=payload.return_url,
+        cancel_url=payload.cancel_url,
+        related_entity_id=subscription.id,
+    )
+    provider = get_payment_provider(provider_name)
+    initiation = provider.initiate(payment)
+    payment.provider_reference = initiation.provider_reference
+    session.add(payment)
     session.commit()
     session.refresh(subscription)
-    return MarketplaceSubscriptionResponse(
+
+    return MarketplaceSubscribeResponse(
         subscription_id=subscription.id,
+        payment_id=payment.id,
+        redirect_url=initiation.redirect_url,
+        status=subscription.status,
         plan_tier=subscription.plan_tier,
         classes_total=subscription.classes_total,
-        classes_remaining=subscription.classes_remaining,
-        reset_at=subscription.reset_at,
-        status=subscription.status,
-        manage_options=["upgrade", "downgrade", "pause", "cancel"],
     )
 
 

@@ -121,6 +121,22 @@ def get_password_hash(password: str) -> str:
     return password_hasher.hash(password)
 
 
+def validate_password_strength(password: str) -> str:
+    """Validate password meets strength requirements (M10).
+
+    Rules: min 8 chars, at least 1 uppercase, 1 lowercase, 1 digit.
+    """
+    if len(password) < 8:
+        raise ValueError("Password must be at least 8 characters")
+    if not any(c.isupper() for c in password):
+        raise ValueError("Password must contain at least one uppercase letter")
+    if not any(c.islower() for c in password):
+        raise ValueError("Password must contain at least one lowercase letter")
+    if not any(c.isdigit() for c in password):
+        raise ValueError("Password must contain at least one digit")
+    return password
+
+
 def needs_rehash(hashed_password: str) -> bool:
     """Check if a password hash should be upgraded to Argon2.
 

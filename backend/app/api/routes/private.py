@@ -1,9 +1,10 @@
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 
 from app.api.deps import SessionDep
+from app.core.config import settings
 from app.core.security import get_password_hash
 from app.models import (
     User,
@@ -25,6 +26,11 @@ def create_user(user_in: PrivateUserCreate, session: SessionDep) -> Any:
     """
     Create a new user.
     """
+    if settings.ENVIRONMENT != "local":
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Not found",
+        )
 
     user = User(
         email=user_in.email,

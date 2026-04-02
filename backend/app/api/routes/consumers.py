@@ -8,18 +8,20 @@ from datetime import datetime, timedelta, timezone
 
 import jwt
 from fastapi import APIRouter, HTTPException, Request, status
-from pydantic import ValidationError
+from pydantic import ValidationError, field_validator
 from sqlmodel import Field, SQLModel, or_, select
 from starlette.responses import Response
 
 from app.api.deps import CurrentConsumer, SessionDep
 from app.core import security
 from app.core.config import settings
+from app.core.rate_limit import RATE_AUTH, RATE_PASSWORD_RESET, limiter
 from app.core.security import (
     create_access_token,
     create_refresh_token,
     get_password_hash,
     needs_rehash,
+    validate_password_strength,
     verify_password,
 )
 from app.models import (
@@ -223,7 +225,9 @@ def resend_verification_email(
 
 
 @router.post("/login", response_model=ConsumerToken)
+@limiter.limit(RATE_AUTH)
 def login_consumer(
+    request: Request,  # noqa: ARG001 — required by slowapi limiter
     session: SessionDep,
     login_data: ConsumerLoginRequest,
 ) -> ConsumerToken:
@@ -413,7 +417,9 @@ def refresh_consumer_token(
 
 
 @router.post("/forgot-password")
+@limiter.limit(RATE_PASSWORD_RESET)
 def forgot_password(
+    request: Request,  # noqa: ARG001 — required by slowapi limiter
     session: SessionDep,
     request_data: ForgotPasswordRequest,
 ) -> Message:
@@ -668,6 +674,11 @@ class SetPasswordRequest(SQLModel):
     """Request to set password for social-login-only user."""
 
     new_password: str = Field(min_length=8, max_length=128)
+
+    @field_validator("new_password")
+    @classmethod
+    def check_password_strength(cls, v: str) -> str:
+        return validate_password_strength(v)
 
 
 @router.get("/google")
@@ -974,8 +985,6 @@ async def apple_callback(
     """
     import json
 
-    import jwt as pyjwt
-
     from app.core.oauth import generate_apple_client_secret, oauth
     from app.core.oauth_utils import build_oauth_redirect_response
 
@@ -1014,9 +1023,11 @@ async def apple_callback(
         )
 
     try:
-        decoded = pyjwt.decode(id_token, options={"verify_signature": False})
+        from app.core.apple_token import verify_apple_id_token
+
+        decoded = verify_apple_id_token(id_token)
     except Exception:
-        return _oauth_error("OAUTH_USER_INFO_FAILED", "Failed to decode Apple ID token")
+        return _oauth_error("OAUTH_USER_INFO_FAILED", "Failed to verify Apple ID token")
 
     apple_id = decoded.get("sub")
     email = decoded.get("email")

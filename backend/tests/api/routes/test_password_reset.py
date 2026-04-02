@@ -194,7 +194,7 @@ class TestConsumerResetPassword:
 
         response = client.post(
             f"{settings.API_V1_STR}/auth/consumer/reset-password",
-            json={"token": token, "new_password": "newpassword123"},
+            json={"token": token, "new_password": "NewPassword123"},
         )
 
         assert response.status_code == 200
@@ -203,7 +203,7 @@ class TestConsumerResetPassword:
 
         # Verify password was updated
         db.refresh(consumer)
-        assert verify_password("newpassword123", consumer.hashed_password)
+        assert verify_password("NewPassword123", consumer.hashed_password)
 
     def test_reset_password_invalidates_sessions(
         self, client: TestClient, db: Session
@@ -217,7 +217,7 @@ class TestConsumerResetPassword:
 
         response = client.post(
             f"{settings.API_V1_STR}/auth/consumer/reset-password",
-            json={"token": token, "new_password": "newpassword123"},
+            json={"token": token, "new_password": "NewPassword123"},
         )
 
         assert response.status_code == 200
@@ -246,7 +246,7 @@ class TestConsumerResetPassword:
         reset_token = generate_password_reset_token(email, account_type="consumer")
         reset_response = client.post(
             f"{settings.API_V1_STR}/auth/consumer/reset-password",
-            json={"token": reset_token, "new_password": "newpassword123"},
+            json={"token": reset_token, "new_password": "NewPassword123"},
         )
         assert reset_response.status_code == 200
 
@@ -270,14 +270,14 @@ class TestConsumerResetPassword:
         # Reset password
         reset_response = client.post(
             f"{settings.API_V1_STR}/auth/consumer/reset-password",
-            json={"token": token, "new_password": "newpassword123"},
+            json={"token": token, "new_password": "NewPassword123"},
         )
         assert reset_response.status_code == 200
 
         # Login with new password
         login_response = client.post(
             f"{settings.API_V1_STR}/auth/consumer/login",
-            json={"email": email, "password": "newpassword123"},
+            json={"email": email, "password": "NewPassword123"},
         )
         assert login_response.status_code == 200
         assert "access_token" in login_response.json()
@@ -298,7 +298,7 @@ class TestConsumerResetPassword:
 
         response = client.post(
             f"{settings.API_V1_STR}/auth/consumer/reset-password",
-            json={"token": expired_token, "new_password": "newpassword123"},
+            json={"token": expired_token, "new_password": "NewPassword123"},
         )
 
         assert response.status_code == 400
@@ -308,7 +308,7 @@ class TestConsumerResetPassword:
         """Test reset-password with invalid token returns 400."""
         response = client.post(
             f"{settings.API_V1_STR}/auth/consumer/reset-password",
-            json={"token": "invalid-random-string", "new_password": "newpassword123"},
+            json={"token": "invalid-random-string", "new_password": "NewPassword123"},
         )
 
         assert response.status_code == 400
@@ -323,7 +323,7 @@ class TestConsumerResetPassword:
 
         response = client.post(
             f"{settings.API_V1_STR}/auth/consumer/reset-password",
-            json={"token": token, "new_password": "newpassword123"},
+            json={"token": token, "new_password": "NewPassword123"},
         )
 
         # Should return same error to prevent enumeration
@@ -341,7 +341,7 @@ class TestConsumerResetPassword:
 
         response = client.post(
             f"{settings.API_V1_STR}/auth/consumer/reset-password",
-            json={"token": token, "new_password": "newpassword123"},
+            json={"token": token, "new_password": "NewPassword123"},
         )
 
         # Should return same error to prevent enumeration
@@ -521,7 +521,7 @@ class TestStaffResetPassword:
 
         response = client.post(
             f"{settings.API_V1_STR}/auth/staff/reset-password",
-            json={"token": token, "new_password": "newpassword123"},
+            json={"token": token, "new_password": "NewPassword123"},
         )
 
         assert response.status_code == 200
@@ -530,7 +530,7 @@ class TestStaffResetPassword:
 
         # Verify password was updated
         db.refresh(staff)
-        assert verify_password("newpassword123", staff.hashed_password)
+        assert verify_password("NewPassword123", staff.hashed_password)
 
     def test_reset_password_invalidates_sessions(
         self, client: TestClient, db: Session
@@ -545,7 +545,7 @@ class TestStaffResetPassword:
 
         response = client.post(
             f"{settings.API_V1_STR}/auth/staff/reset-password",
-            json={"token": token, "new_password": "newpassword123"},
+            json={"token": token, "new_password": "NewPassword123"},
         )
 
         assert response.status_code == 200
@@ -568,14 +568,14 @@ class TestStaffResetPassword:
         # Reset password
         reset_response = client.post(
             f"{settings.API_V1_STR}/auth/staff/reset-password",
-            json={"token": token, "new_password": "newpassword123"},
+            json={"token": token, "new_password": "NewPassword123"},
         )
         assert reset_response.status_code == 200
 
         # Login with new password
         login_response = client.post(
             f"{settings.API_V1_STR}/auth/staff/login",
-            json={"email": email, "password": "newpassword123"},
+            json={"email": email, "password": "NewPassword123"},
         )
         assert login_response.status_code == 200
 
@@ -604,7 +604,7 @@ class TestStaffResetPassword:
         reset_token = generate_password_reset_token(email, account_type="staff")
         reset_response = client.post(
             f"{settings.API_V1_STR}/auth/staff/reset-password",
-            json={"token": reset_token, "new_password": "newpassword123"},
+            json={"token": reset_token, "new_password": "NewPassword123"},
         )
         assert reset_response.status_code == 200
 
@@ -620,7 +620,7 @@ class TestStaffResetPassword:
         """Test staff reset-password with invalid token returns 400."""
         response = client.post(
             f"{settings.API_V1_STR}/auth/staff/reset-password",
-            json={"token": "invalid-token", "new_password": "newpassword123"},
+            json={"token": "invalid-token", "new_password": "NewPassword123"},
         )
 
         assert response.status_code == 400
@@ -638,7 +638,7 @@ class TestStaffResetPassword:
 
         response = client.post(
             f"{settings.API_V1_STR}/auth/staff/reset-password",
-            json={"token": token, "new_password": "newpassword123"},
+            json={"token": token, "new_password": "NewPassword123"},
         )
 
         assert response.status_code == 400
@@ -720,7 +720,7 @@ class TestCrossAccountResetRejection:
         # Try to use the consumer token on the staff endpoint - should fail
         response = client.post(
             f"{settings.API_V1_STR}/auth/staff/reset-password",
-            json={"token": consumer_token, "new_password": "hacked_password"},
+            json={"token": consumer_token, "new_password": "HackedPass1"},
         )
 
         assert response.status_code == 400
@@ -751,7 +751,7 @@ class TestCrossAccountResetRejection:
         # Try to use the staff token on the consumer endpoint - should fail
         response = client.post(
             f"{settings.API_V1_STR}/auth/consumer/reset-password",
-            json={"token": staff_token, "new_password": "hacked_password"},
+            json={"token": staff_token, "new_password": "HackedPass1"},
         )
 
         assert response.status_code == 400
@@ -774,7 +774,7 @@ class TestCrossAccountResetRejection:
         # Try to use the user token on the consumer endpoint - should fail
         response = client.post(
             f"{settings.API_V1_STR}/auth/consumer/reset-password",
-            json={"token": user_token, "new_password": "hacked_password"},
+            json={"token": user_token, "new_password": "HackedPass1"},
         )
 
         assert response.status_code == 400
@@ -798,7 +798,7 @@ class TestCrossAccountResetRejection:
         # Try to use the user token on the staff endpoint - should fail
         response = client.post(
             f"{settings.API_V1_STR}/auth/staff/reset-password",
-            json={"token": user_token, "new_password": "hacked_password"},
+            json={"token": user_token, "new_password": "HackedPass1"},
         )
 
         assert response.status_code == 400

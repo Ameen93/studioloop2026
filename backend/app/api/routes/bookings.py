@@ -25,6 +25,11 @@ from app.models import (
     WaitlistEntry,
     WaitlistStatus,
 )
+from app.models.payment import Payment, PaymentStatus, PaymentType
+from app.services.payments.providers import (
+    get_default_payment_provider,
+    get_payment_provider,
+)
 
 router = APIRouter(prefix="/gyms", tags=["bookings"])
 WAITLIST_OFFER_MINUTES = 30
@@ -42,6 +47,15 @@ class PayPerClassBookingRequest(BaseModel):
     session_id: UUID
     amount_cents: int
     source: BookingSource = BookingSource.DIRECT
+    return_url: str
+    cancel_url: str
+
+
+class PayPerClassResponse(BaseModel):
+    booking_id: UUID
+    payment_id: UUID
+    redirect_url: str
+    status: BookingStatus
 
 
 class CancelBookingResponse(BaseModel):
@@ -213,17 +227,45 @@ def book_with_membership(
     return booking
 
 
-@router.post("/consumer/bookings/pay_per_class", response_model=Booking)
+@router.post(
+    "/consumer/bookings/pay_per_class",
+    response_model=PayPerClassResponse,
+    status_code=201,
+)
 def book_pay_per_class(
     payload: PayPerClassBookingRequest,
     current_consumer: CurrentConsumer,
     session: SessionDep,
-) -> Booking:
+) -> PayPerClassResponse:
     class_session = _get_session_or_404(session, payload.session_id)
     if class_session.gym_id != payload.gym_id:
         raise HTTPException(status_code=400, detail="Session does not belong to gym")
+
+    # Auto-expire stale PENDING_PAYMENT bookings for this consumer+session (>1 hour)
+    stale_cutoff = datetime.now(timezone.utc) - timedelta(hours=1)
+    stale_bookings = list(
+        session.exec(
+            select(Booking).where(
+                Booking.consumer_id == current_consumer.id,
+                Booking.session_id == payload.session_id,
+                Booking.status == BookingStatus.PENDING_PAYMENT,
+                Booking.created_at < stale_cutoff,
+            )
+        ).all()
+    )
+    for stale in stale_bookings:
+        stale.mark_cancelled()
+        if class_session.spots_booked > 0:
+            class_session.spots_booked -= 1
+        session.add(stale)
+    if stale_bookings:
+        session.add(class_session)
+        session.flush()
+
     if class_session.capacity and class_session.spots_booked >= class_session.capacity:
         raise HTTPException(status_code=409, detail="Class is full")
+    if payload.amount_cents != class_session.price_cents:
+        raise HTTPException(status_code=400, detail="Payment amount does not match class price")
 
     booking = Booking(
         gym_id=payload.gym_id,
@@ -232,14 +274,42 @@ def book_pay_per_class(
         booking_type=BookingType.PAY_PER_CLASS,
         price_paid_cents=payload.amount_cents,
         source=payload.source,
-        status=BookingStatus.BOOKED,
+        status=BookingStatus.PENDING_PAYMENT,
     )
+    # Hold the spot while payment processes; released on failure via webhook
     class_session.spots_booked += 1
     session.add(booking)
     session.add(class_session)
+    session.flush()
+
+    provider_name = get_default_payment_provider()
+    payment = Payment(
+        gym_id=payload.gym_id,
+        consumer_id=current_consumer.id,
+        amount_cents=payload.amount_cents,
+        currency="ZAR",
+        payment_type=PaymentType.CLASS_BOOKING,
+        status=PaymentStatus.PENDING,
+        provider=provider_name,
+        description=f"Class: {class_session.title}",
+        return_url=payload.return_url,
+        cancel_url=payload.cancel_url,
+        related_entity_id=booking.id,
+        extra_data={"class_name": class_session.title},
+    )
+    provider = get_payment_provider(provider_name)
+    initiation = provider.initiate(payment)
+    payment.provider_reference = initiation.provider_reference
+    session.add(payment)
     session.commit()
     session.refresh(booking)
-    return booking
+
+    return PayPerClassResponse(
+        booking_id=booking.id,
+        payment_id=payment.id,
+        redirect_url=initiation.redirect_url,
+        status=booking.status,
+    )
 
 
 @router.post(

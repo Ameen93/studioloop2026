@@ -6,7 +6,7 @@ services:
     image: postgres:17
     restart: unless-stopped
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - local-db-data:/var/lib/postgresql/data/pgdata
     environment:
@@ -25,7 +25,7 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - local-redis-data:/data
     healthcheck:
@@ -38,7 +38,7 @@ services:
     image: adminer
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     depends_on:
       - db
     environment:

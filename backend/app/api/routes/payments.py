@@ -3,12 +3,22 @@ from decimal import ROUND_HALF_UP, Decimal
 from uuid import UUID
 
 from fastapi import APIRouter, Header, HTTPException, Query, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl
 from sqlmodel import select
 
 from app.api.deps import CurrentConsumer, CurrentStaff, SessionDep, StaffGymDep
 from app.core.config import settings
-from app.models import Consumer, GymMembership, GymMembershipStatus
+from app.core.rate_limit import RATE_PAYMENT, RATE_WEBHOOK, limiter
+from app.models import (
+    Booking,
+    BookingStatus,
+    ClassSession,
+    Consumer,
+    GymMembership,
+    GymMembershipStatus,
+    MarketplaceSubscription,
+    MarketplaceSubscriptionStatus,
+)
 from app.models.payment import (
     Payment,
     PaymentProviderName,
@@ -31,9 +41,9 @@ class InitiatePaymentRequest(BaseModel):
     payment_type: PaymentType
     amount_cents: int = Field(ge=0)
     description: str = Field(min_length=1, max_length=255)
-    return_url: str = Field(min_length=1, max_length=500)
-    cancel_url: str = Field(min_length=1, max_length=500)
-    webhook_url: str = Field(min_length=1, max_length=500)
+    return_url: HttpUrl
+    cancel_url: HttpUrl
+    webhook_url: HttpUrl
     provider: PaymentProviderName | None = None
     related_entity_id: UUID | None = None
 
@@ -125,9 +135,9 @@ class CreateSubscriptionRequest(BaseModel):
     gym_id: UUID
     amount_cents: int = Field(ge=0)
     description: str = Field(min_length=1, max_length=255)
-    return_url: str = Field(min_length=1, max_length=500)
-    cancel_url: str = Field(min_length=1, max_length=500)
-    webhook_url: str = Field(min_length=1, max_length=500)
+    return_url: HttpUrl
+    cancel_url: HttpUrl
+    webhook_url: HttpUrl
     provider: PaymentProviderName = PaymentProviderName.STITCH
     related_entity_id: UUID | None = None
 
@@ -220,7 +230,9 @@ def _build_receipt(payment: Payment, consumer: Consumer) -> PaymentReceipt:
 
 
 @router.post("/initiate", response_model=InitiatePaymentResponse)
+@limiter.limit(RATE_PAYMENT)
 def initiate_payment_flow(
+    request: Request,  # noqa: ARG001 — required by slowapi limiter
     payload: InitiatePaymentRequest,
     current_consumer: CurrentConsumer,
     session: SessionDep,
@@ -235,9 +247,9 @@ def initiate_payment_flow(
         status=PaymentStatus.PENDING,
         provider=provider_name,
         description=payload.description,
-        return_url=payload.return_url,
-        cancel_url=payload.cancel_url,
-        webhook_url=payload.webhook_url,
+        return_url=str(payload.return_url),
+        cancel_url=str(payload.cancel_url),
+        webhook_url=str(payload.webhook_url),
         related_entity_id=payload.related_entity_id,
     )
     provider = get_payment_provider(provider_name)
@@ -275,9 +287,9 @@ def create_subscription(
         status=PaymentStatus.PENDING,
         provider=provider_name,
         description=payload.description,
-        return_url=payload.return_url,
-        cancel_url=payload.cancel_url,
-        webhook_url=payload.webhook_url,
+        return_url=str(payload.return_url),
+        cancel_url=str(payload.cancel_url),
+        webhook_url=str(payload.webhook_url),
         related_entity_id=payload.related_entity_id,
     )
     provider = get_payment_provider(provider_name)
@@ -390,6 +402,7 @@ def list_payments_for_gym(
 
 @router.post("/webhooks/{provider}")
 @router.post("/webhook")
+@limiter.limit(RATE_WEBHOOK)
 async def process_payment_webhook(
     payload: PaymentWebhookRequest,
     session: SessionDep,
@@ -439,12 +452,26 @@ async def process_payment_webhook(
 
     if payload.status == PaymentStatus.COMPLETED:
         payment.mark_completed(provider_reference=payload.provider_reference)
-        if payment.payment_type == PaymentType.MEMBERSHIP and payment.related_entity_id:
-            membership = session.get(GymMembership, payment.related_entity_id)
-            if membership:
-                membership.status = GymMembershipStatus.ACTIVE
-                membership.ended_at = None
-                session.add(membership)
+
+        if payment.related_entity_id:
+            if payment.payment_type == PaymentType.MEMBERSHIP:
+                membership = session.get(GymMembership, payment.related_entity_id)
+                if membership:
+                    membership.status = GymMembershipStatus.ACTIVE
+                    membership.ended_at = None
+                    session.add(membership)
+            elif payment.payment_type == PaymentType.CLASS_BOOKING:
+                booking = session.get(Booking, payment.related_entity_id)
+                if booking:
+                    booking.status = BookingStatus.BOOKED
+                    session.add(booking)
+            elif payment.payment_type == PaymentType.MARKETPLACE_SUBSCRIPTION:
+                subscription = session.get(
+                    MarketplaceSubscription, payment.related_entity_id
+                )
+                if subscription:
+                    subscription.status = MarketplaceSubscriptionStatus.ACTIVE
+                    session.add(subscription)
 
         receipt = session.exec(
             select(PaymentReceipt).where(PaymentReceipt.payment_id == payment.id)
@@ -464,12 +491,35 @@ async def process_payment_webhook(
         payment.mark_failed(
             payload.failure_reason or "payment_failed", next_retry_at=next_retry_at
         )
-        if payment.payment_type == PaymentType.MEMBERSHIP and payment.related_entity_id:
-            membership = session.get(GymMembership, payment.related_entity_id)
-            if membership:
-                membership.status = GymMembershipStatus.INACTIVE
-                membership.ended_at = datetime.now(UTC)
-                session.add(membership)
+        if payment.related_entity_id:
+            if payment.payment_type == PaymentType.MEMBERSHIP:
+                membership = session.get(GymMembership, payment.related_entity_id)
+                if membership:
+                    membership.status = GymMembershipStatus.INACTIVE
+                    membership.ended_at = datetime.now(UTC)
+                    session.add(membership)
+            elif payment.payment_type == PaymentType.CLASS_BOOKING:
+                booking = session.get(Booking, payment.related_entity_id)
+                if booking and booking.status == BookingStatus.PENDING_PAYMENT:
+                    booking.mark_cancelled()
+                    # Release the held spot
+                    class_session = session.get(ClassSession, booking.session_id)
+                    if class_session and class_session.spots_booked > 0:
+                        class_session.spots_booked -= 1
+                        session.add(class_session)
+                    session.add(booking)
+            elif payment.payment_type == PaymentType.MARKETPLACE_SUBSCRIPTION:
+                subscription = session.get(
+                    MarketplaceSubscription, payment.related_entity_id
+                )
+                if (
+                    subscription
+                    and subscription.status
+                    == MarketplaceSubscriptionStatus.PENDING_PAYMENT
+                ):
+                    subscription.status = MarketplaceSubscriptionStatus.CANCELLED
+                    subscription.cancelled_at = datetime.now(UTC)
+                    session.add(subscription)
     else:
         payment.status = payload.status
 
@@ -611,7 +661,58 @@ def failed_payment_action_items(
 
 @router.post("/retries/run", response_model=RetryRunResponse)
 def run_payment_retry_worker(session: SessionDep) -> RetryRunResponse:
+    if settings.ENVIRONMENT != "local":
+        raise HTTPException(status_code=404, detail="Not found")
     now = datetime.now(UTC)
+
+    # --- Expire stale PENDING payments (abandoned checkouts, >1 hour old) ---
+    stale_cutoff = now - timedelta(hours=1)
+    stale_pending = list(
+        session.exec(
+            select(Payment).where(
+                Payment.status == PaymentStatus.PENDING,
+                Payment.created_at < stale_cutoff,
+            )
+        ).all()
+    )
+    for payment in stale_pending:
+        payment.mark_failed("payment_expired", next_retry_at=None)
+        payment.status = PaymentStatus.FAILED_PERMANENT
+        if payment.related_entity_id:
+            if payment.payment_type == PaymentType.MEMBERSHIP:
+                membership = session.get(GymMembership, payment.related_entity_id)
+                if (
+                    membership
+                    and membership.status == GymMembershipStatus.PENDING_PAYMENT
+                ):
+                    membership.status = GymMembershipStatus.CANCELLED
+                    membership.is_active = False
+                    membership.ended_at = now
+                    session.add(membership)
+            elif payment.payment_type == PaymentType.CLASS_BOOKING:
+                booking = session.get(Booking, payment.related_entity_id)
+                if booking and booking.status == BookingStatus.PENDING_PAYMENT:
+                    booking.mark_cancelled()
+                    class_session = session.get(ClassSession, booking.session_id)
+                    if class_session and class_session.spots_booked > 0:
+                        class_session.spots_booked -= 1
+                        session.add(class_session)
+                    session.add(booking)
+            elif payment.payment_type == PaymentType.MARKETPLACE_SUBSCRIPTION:
+                subscription = session.get(
+                    MarketplaceSubscription, payment.related_entity_id
+                )
+                if (
+                    subscription
+                    and subscription.status
+                    == MarketplaceSubscriptionStatus.PENDING_PAYMENT
+                ):
+                    subscription.status = MarketplaceSubscriptionStatus.CANCELLED
+                    subscription.cancelled_at = now
+                    session.add(subscription)
+        session.add(payment)
+
+    # --- Retry failed payments ---
     candidates = [
         p
         for p in session.exec(
@@ -622,6 +723,8 @@ def run_payment_retry_worker(session: SessionDep) -> RetryRunResponse:
 
     offsets = _retry_offsets()
     processed: list[UUID] = []
+    for payment in stale_pending:
+        processed.append(payment.id)
     for payment in candidates:
         payment.retry_count += 1
         force_success = bool(payment.extra_data.get("force_success_on_retry"))
@@ -766,4 +869,6 @@ def get_or_generate_receipt(
 def webhook_signature_test(
     event_id: str, payment_id: UUID, status: str
 ) -> dict[str, str]:
+    if settings.ENVIRONMENT != "local":
+        raise HTTPException(status_code=404, detail="Not found")
     return {"signature": build_webhook_signature(event_id, payment_id, status)}

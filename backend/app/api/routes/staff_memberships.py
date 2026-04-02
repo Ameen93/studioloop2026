@@ -1,5 +1,5 @@
 import secrets
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, status
@@ -30,6 +30,11 @@ from app.models.membership_plan import (
     MembershipPlanCreate,
     MembershipPlanPublic,
     MembershipPlanUpdate,
+)
+from app.models.payment import Payment, PaymentStatus, PaymentType
+from app.services.payments.providers import (
+    get_default_payment_provider,
+    get_payment_provider,
 )
 
 router = APIRouter(prefix="/gyms", tags=["staff-memberships"])
@@ -96,6 +101,15 @@ class MembershipEnrollRequest(SQLModel):
     gym_id: UUID
     membership_plan_id: UUID
     payment_method_last4: str | None = Field(default=None, min_length=4, max_length=4)
+    return_url: str = Field(min_length=1, max_length=500)
+    cancel_url: str = Field(min_length=1, max_length=500)
+
+
+class MembershipEnrollResponse(SQLModel):
+    membership_id: UUID
+    payment_id: UUID
+    redirect_url: str
+    status: GymMembershipStatus
 
 
 class MembershipChangeRequest(SQLModel):
@@ -574,14 +588,14 @@ def list_public_membership_plans(
 
 @router.post(
     "/consumer/memberships",
-    response_model=MembershipPublic,
+    response_model=MembershipEnrollResponse,
     status_code=status.HTTP_201_CREATED,
 )
 def enroll_membership(
     session: SessionDep,
     current_consumer: CurrentConsumer,
     payload: MembershipEnrollRequest,
-) -> MembershipPublic:
+) -> MembershipEnrollResponse:
     plan = session.exec(
         select(MembershipPlan).where(
             MembershipPlan.id == payload.membership_plan_id,
@@ -604,31 +618,72 @@ def enroll_membership(
             GymMembership.gym_id == payload.gym_id,
             GymMembership.consumer_id == current_consumer.id,
             col(GymMembership.is_active).is_(True),
-            GymMembership.status == GymMembershipStatus.ACTIVE,
+            GymMembership.status.in_(  # type: ignore[union-attr]
+                [GymMembershipStatus.ACTIVE, GymMembershipStatus.PENDING_PAYMENT]
+            ),
         )
     ).first()
     if existing_membership:
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "code": "ACTIVE_MEMBERSHIP_EXISTS",
-                "message": "Consumer already has an active membership at this gym",
-                "details": {},
-            },
-        )
+        # Auto-expire stale PENDING_PAYMENT memberships (>1 hour old)
+        stale_cutoff = datetime.now(timezone.utc) - timedelta(hours=1)
+        if (
+            existing_membership.status == GymMembershipStatus.PENDING_PAYMENT
+            and existing_membership.created_at < stale_cutoff
+        ):
+            existing_membership.status = GymMembershipStatus.CANCELLED
+            existing_membership.is_active = False
+            existing_membership.ended_at = datetime.now(timezone.utc)
+            session.add(existing_membership)
+            session.flush()
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": "ACTIVE_MEMBERSHIP_EXISTS",
+                    "message": "Consumer already has an active or pending membership at this gym",
+                    "details": {},
+                },
+            )
 
     membership = GymMembership(
         gym_id=payload.gym_id,
         consumer_id=current_consumer.id,
         membership_plan_id=plan.id,
         membership_tier=plan.tier,
-        status=GymMembershipStatus.ACTIVE,
+        status=GymMembershipStatus.PENDING_PAYMENT,
         payment_method_last4=payload.payment_method_last4,
     )
     session.add(membership)
+    session.flush()
+
+    provider_name = get_default_payment_provider()
+    payment = Payment(
+        gym_id=payload.gym_id,
+        consumer_id=current_consumer.id,
+        amount_cents=plan.price_cents,
+        currency="ZAR",
+        payment_type=PaymentType.MEMBERSHIP,
+        status=PaymentStatus.PENDING,
+        provider=provider_name,
+        description=f"Membership: {plan.name}",
+        return_url=payload.return_url,
+        cancel_url=payload.cancel_url,
+        related_entity_id=membership.id,
+    )
+    provider = get_payment_provider(provider_name)
+    initiation = provider.initiate(payment)
+    payment.provider_reference = initiation.provider_reference
+    session.add(payment)
     session.commit()
     session.refresh(membership)
-    return MembershipPublic(**membership.model_dump())
+    session.refresh(payment)
+
+    return MembershipEnrollResponse(
+        membership_id=membership.id,
+        payment_id=payment.id,
+        redirect_url=initiation.redirect_url,
+        status=membership.status,
+    )
 
 
 @router.get("/consumer/memberships", response_model=list[MembershipPublic])

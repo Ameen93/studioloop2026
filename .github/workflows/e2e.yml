@@ -57,7 +57,7 @@ jobs:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: app_test
       FIRST_SUPERUSER: admin@example.com
-      FIRST_SUPERUSER_PASSWORD: changethis
+      FIRST_SUPERUSER_PASSWORD: Changethis1
 
     steps:
       - uses: actions/checkout@v4
@@ -118,9 +118,9 @@ jobs:
         working-directory: ./frontend
         run: |
           if [ "${{ github.event.inputs.browser }}" = "all" ]; then
-            pnpm test:e2e --project=chromium --project=firefox --project=webkit
+            pnpm test:e2e --project=web-chromium --project=consumer-web-chromium --project=gym-web-chromium
           else
-            pnpm test:e2e
+            pnpm test:e2e --project=web-chromium
           fi
         env:
           BASE_URL: http://localhost:5173

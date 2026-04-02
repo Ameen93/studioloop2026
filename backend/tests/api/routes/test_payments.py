@@ -9,11 +9,18 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
 from app.models import (
+    Booking,
+    BookingStatus,
+    ClassSession,
     Gym,
     GymMembership,
     GymMembershipStatus,
+    MarketplaceSubscription,
+    MarketplaceSubscriptionStatus,
     Payment,
     PaymentStatus,
+    PaymentType,
+    Space,
     StaffRole,
 )
 from app.services.payments.providers import build_webhook_signature
@@ -655,3 +662,201 @@ def test_payments_root_list_endpoint_is_gym_scoped(
     assert ok.status_code == 200, ok.text
     assert "summary" in ok.json()
     assert "items" in ok.json()
+
+
+def test_webhook_completes_pending_booking(client: TestClient, db: Session) -> None:
+    """Webhook COMPLETED event activates a PENDING_PAYMENT booking."""
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+    consumer_headers, consumer = _consumer_headers(client, db)
+
+    space = Space(gym_id=gym.id, name=f"PayTest-{uuid4().hex[:6]}", capacity=20)
+    db.add(space)
+    db.commit()
+    db.refresh(space)
+    class_session = ClassSession(
+        gym_id=gym.id,
+        space_id=space.id,
+        title="Payment Test Class",
+        start_time=datetime.now(UTC) + timedelta(days=1),
+        end_time=datetime.now(UTC) + timedelta(days=1, hours=1),
+        capacity=20,
+        spots_booked=0,
+        price_cents=15000,
+    )
+    db.add(class_session)
+    db.commit()
+    db.refresh(class_session)
+
+    booking = Booking(
+        gym_id=gym.id,
+        consumer_id=consumer.id,
+        session_id=class_session.id,
+        booking_type="pay_per_class",
+        status=BookingStatus.PENDING_PAYMENT,
+        price_paid_cents=15000,
+    )
+    db.add(booking)
+    db.commit()
+    db.refresh(booking)
+
+    init = client.post(
+        "/api/v1/payments/initiate",
+        json={
+            "gym_id": str(gym.id),
+            "payment_type": "class_booking",
+            "amount_cents": 15000,
+            "description": "Class booking",
+            "return_url": "https://app.test/return",
+            "cancel_url": "https://app.test/cancel",
+            "webhook_url": "https://api.test/webhook",
+            "related_entity_id": str(booking.id),
+        },
+        headers=consumer_headers,
+    )
+    payment_id = init.json()["payment_id"]
+
+    event_id = f"evt-{uuid4()}"
+    signature = build_webhook_signature(event_id, UUID(payment_id), "completed")
+    res = client.post(
+        "/api/v1/payments/webhooks/ozow",
+        json={
+            "event_id": event_id,
+            "payment_id": payment_id,
+            "status": "completed",
+            "provider_reference": "ref-booking-ok",
+        },
+        headers={"X-Signature": signature},
+    )
+    assert res.status_code == 200
+
+    db.refresh(booking)
+    assert booking.status == BookingStatus.BOOKED
+
+
+def test_webhook_fails_pending_booking_releases_spot(
+    client: TestClient, db: Session
+) -> None:
+    """Webhook FAILED event cancels a PENDING_PAYMENT booking and releases the spot."""
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+    consumer_headers, consumer = _consumer_headers(client, db)
+
+    space = Space(gym_id=gym.id, name=f"FailTest-{uuid4().hex[:6]}", capacity=20)
+    db.add(space)
+    db.commit()
+    db.refresh(space)
+    class_session = ClassSession(
+        gym_id=gym.id,
+        space_id=space.id,
+        title="Fail Test Class",
+        start_time=datetime.now(UTC) + timedelta(days=1),
+        end_time=datetime.now(UTC) + timedelta(days=1, hours=1),
+        capacity=20,
+        spots_booked=1,
+        price_cents=15000,
+    )
+    db.add(class_session)
+    db.commit()
+    db.refresh(class_session)
+
+    booking = Booking(
+        gym_id=gym.id,
+        consumer_id=consumer.id,
+        session_id=class_session.id,
+        booking_type="pay_per_class",
+        status=BookingStatus.PENDING_PAYMENT,
+        price_paid_cents=15000,
+    )
+    db.add(booking)
+    db.commit()
+    db.refresh(booking)
+
+    init = client.post(
+        "/api/v1/payments/initiate",
+        json={
+            "gym_id": str(gym.id),
+            "payment_type": "class_booking",
+            "amount_cents": 15000,
+            "description": "Class booking",
+            "return_url": "https://app.test/return",
+            "cancel_url": "https://app.test/cancel",
+            "webhook_url": "https://api.test/webhook",
+            "related_entity_id": str(booking.id),
+        },
+        headers=consumer_headers,
+    )
+    payment_id = init.json()["payment_id"]
+
+    event_id = f"evt-{uuid4()}"
+    signature = build_webhook_signature(event_id, UUID(payment_id), "failed")
+    res = client.post(
+        "/api/v1/payments/webhooks/ozow",
+        json={
+            "event_id": event_id,
+            "payment_id": payment_id,
+            "status": "failed",
+            "failure_reason": "declined",
+        },
+        headers={"X-Signature": signature},
+    )
+    assert res.status_code == 200
+
+    db.refresh(booking)
+    assert booking.status == BookingStatus.CANCELLED
+
+    db.refresh(class_session)
+    assert class_session.spots_booked == 0
+
+
+def test_webhook_completes_pending_marketplace_subscription(
+    client: TestClient, db: Session
+) -> None:
+    """Webhook COMPLETED event activates a PENDING_PAYMENT marketplace subscription."""
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+    consumer_headers, consumer = _consumer_headers(client, db)
+
+    subscription = MarketplaceSubscription(
+        consumer_id=consumer.id,
+        plan_tier="twelve",
+        classes_total=12,
+        classes_remaining=12,
+        status=MarketplaceSubscriptionStatus.PENDING_PAYMENT,
+    )
+    db.add(subscription)
+    db.commit()
+    db.refresh(subscription)
+
+    # Create payment with gym_id=None (platform-level)
+    payment = Payment(
+        gym_id=None,
+        consumer_id=consumer.id,
+        amount_cents=99900,
+        currency="ZAR",
+        payment_type=PaymentType.MARKETPLACE_SUBSCRIPTION,
+        status=PaymentStatus.PENDING,
+        provider="ozow",
+        description="Marketplace twelve plan",
+        related_entity_id=subscription.id,
+    )
+    db.add(payment)
+    db.commit()
+    db.refresh(payment)
+
+    event_id = f"evt-{uuid4()}"
+    signature = build_webhook_signature(event_id, payment.id, "completed")
+    res = client.post(
+        "/api/v1/payments/webhooks/ozow",
+        json={
+            "event_id": event_id,
+            "payment_id": str(payment.id),
+            "status": "completed",
+            "provider_reference": "ref-sub-ok",
+        },
+        headers={"X-Signature": signature},
+    )
+    assert res.status_code == 200
+
+    db.refresh(subscription)
+    assert subscription.status == MarketplaceSubscriptionStatus.ACTIVE

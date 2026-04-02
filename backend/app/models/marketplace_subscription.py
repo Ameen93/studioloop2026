@@ -14,6 +14,7 @@ class MarketplacePlanTier(StrEnum):
 
 
 class MarketplaceSubscriptionStatus(StrEnum):
+    PENDING_PAYMENT = "pending_payment"
     ACTIVE = "active"
     PAUSED = "paused"
     CANCELLED = "cancelled"

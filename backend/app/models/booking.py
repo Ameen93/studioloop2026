@@ -13,6 +13,7 @@ class BookingType(StrEnum):
 
 
 class BookingStatus(StrEnum):
+    PENDING_PAYMENT = "pending_payment"
     BOOKED = "booked"
     CANCELLED = "cancelled"
     CHECKED_IN = "checked_in"

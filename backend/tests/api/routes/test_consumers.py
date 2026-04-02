@@ -28,7 +28,7 @@ from app.core.config import settings
 from app.core.security import verify_password
 from app.models.consumer import Consumer, UserRole
 from app.utils import generate_email_verification_token
-from tests.utils.utils import random_email, random_lower_string
+from tests.utils.utils import random_email, random_lower_string, random_password
 
 
 class TestConsumerRegistration:
@@ -37,7 +37,7 @@ class TestConsumerRegistration:
     def test_register_consumer_success(self, client: TestClient, db: Session) -> None:
         """Test successful consumer registration creates account with consumer role."""
         email = random_email()
-        password = random_lower_string()
+        password = random_password()
         data = {
             "email": email,
             "password": password,
@@ -83,7 +83,7 @@ class TestConsumerRegistration:
         email = random_email()
         data = {
             "email": email,
-            "password": random_lower_string(),
+            "password": random_password(),
             "first_name": "Test",
             "last_name": "User",
         }
@@ -110,7 +110,7 @@ class TestConsumerRegistration:
         email = random_email()
         data = {
             "email": email,
-            "password": random_lower_string(),
+            "password": random_password(),
             "first_name": "Test",
             "last_name": "User",
         }
@@ -124,7 +124,7 @@ class TestConsumerRegistration:
         assert response1.status_code == 201
 
         # Second registration with same email
-        data["password"] = random_lower_string()  # Different password
+        data["password"] = random_password()  # Different password
         response2 = client.post(
             f"{settings.API_V1_STR}/auth/consumer/register",
             json=data,
@@ -142,7 +142,7 @@ class TestConsumerRegistration:
         """Test that invalid email format returns 422."""
         data = {
             "email": "not-an-email",
-            "password": random_lower_string(),
+            "password": random_password(),
             "first_name": "Test",
             "last_name": "User",
         }
@@ -174,7 +174,7 @@ class TestConsumerRegistration:
         """Test that missing first_name returns 422."""
         data = {
             "email": random_email(),
-            "password": random_lower_string(),
+            "password": random_password(),
             "last_name": "User",
         }
 
@@ -189,7 +189,7 @@ class TestConsumerRegistration:
         """Test that missing last_name returns 422."""
         data = {
             "email": random_email(),
-            "password": random_lower_string(),
+            "password": random_password(),
             "first_name": "Test",
         }
 
@@ -210,7 +210,7 @@ class TestEmailVerification:
         email = random_email()
         data = {
             "email": email,
-            "password": random_lower_string(),
+            "password": random_password(),
             "first_name": "Test",
             "last_name": "User",
         }
@@ -259,7 +259,7 @@ class TestEmailVerification:
         email = random_email()
         data = {
             "email": email,
-            "password": random_lower_string(),
+            "password": random_password(),
             "first_name": "Test",
             "last_name": "User",
         }
@@ -309,7 +309,7 @@ class TestResendVerification:
         email = random_email()
         data = {
             "email": email,
-            "password": random_lower_string(),
+            "password": random_password(),
             "first_name": "Test",
             "last_name": "User",
         }
@@ -386,7 +386,7 @@ class TestConsumerLogin:
     def test_login_success(self, client: TestClient, db: Session) -> None:
         """Test successful login returns access_token and refresh_token (AC #1)."""
         email = random_email()
-        password = random_lower_string()
+        password = random_password()
         consumer = self._create_verified_consumer(client, db, email, password)
 
         response = client.post(
@@ -436,7 +436,7 @@ class TestConsumerLogin:
     def test_login_invalid_password(self, client: TestClient, db: Session) -> None:
         """Test login with wrong password returns 401 INVALID_CREDENTIALS (AC #4)."""
         email = random_email()
-        password = random_lower_string()
+        password = random_password()
         self._create_verified_consumer(client, db, email, password)
 
         response = client.post(
@@ -464,7 +464,7 @@ class TestConsumerLogin:
     def test_login_unverified_account(self, client: TestClient, db: Session) -> None:
         """Test login with unverified account returns 403 EMAIL_NOT_VERIFIED (AC #5)."""
         email = random_email()
-        password = random_lower_string()
+        password = random_password()
         data = {
             "email": email,
             "password": password,
@@ -504,7 +504,7 @@ class TestConsumerLogin:
     def test_login_deactivated_account(self, client: TestClient, db: Session) -> None:
         """Test login with deactivated account returns 401 INVALID_CREDENTIALS."""
         email = random_email()
-        password = random_lower_string()
+        password = random_password()
 
         # Create and verify consumer
         self._create_verified_consumer(client, db, email, password)
@@ -528,7 +528,7 @@ class TestConsumerLogin:
 
     def test_login_rehashes_legacy_bcrypt(self, client: TestClient, db: Session) -> None:
         """Test login upgrades legacy bcrypt hashes to Argon2 (ARCH-11)."""
-        password = random_lower_string()
+        password = random_password()
         legacy_bcrypt_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
         consumer = Consumer(
             email=random_email(),

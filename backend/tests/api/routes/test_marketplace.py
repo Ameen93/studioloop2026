@@ -14,7 +14,7 @@ from app.models import (
     ReferralInvite,
     Space,
 )
-from tests.api.routes.test_staff_memberships import _consumer_headers
+from tests.api.routes.test_staff_memberships import _complete_payment_webhook, _consumer_headers
 
 
 def _create_marketplace_session(
@@ -314,18 +314,33 @@ def test_view_marketplace_gym_profile_includes_amenities_and_upcoming(client: Te
 def test_marketplace_subscribe_and_view_status(client: TestClient, db: Session) -> None:
     headers, consumer = _consumer_headers(client, db)
 
-    res = client.post("/api/v1/marketplace/subscriptions", json={"plan_tier": "twelve"}, headers=headers)
-    assert res.status_code == 200
+    res = client.post(
+        "/api/v1/marketplace/subscriptions",
+        json={
+            "plan_tier": "twelve",
+            "return_url": "https://app.test/return",
+            "cancel_url": "https://app.test/cancel",
+        },
+        headers=headers,
+    )
+    assert res.status_code == 201
     body = res.json()
     assert body["plan_tier"] == "twelve"
-    assert body["classes_remaining"] == 12
+    assert body["status"] == "pending_payment"
+    assert "payment_id" in body
+    assert "redirect_url" in body
+
+    # Complete payment to activate subscription
+    _complete_payment_webhook(client, body["payment_id"])
 
     status = client.get("/api/v1/marketplace/subscriptions/me", headers=headers)
     assert status.status_code == 200
     assert status.json()["plan_tier"] == "twelve"
+    assert status.json()["status"] == "active"
 
     sub = db.exec(select(MarketplaceSubscription).where(MarketplaceSubscription.consumer_id == consumer.id)).first()
     assert sub is not None
+    assert sub.status == MarketplaceSubscriptionStatus.ACTIVE
 
 
 def test_book_marketplace_class_with_subscription(client: TestClient, db: Session) -> None:
@@ -432,10 +447,27 @@ def test_referral_link_and_tracking(client: TestClient, db: Session) -> None:
 
 def test_cannot_create_duplicate_active_subscription(client: TestClient, db: Session) -> None:
     headers, _ = _consumer_headers(client, db)
-    first = client.post("/api/v1/marketplace/subscriptions", json={"plan_tier": "eight"}, headers=headers)
-    assert first.status_code == 200
+    first = client.post(
+        "/api/v1/marketplace/subscriptions",
+        json={
+            "plan_tier": "eight",
+            "return_url": "https://app.test/return",
+            "cancel_url": "https://app.test/cancel",
+        },
+        headers=headers,
+    )
+    assert first.status_code == 201
 
-    second = client.post("/api/v1/marketplace/subscriptions", json={"plan_tier": "twelve"}, headers=headers)
+    # Second attempt should fail (first is PENDING_PAYMENT)
+    second = client.post(
+        "/api/v1/marketplace/subscriptions",
+        json={
+            "plan_tier": "twelve",
+            "return_url": "https://app.test/return",
+            "cancel_url": "https://app.test/cancel",
+        },
+        headers=headers,
+    )
     assert second.status_code == 400
 
 

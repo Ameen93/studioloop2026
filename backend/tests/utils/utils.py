@@ -10,6 +10,12 @@ def random_lower_string() -> str:
     return "".join(random.choices(string.ascii_lowercase, k=32))
 
 
+def random_password() -> str:
+    """Generate a random password that meets the password policy."""
+    base = "".join(random.choices(string.ascii_lowercase, k=8))
+    return f"T{base}1"  # Ensures uppercase, lowercase, and digit
+
+
 def random_email() -> str:
     return f"{random_lower_string()}@{random_lower_string()}.com"
 

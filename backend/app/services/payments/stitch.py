@@ -299,7 +299,7 @@ class StitchProvider:
             )
 
         # Fallback: HMAC verification for non-Svix integration paths
-        secret = settings.STITCH_WEBHOOK_SECRET.encode() or settings.SECRET_KEY.encode()
+        secret = (settings.STITCH_WEBHOOK_SECRET or settings.SECRET_KEY).encode()
         event_id = str(payload.get("event_id", ""))
         payment_id = str(payload.get("payment_id", ""))
         status = str(payload.get("status", "")).lower()

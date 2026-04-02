@@ -4,9 +4,14 @@ from uuid import uuid4
 from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
-from app.models import ClassSession, Gym, Space, StaffRole
+from app.models import ClassSession, Gym, GymMembership, GymMembershipStatus, Space, StaffRole
 from app.models.digital_waiver import DigitalWaiverAcceptance
-from tests.api.routes.test_staff_memberships import _consumer_headers, _staff_headers
+from tests.api.routes.test_staff_memberships import (
+    _complete_payment_webhook,
+    _consumer_headers,
+    _enroll_and_activate,
+    _staff_headers,
+)
 
 
 def _create_session(db: Session, gym: Gym) -> ClassSession:
@@ -46,23 +51,15 @@ def test_membership_booking_cancel_waitlist_flow(client: TestClient, db: Session
     c1_headers, c1 = _consumer_headers(client, db)
     c2_headers, c2 = _consumer_headers(client, db)
 
-    m1 = client.post(
-        "/api/v1/gyms/consumer/memberships",
-        json={"gym_id": str(gym.id), "membership_plan_id": plan["id"], "payment_method_last4": "1111"},
-        headers=c1_headers,
-    ).json()
-    m2 = client.post(
-        "/api/v1/gyms/consumer/memberships",
-        json={"gym_id": str(gym.id), "membership_plan_id": plan["id"], "payment_method_last4": "2222"},
-        headers=c2_headers,
-    ).json()
+    m1_id = _enroll_and_activate(client, c1_headers, str(gym.id), plan["id"], "1111")
+    m2_id = _enroll_and_activate(client, c2_headers, str(gym.id), plan["id"], "2222")
 
-    for consumer, membership in [(c1, m1), (c2, m2)]:
+    for consumer, membership_id in [(c1, m1_id), (c2, m2_id)]:
         db.add(
             DigitalWaiverAcceptance(
                 gym_id=gym.id,
                 consumer_id=consumer.id,
-                gym_membership_id=membership["id"],
+                gym_membership_id=membership_id,
                 waiver_version="v1",
             )
         )
@@ -110,11 +107,16 @@ def test_list_consumer_bookings(client: TestClient, db: Session) -> None:
             "gym_id": str(gym.id),
             "session_id": str(session1.id),
             "amount_cents": 12000,
+            "return_url": "https://app.test/return",
+            "cancel_url": "https://app.test/cancel",
         },
         headers=c_headers,
     )
-    assert b1.status_code == 200
-    booking_id = b1.json()["id"]
+    assert b1.status_code == 201
+    booking_id = b1.json()["booking_id"]
+
+    # Complete payment so booking becomes BOOKED
+    _complete_payment_webhook(client, b1.json()["payment_id"])
 
     # List bookings — should include the new booking
     res = client.get(
@@ -183,6 +185,147 @@ def test_list_consumer_bookings(client: TestClient, db: Session) -> None:
     assert booking_id in cancelled_ids_after
 
 
+def test_booking_full_class_rejected(client: TestClient, db: Session) -> None:
+    """Booking to a full class should be rejected."""
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+
+    # Create a class with 0 capacity remaining
+    space = Space(gym_id=gym.id, name=f"FullStudio-{uuid4().hex[:6]}", capacity=1)
+    db.add(space)
+    db.commit()
+    db.refresh(space)
+
+    cs = ClassSession(
+        gym_id=gym.id,
+        space_id=space.id,
+        title="Full Class",
+        start_time=datetime.now(timezone.utc) + timedelta(days=2),
+        end_time=datetime.now(timezone.utc) + timedelta(days=2, hours=1),
+        capacity=1,
+        spots_booked=1,  # Already full
+        price_cents=10000,
+    )
+    db.add(cs)
+    db.commit()
+    db.refresh(cs)
+
+    c_headers, _ = _consumer_headers(client, db)
+    res = client.post(
+        "/api/v1/gyms/consumer/bookings/pay_per_class",
+        json={
+            "gym_id": str(gym.id),
+            "session_id": str(cs.id),
+            "amount_cents": 10000,
+            "return_url": "https://app.test/return",
+            "cancel_url": "https://app.test/cancel",
+        },
+        headers=c_headers,
+    )
+    assert res.status_code == 409
+
+
+def test_cancel_already_cancelled_booking(client: TestClient, db: Session) -> None:
+    """Cancelling an already-cancelled booking should return the existing cancelled state."""
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+
+    c_headers, _ = _consumer_headers(client, db)
+    cs = _create_session(db, gym)
+
+    # Book
+    book_res = client.post(
+        "/api/v1/gyms/consumer/bookings/pay_per_class",
+        json={
+            "gym_id": str(gym.id),
+            "session_id": str(cs.id),
+            "amount_cents": 12000,
+            "return_url": "https://app.test/return",
+            "cancel_url": "https://app.test/cancel",
+        },
+        headers=c_headers,
+    )
+    assert book_res.status_code == 201
+    booking_id = book_res.json()["booking_id"]
+    # Complete payment so booking becomes BOOKED (cancellable)
+    _complete_payment_webhook(client, book_res.json()["payment_id"])
+
+    # Cancel first time
+    cancel1 = client.post(
+        f"/api/v1/gyms/consumer/bookings/{booking_id}/cancel", headers=c_headers
+    )
+    assert cancel1.status_code == 200
+    assert cancel1.json()["status"] == "cancelled"
+
+    # Cancel again — should still return 200 with cancelled status
+    cancel2 = client.post(
+        f"/api/v1/gyms/consumer/bookings/{booking_id}/cancel", headers=c_headers
+    )
+    assert cancel2.status_code == 200
+    assert cancel2.json()["status"] == "cancelled"
+
+
+def test_consumer_qr_code_generation(client: TestClient, db: Session) -> None:
+    """QR code endpoint should return a JWT token."""
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+
+    owner_headers = _staff_headers(client, db, gym, StaffRole.OWNER)
+    c_headers, consumer = _consumer_headers(client, db)
+
+    # Set up membership + waiver for valid QR generation
+    plan = client.post(
+        "/api/v1/gyms/me/membership_plans",
+        json={"name": "QRPlan", "description": "P", "price_cents": 30000, "billing_cycle": "monthly"},
+        headers=owner_headers,
+    ).json()
+    membership_id = _enroll_and_activate(client, c_headers, str(gym.id), plan["id"], "7777")
+    db.add(
+        DigitalWaiverAcceptance(
+            gym_id=gym.id,
+            consumer_id=consumer.id,
+            gym_membership_id=membership_id,
+            waiver_version="v1",
+        )
+    )
+    db.commit()
+
+    qr_res = client.get("/api/v1/gyms/consumer/qr_code", headers=c_headers)
+    assert qr_res.status_code == 200
+    data = qr_res.json()
+    assert "token" in data
+    assert "expires_at" in data
+    assert "consumer_name" in data
+    assert isinstance(data["todays_booking_ids"], list)
+
+
+def test_search_members_for_check_in(client: TestClient, db: Session) -> None:
+    """Staff search for members by name should return matching consumers."""
+    gym = db.exec(select(Gym)).first()
+    assert gym is not None
+
+    owner_headers = _staff_headers(client, db, gym, StaffRole.OWNER)
+    c_headers, consumer = _consumer_headers(client, db)
+
+    # Enroll consumer as member of this gym
+    plan = client.post(
+        "/api/v1/gyms/me/membership_plans",
+        json={"name": "SearchPlan", "description": "S", "price_cents": 20000, "billing_cycle": "monthly"},
+        headers=owner_headers,
+    ).json()
+    _enroll_and_activate(client, c_headers, str(gym.id), plan["id"], "8888")
+
+    # Search by consumer's first name
+    search_res = client.get(
+        "/api/v1/gyms/me/check_ins/search",
+        params={"q": consumer.first_name},
+        headers=owner_headers,
+    )
+    assert search_res.status_code == 200
+    found_ids = [r["consumer_id"] for r in search_res.json()]
+    assert str(consumer.id) in found_ids
+
+
 def test_pay_per_class_and_source_tracking(client: TestClient, db: Session) -> None:
     gym = db.exec(select(Gym)).first()
     assert gym is not None
@@ -196,12 +339,15 @@ def test_pay_per_class_and_source_tracking(client: TestClient, db: Session) -> N
             "session_id": str(class_session.id),
             "amount_cents": 12000,
             "source": "marketplace",
+            "return_url": "https://app.test/return",
+            "cancel_url": "https://app.test/cancel",
         },
         headers=c_headers,
     )
-    assert res.status_code == 200
-    assert res.json()["booking_type"] == "pay_per_class"
-    assert res.json()["source"] == "marketplace"
+    assert res.status_code == 201
+    assert res.json()["status"] == "pending_payment"
+    assert "redirect_url" in res.json()
+    assert "payment_id" in res.json()
 
 
 def test_qr_and_manual_check_in(client: TestClient, db: Session) -> None:
@@ -216,16 +362,12 @@ def test_qr_and_manual_check_in(client: TestClient, db: Session) -> None:
         json={"name": "CheckInPlan", "description": "P", "price_cents": 30000, "billing_cycle": "monthly"},
         headers=owner_headers,
     ).json()
-    membership = client.post(
-        "/api/v1/gyms/consumer/memberships",
-        json={"gym_id": str(gym.id), "membership_plan_id": plan["id"], "payment_method_last4": "4444"},
-        headers=c_headers,
-    ).json()
+    membership_id = _enroll_and_activate(client, c_headers, str(gym.id), plan["id"], "4444")
     db.add(
         DigitalWaiverAcceptance(
             gym_id=gym.id,
             consumer_id=consumer.id,
-            gym_membership_id=membership["id"],
+            gym_membership_id=membership_id,
             waiver_version="v1",
         )
     )
@@ -259,16 +401,12 @@ def test_offline_check_in_sync(client: TestClient, db: Session) -> None:
         json={"name": "OfflinePlan", "description": "P", "price_cents": 30000, "billing_cycle": "monthly"},
         headers=owner_headers,
     ).json()
-    membership = client.post(
-        "/api/v1/gyms/consumer/memberships",
-        json={"gym_id": str(gym.id), "membership_plan_id": plan["id"], "payment_method_last4": "5555"},
-        headers=c_headers,
-    ).json()
+    membership_id = _enroll_and_activate(client, c_headers, str(gym.id), plan["id"], "5555")
     db.add(
         DigitalWaiverAcceptance(
             gym_id=gym.id,
             consumer_id=consumer.id,
-            gym_membership_id=membership["id"],
+            gym_membership_id=membership_id,
             waiver_version="v1",
         )
     )

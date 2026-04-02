@@ -18,7 +18,7 @@ from sqlmodel import Field, SQLModel, col, select
 
 from app.api.deps import CurrentStaff, RequireOwnerOrManager, SessionDep
 from app.core.config import settings
-from app.core.security import get_password_hash
+from app.core.security import get_password_hash, validate_password_strength
 from app.models import (
     Consumer,
     Gym,
@@ -55,6 +55,11 @@ class GymRegistrationRequest(SQLModel):
     gym_slug: str = Field(min_length=1, max_length=100)
     contact_email: EmailStr = Field(max_length=255)
     contact_phone: str = Field(min_length=8, max_length=50)
+
+    @field_validator("owner_password")
+    @classmethod
+    def check_password_strength(cls, v: str) -> str:
+        return validate_password_strength(v)
 
     @field_validator("gym_slug")
     @classmethod

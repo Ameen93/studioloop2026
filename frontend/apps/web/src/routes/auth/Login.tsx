@@ -1,15 +1,14 @@
 /**
- * Consumer login screen.
+ * Admin login screen.
  *
- * Allows consumers to login with email and password.
- * Stores tokens in localStorage upon successful login.
+ * Uses the OAuth2 password grant endpoint for superuser login.
+ * Stores access_token in localStorage upon successful login.
  */
 
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import { useMutation } from '@tanstack/react-query';
-import { consumerAuthLoginConsumer } from '@sl/api-client';
-import type { ConsumerLoginRequest } from '@sl/api-client';
+import { loginLoginAccessToken } from '@sl/api-client';
 
 interface FormErrors {
   email?: string;
@@ -22,42 +21,40 @@ export function Login() {
   const [errors, setErrors] = useState<FormErrors>({});
 
   const loginMutation = useMutation({
-    mutationFn: async (data: ConsumerLoginRequest) => {
-      const response = await consumerAuthLoginConsumer({
-        body: data,
+    mutationFn: async (data: { username: string; password: string }) => {
+      const response = await loginLoginAccessToken({
+        body: {
+          grant_type: 'password',
+          username: data.username,
+          password: data.password,
+        },
         throwOnError: true,
       });
 
       return response.data;
     },
-    onSuccess: (tokens) => {
-
-      // Store tokens in localStorage (AC #2 - web uses memory/localStorage)
-      localStorage.setItem('access_token', tokens.access_token);
-      localStorage.setItem('refresh_token', tokens.refresh_token);
-      // Navigate to home screen (AC #3)
+    onSuccess: (token) => {
+      localStorage.setItem('access_token', token.access_token);
       navigate('/');
     },
     onError: (error: unknown) => {
       const err = error as {
-        body?: { detail?: { code?: string; message?: string } };
-        detail?: { code?: string; message?: string };
+        body?: { detail?: string | { code?: string; message?: string } };
+        detail?: string | { code?: string; message?: string };
       };
-      const code = err?.body?.detail?.code || err?.detail?.code;
+      const detail = err?.body?.detail || err?.detail;
 
-      if (code === 'EMAIL_NOT_VERIFIED') {
-        setErrors({
-          general: 'Please verify your email before logging in. Check your inbox for the verification link.',
-        });
-      } else if (code === 'INVALID_CREDENTIALS') {
-        setErrors({ general: 'Invalid email or password' });
+      if (typeof detail === 'string') {
+        setErrors({ general: detail });
+      } else if (detail && typeof detail === 'object' && 'message' in detail) {
+        setErrors({ general: detail.message || 'Login failed. Please try again.' });
       } else {
         setErrors({ general: 'Login failed. Please try again.' });
       }
     },
   });
 
-  const validateForm = (formData: FormData): ConsumerLoginRequest | null => {
+  const validateForm = (formData: FormData): { username: string; password: string } | null => {
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
@@ -77,7 +74,7 @@ export function Login() {
     }
 
     setErrors({});
-    return { email, password };
+    return { username: email, password };
   };
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -95,13 +92,10 @@ export function Login() {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to your account
+            StudioLoop Admin
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Don't have an account?{' '}
-            <Link to="/auth/register" className="font-medium text-gray-700 hover:text-gray-500">
-              Create one
-            </Link>
+            Sign in to the admin dashboard
           </p>
         </div>
 
@@ -126,7 +120,7 @@ export function Login() {
                 className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm ${
                   errors.email ? 'border-red-300' : 'border-gray-300'
                 }`}
-                placeholder="john@example.com"
+                placeholder="admin@studioloop.co.za"
               />
               {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
             </div>
@@ -147,14 +141,6 @@ export function Login() {
                 placeholder="Enter your password"
               />
               {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="text-sm">
-              <Link to="/auth/forgot-password" className="font-medium text-gray-700 hover:text-gray-500">
-                Forgot your password?
-              </Link>
             </div>
           </div>
 

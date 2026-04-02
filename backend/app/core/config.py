@@ -184,6 +184,17 @@ class Settings(BaseSettings):
             "FIRST_SUPERUSER_PASSWORD", self.FIRST_SUPERUSER_PASSWORD
         )
 
+        if self.ENVIRONMENT != "local":
+            if not self.SECRET_KEY:
+                raise ValueError("SECRET_KEY must be explicitly set outside local")
+            if not self.STITCH_WEBHOOK_SECRET:
+                raise ValueError(
+                    "STITCH_WEBHOOK_SECRET must be set outside local environments"
+                )
+        if self.ENVIRONMENT == "production":
+            if self.PAYMENT_PROVIDER != "stitch":
+                raise ValueError("PAYMENT_PROVIDER must be 'stitch' in production")
+
         return self
 
 

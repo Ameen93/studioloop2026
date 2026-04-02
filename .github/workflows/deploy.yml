@@ -28,11 +28,11 @@ jobs:
       matrix:
         include:
           - app: gym-web
-            vercel_project_id: prj_y2xzGKmjJW9laCZBqV8R8sKMbnX1
+            vercel_project_id: ${{ secrets.VERCEL_GYM_WEB_PROJECT_ID }}
           - app: consumer-web
-            vercel_project_id: prj_eWvjhBrFUwTMKjVn2Sme0BzAn2tv
+            vercel_project_id: ${{ secrets.VERCEL_CONSUMER_WEB_PROJECT_ID }}
           - app: web
-            vercel_project_id: prj_RRrUEHw9Ig7NdZR7pquuXXKe1Ik7
+            vercel_project_id: ${{ secrets.VERCEL_WEB_PROJECT_ID }}
     steps:
       - uses: actions/checkout@v4
 

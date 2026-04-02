@@ -30,6 +30,11 @@ class PaymentProviderName(StrEnum):
 class Payment(GymScopedModel, table=True):
     __tablename__ = "payments"
 
+    # Override parent gym_id to nullable — marketplace subscription payments are
+    # platform-level and have no associated gym.
+    gym_id: UUID | None = Field(  # type: ignore[assignment]
+        default=None, foreign_key="gyms.id", nullable=True, index=True
+    )
     consumer_id: UUID = Field(foreign_key="consumers.id", nullable=False, index=True)
     amount_cents: int = Field(ge=0, nullable=False)
     currency: str = Field(default="ZAR", max_length=3)

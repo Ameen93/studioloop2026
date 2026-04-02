@@ -1,6 +1,17 @@
-import { fireEvent, render, screen } from '@testing-library/react'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
+
+// Mock the loginTestToken API call used by AuthGuard
+vi.mock('@sl/api-client', async () => {
+  const actual = await vi.importActual('@sl/api-client');
+  return {
+    ...actual,
+    loginTestToken: vi.fn().mockResolvedValue({
+      data: { id: '1', email: 'admin@test.com', is_superuser: true, is_active: true },
+    }),
+  };
+});
 
 describe('App', () => {
   beforeEach(() => {
@@ -8,15 +19,9 @@ describe('App', () => {
     window.history.replaceState({}, '', '/')
   })
 
-  it('redirects authenticated users to the protected home route', () => {
-    localStorage.setItem('access_token', 'token')
+  it('redirects unauthenticated users to the login page', () => {
     render(<App />)
-    expect(screen.getByText('You are signed in')).toBeInTheDocument()
-  })
-
-  it('renders the login page by default', () => {
-    render(<App />)
-    expect(screen.getByText('Sign in to your account')).toBeInTheDocument()
+    expect(screen.getByText('StudioLoop Admin')).toBeInTheDocument()
   })
 
   it('renders the login form fields', () => {
@@ -26,17 +31,24 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument()
   })
 
-  it('supports logout from the protected home route', () => {
-    localStorage.setItem('access_token', 'token')
-    render(<App />)
-    fireEvent.click(screen.getByRole('button', { name: /sign out/i }))
-    expect(screen.getByText('Sign in to your account')).toBeInTheDocument()
-  })
-
   it('renders forgot password route', () => {
     window.history.replaceState({}, '', '/auth/forgot-password')
     render(<App />)
     expect(screen.getByText('Reset your password')).toBeInTheDocument()
+  })
+
+  it('renders set-password form when token is provided', () => {
+    window.history.replaceState({}, '', '/reset-password?token=abc123')
+    render(<App />)
+    expect(screen.getByText('Set your password')).toBeInTheDocument()
+    expect(screen.getByLabelText(/new password/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/confirm password/i)).toBeInTheDocument()
+  })
+
+  it('renders invalid-link message when token is missing', () => {
+    window.history.replaceState({}, '', '/reset-password')
+    render(<App />)
+    expect(screen.getByText('Invalid link')).toBeInTheDocument()
   })
 
   it('renders resend verification route', () => {
