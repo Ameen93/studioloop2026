@@ -9,34 +9,48 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../../hooks/useAuth';
 
+type CallbackResult =
+  | { error: string }
+  | { error: null; accessToken: string; refreshToken: string };
+
+/**
+ * The redirect fragment is already in the URL when this route mounts, so the
+ * outcome is derivable at render time. Reading it here rather than setting
+ * state inside an effect avoids a cascading render.
+ */
+function readCallbackFragment(): CallbackResult {
+  const params = new URLSearchParams(window.location.hash.substring(1));
+
+  if (params.get('error')) {
+    return {
+      error: params.get('error_message') || 'OAuth sign-in failed. Please try again.',
+    };
+  }
+
+  const accessToken = params.get('access_token');
+  const refreshToken = params.get('refresh_token');
+
+  if (!accessToken || !refreshToken) {
+    return { error: 'Missing authentication tokens. Please try again.' };
+  }
+
+  return { error: null, accessToken, refreshToken };
+}
+
 export function OAuthCallback() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [error, setError] = useState<string | null>(null);
+  const [result] = useState(readCallbackFragment);
+  const error = result.error;
 
   useEffect(() => {
-    const hash = window.location.hash.substring(1);
-    const params = new URLSearchParams(hash);
-
-    const errorCode = params.get('error');
-    const errorMessage = params.get('error_message');
-
-    if (errorCode) {
-      setError(errorMessage || 'OAuth sign-in failed. Please try again.');
+    if (result.error !== null) {
       return;
     }
 
-    const accessToken = params.get('access_token');
-    const refreshToken = params.get('refresh_token');
-
-    if (!accessToken || !refreshToken) {
-      setError('Missing authentication tokens. Please try again.');
-      return;
-    }
-
-    login(accessToken, refreshToken);
+    login(result.accessToken, result.refreshToken);
     navigate('/', { replace: true });
-  }, [login, navigate]);
+  }, [login, navigate, result]);
 
   if (error) {
     return (

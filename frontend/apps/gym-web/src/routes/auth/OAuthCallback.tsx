@@ -12,37 +12,72 @@ const ACCESS_TOKEN_KEY = 'gym_staff_access_token';
 const REFRESH_TOKEN_KEY = 'gym_staff_refresh_token';
 const STAFF_INFO_KEY = 'gym_staff_info';
 
+type StaffSession = {
+  accessToken: string;
+  refreshToken: string;
+  staffId: string;
+  role: string;
+  gymId: string;
+  gymName: string;
+};
+
+type CallbackResult = { error: string } | { error: null; session: StaffSession };
+
+/**
+ * The redirect fragment is already in the URL when this route mounts, so the
+ * outcome is derivable at render time. Reading it here rather than setting
+ * state inside an effect avoids a cascading render.
+ */
+function readCallbackFragment(): CallbackResult {
+  const params = new URLSearchParams(window.location.hash.substring(1));
+
+  const errorCode = params.get('error');
+  if (errorCode) {
+    if (errorCode === 'NO_STAFF_ACCOUNT') {
+      return {
+        error:
+          'No staff account found for this email. Your gym administrator must create your account first.',
+      };
+    }
+    return {
+      error: params.get('error_message') || 'OAuth sign-in failed. Please try again.',
+    };
+  }
+
+  const accessToken = params.get('access_token');
+  const refreshToken = params.get('refresh_token');
+  const staffId = params.get('staff_id');
+  const role = params.get('role');
+  const gymId = params.get('gym_id');
+
+  if (!accessToken || !refreshToken || !staffId || !role || !gymId) {
+    return { error: 'Missing authentication data. Please try again.' };
+  }
+
+  return {
+    error: null,
+    session: {
+      accessToken,
+      refreshToken,
+      staffId,
+      role,
+      gymId,
+      gymName: params.get('gym_name') || '',
+    },
+  };
+}
+
 export function OAuthCallback() {
   const navigate = useNavigate();
-  const [error, setError] = useState<string | null>(null);
+  const [result] = useState(readCallbackFragment);
+  const error = result.error;
 
   useEffect(() => {
-    const hash = window.location.hash.substring(1);
-    const params = new URLSearchParams(hash);
-
-    const errorCode = params.get('error');
-    const errorMessage = params.get('error_message');
-
-    if (errorCode) {
-      if (errorCode === 'NO_STAFF_ACCOUNT') {
-        setError('No staff account found for this email. Your gym administrator must create your account first.');
-      } else {
-        setError(errorMessage || 'OAuth sign-in failed. Please try again.');
-      }
+    if (result.error !== null) {
       return;
     }
 
-    const accessToken = params.get('access_token');
-    const refreshToken = params.get('refresh_token');
-    const staffId = params.get('staff_id');
-    const role = params.get('role');
-    const gymId = params.get('gym_id');
-    const gymName = params.get('gym_name');
-
-    if (!accessToken || !refreshToken || !staffId || !role || !gymId) {
-      setError('Missing authentication data. Please try again.');
-      return;
-    }
+    const { accessToken, refreshToken, staffId, role, gymId, gymName } = result.session;
 
     localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
     localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
@@ -52,12 +87,12 @@ export function OAuthCallback() {
         id: staffId,
         role,
         gym_id: gymId,
-        gym_name: gymName || '',
+        gym_name: gymName,
       }),
     );
 
     navigate('/dashboard', { replace: true });
-  }, [navigate]);
+  }, [navigate, result]);
 
   if (error) {
     return (

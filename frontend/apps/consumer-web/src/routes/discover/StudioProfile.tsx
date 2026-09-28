@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useParams, useNavigate } from 'react-router';
+import { Link, useParams } from 'react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   marketplaceViewMarketplaceGymProfile,
@@ -21,7 +21,6 @@ function billingLabel(cycle: string): string {
 
 export function StudioProfile() {
   const { gymId } = useParams();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedPlan, setSelectedPlan] = useState<MembershipPlanPublic | null>(null);
   const [waiverAccepted, setWaiverAccepted] = useState(false);
