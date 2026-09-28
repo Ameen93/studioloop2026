@@ -28,9 +28,11 @@ from app.models.payment import (
     PaymentWebhookEvent,
 )
 from app.services.payments.providers import (
+    UnknownPaymentProviderError,
     build_webhook_signature,
     get_default_payment_provider,
     get_payment_provider,
+    stub_webhooks_allowed,
 )
 
 router = APIRouter(prefix="/payments", tags=["payments"])
@@ -58,13 +60,21 @@ class InitiatePaymentResponse(BaseModel):
 
 
 class PaymentWebhookRequest(BaseModel):
+    """Inbound webhook body.
+
+    Deliberately carries no field that can assert its own authenticity: the
+    provider's signature over the raw body is the only thing that authenticates
+    a webhook. (An earlier `verified: bool` field here was honoured by the
+    PayFast stub, which made this route an unauthenticated way to complete any
+    payment.)
+    """
+
     event_id: str = Field(min_length=1, max_length=255)
     payment_id: UUID
     status: PaymentStatus
     provider_reference: str | None = Field(default=None, max_length=255)
     event_type: str = Field(default="payment.updated", max_length=64)
     failure_reason: str | None = Field(default=None, max_length=500)
-    verified: bool | None = None
 
 
 class PaymentItem(BaseModel):
@@ -276,7 +286,9 @@ def create_subscription(
 ) -> CreateSubscriptionResponse:
     provider_name = payload.provider
     if provider_name != PaymentProviderName.STITCH:
-        raise HTTPException(status_code=400, detail="Subscriptions are only supported via Stitch")
+        raise HTTPException(
+            status_code=400, detail="Subscriptions are only supported via Stitch"
+        )
 
     payment = Payment(
         gym_id=payload.gym_id,
@@ -400,32 +412,128 @@ def list_payments_for_gym(
     return GymPaymentsListResponse(summary=summary, items=items)
 
 
+def _resolve_webhook_provider(provider_path: str | None) -> PaymentProviderName:
+    """Decide which provider verifies this webhook.
+
+    The configured provider decides, never the caller. A `{provider}` path
+    segment is accepted only as an assertion to cross-check: if it names a
+    different provider than PAYMENT_PROVIDER, the request is refused rather than
+    silently routed to another verifier. This is the fix for the bypass where the
+    path segment selected the verifier, letting a caller pick the stub provider.
+    """
+    try:
+        configured = get_default_payment_provider()
+    except UnknownPaymentProviderError as exc:
+        # Misconfiguration, not a client error: refuse to process anything.
+        raise HTTPException(
+            status_code=503, detail="Payment provider is not configured"
+        ) from exc
+
+    if provider_path is not None:
+        try:
+            requested = PaymentProviderName(provider_path.strip().lower())
+        except ValueError:
+            raise HTTPException(
+                status_code=404, detail="Unknown payment provider"
+            ) from None
+        if requested != configured:
+            raise HTTPException(
+                status_code=403,
+                detail="Webhook provider does not match the configured provider",
+            )
+    return configured
+
+
 @router.post("/webhooks/{provider}")
+@limiter.limit(RATE_WEBHOOK)
+async def process_payment_webhook_for_provider(
+    payload: PaymentWebhookRequest,
+    session: SessionDep,
+    request: Request,
+    provider: str,
+    x_signature: str | None = Header(default=None, alias="X-Signature"),
+    svix_id: str | None = Header(default=None, alias="svix-id"),
+    svix_timestamp: str | None = Header(default=None, alias="svix-timestamp"),
+    svix_signature: str | None = Header(default=None, alias="svix-signature"),
+) -> dict[str, str]:
+    return await _handle_payment_webhook(
+        payload=payload,
+        session=session,
+        request=request,
+        provider_path=provider,
+        x_signature=x_signature,
+        svix_id=svix_id,
+        svix_timestamp=svix_timestamp,
+        svix_signature=svix_signature,
+    )
+
+
 @router.post("/webhook")
 @limiter.limit(RATE_WEBHOOK)
 async def process_payment_webhook(
     payload: PaymentWebhookRequest,
     session: SessionDep,
     request: Request,
-    provider: PaymentProviderName = PaymentProviderName.STITCH,
     x_signature: str | None = Header(default=None, alias="X-Signature"),
     svix_id: str | None = Header(default=None, alias="svix-id"),
     svix_timestamp: str | None = Header(default=None, alias="svix-timestamp"),
     svix_signature: str | None = Header(default=None, alias="svix-signature"),
 ) -> dict[str, str]:
-    existing = session.exec(
-        select(PaymentWebhookEvent).where(
-            PaymentWebhookEvent.event_id == payload.event_id
-        )
-    ).first()
-    if existing:
-        return {"status": "already_processed"}
+    return await _handle_payment_webhook(
+        payload=payload,
+        session=session,
+        request=request,
+        provider_path=None,
+        x_signature=x_signature,
+        svix_id=svix_id,
+        svix_timestamp=svix_timestamp,
+        svix_signature=svix_signature,
+    )
 
-    payment = session.get(Payment, payload.payment_id)
-    if not payment:
-        raise HTTPException(status_code=404, detail="Payment not found")
 
+async def _handle_payment_webhook(
+    *,
+    payload: PaymentWebhookRequest,
+    session: SessionDep,
+    request: Request,
+    provider_path: str | None,
+    x_signature: str | None,
+    svix_id: str | None,
+    svix_timestamp: str | None,
+    svix_signature: str | None,
+) -> dict[str, str]:
+    provider = _resolve_webhook_provider(provider_path)
     verifier = get_payment_provider(provider)
+
+    # A provider with no signing secret cannot authenticate anything, so it may
+    # never be reachable over HTTP outside an opted-in local dev machine. The
+    # provider's own verify() refuses too; this is the visible route-level gate.
+    # getattr default is False on purpose: a provider object that does not
+    # declare the capability is treated as unable to verify, never as able.
+    if not getattr(verifier, "can_verify_webhooks", False) and not (
+        stub_webhooks_allowed()
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Configured payment provider cannot verify webhook signatures",
+        )
+
+    # Only a previously *verified* delivery counts as processed. Keying
+    # idempotency on event_id alone let an unauthenticated caller burn an
+    # event_id with a bad signature and permanently suppress the real delivery.
+    prior_events = list(
+        session.exec(
+            select(PaymentWebhookEvent).where(
+                PaymentWebhookEvent.event_id == payload.event_id
+            )
+        ).all()
+    )
+    if any(prior.signature_valid for prior in prior_events):
+        return {"status": "already_processed"}
+    rejected_event = prior_events[0] if prior_events else None
+
+    # Authenticate before touching any payment state, and before confirming
+    # whether the referenced payment even exists.
     verification_payload = payload.model_dump(mode="json", exclude_none=True)
     if provider == PaymentProviderName.STITCH:
         verification_payload["_svix_id"] = svix_id
@@ -435,20 +543,28 @@ async def process_payment_webhook(
 
     verification = verifier.verify(
         verification_payload,
-        signature=svix_signature if provider == PaymentProviderName.STITCH else x_signature,
+        signature=svix_signature
+        if provider == PaymentProviderName.STITCH
+        else x_signature,
     )
     if not verification.is_valid:
-        event = PaymentWebhookEvent(
-            provider=provider,
-            event_id=payload.event_id,
-            payment_id=payment.id,
-            event_type=payload.event_type,
-            signature_valid=False,
-            payload=payload.model_dump(mode="json", exclude_none=True),
-        )
-        session.add(event)
-        session.commit()
+        if rejected_event is None:
+            session.add(
+                PaymentWebhookEvent(
+                    provider=provider,
+                    event_id=payload.event_id,
+                    payment_id=None,
+                    event_type=payload.event_type,
+                    signature_valid=False,
+                    payload=payload.model_dump(mode="json", exclude_none=True),
+                )
+            )
+            session.commit()
         raise HTTPException(status_code=400, detail="Invalid webhook signature")
+
+    payment = session.get(Payment, payload.payment_id)
+    if not payment:
+        raise HTTPException(status_code=404, detail="Payment not found")
 
     if payload.status == PaymentStatus.COMPLETED:
         payment.mark_completed(provider_reference=payload.provider_reference)
@@ -523,14 +639,17 @@ async def process_payment_webhook(
     else:
         payment.status = payload.status
 
-    event = PaymentWebhookEvent(
-        provider=provider,
-        event_id=payload.event_id,
-        payment_id=payment.id,
-        event_type=payload.event_type,
-        signature_valid=True,
-        payload=payload.model_dump(mode="json", exclude_none=True),
+    # event_id is unique, so promote the audit row left by an earlier rejected
+    # delivery rather than inserting a duplicate.
+    event = rejected_event or PaymentWebhookEvent(
+        event_id=payload.event_id, event_type=payload.event_type
     )
+    event.provider = provider
+    event.payment_id = payment.id
+    event.event_type = payload.event_type
+    event.signature_valid = True
+    event.payload = payload.model_dump(mode="json", exclude_none=True)
+    event.processed_at = datetime.now(UTC)
     session.add(payment)
     session.add(event)
     session.commit()

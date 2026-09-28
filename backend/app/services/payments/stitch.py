@@ -135,6 +135,8 @@ class StitchProvider:
     """Stitch payment provider supporting Pay By Bank and VRP."""
 
     provider_name = PaymentProviderName.STITCH
+    # Verifies Svix HMAC-SHA256 signatures against STITCH_WEBHOOK_SECRET.
+    can_verify_webhooks = True
 
     def __init__(
         self,

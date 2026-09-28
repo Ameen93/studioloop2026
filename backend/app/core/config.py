@@ -149,7 +149,14 @@ class Settings(BaseSettings):
     )
 
     # Payments (Epic 8)
-    PAYMENT_PROVIDER: str = "ozow"
+    # Only the configured provider may verify inbound webhooks. Keep this list in
+    # sync with app.models.payment.PaymentProviderName (imported there instead of
+    # here to avoid a models -> config -> models import cycle).
+    PAYMENT_PROVIDER: Literal["ozow", "payfast", "stitch"] = "ozow"
+    # Escape hatch for driving the stub providers (payfast) from a local dev
+    # machine, where no real signing secret exists. Enforced to False outside
+    # ENVIRONMENT=local by _enforce_non_default_secrets below.
+    PAYMENT_ALLOW_UNVERIFIED_STUB_WEBHOOKS: bool = False
     PAYMENT_RETRY_INTERVAL_DAYS: str = "1,3,7"
     PAYMENT_PLATFORM_FEE_PERCENT: float = 15.0
     PAYMENT_RECEIPT_VAT_PERCENT: float = 15.0
@@ -190,6 +197,11 @@ class Settings(BaseSettings):
             if not self.STITCH_WEBHOOK_SECRET:
                 raise ValueError(
                     "STITCH_WEBHOOK_SECRET must be set outside local environments"
+                )
+            if self.PAYMENT_ALLOW_UNVERIFIED_STUB_WEBHOOKS:
+                raise ValueError(
+                    "PAYMENT_ALLOW_UNVERIFIED_STUB_WEBHOOKS may only be true when "
+                    "ENVIRONMENT=local; it disables webhook signature verification"
                 )
         if self.ENVIRONMENT == "production":
             if self.PAYMENT_PROVIDER != "stitch":

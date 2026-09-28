@@ -345,8 +345,49 @@ the app runs without all of it:
 | Error tracking | `SENTRY_DSN` | Disabled, and ignored entirely when `ENVIRONMENT=local` |
 
 `ENVIRONMENT=local` is doing real work: outside `local` the config validator rejects
-`changethis` secrets and requires `STITCH_WEBHOOK_SECRET`, and `ENVIRONMENT=production` refuses
-to start unless `PAYMENT_PROVIDER=stitch`.
+`changethis` secrets, requires `STITCH_WEBHOOK_SECRET`, and refuses
+`PAYMENT_ALLOW_UNVERIFIED_STUB_WEBHOOKS`; `ENVIRONMENT=production` refuses to start unless
+`PAYMENT_PROVIDER=stitch`.
+
+## Fixed since the audit
+
+These were the defects an audit of this repository found. Each entry says what the defect was
+and what holds instead now, so the history stays readable.
+
+### The payment webhook had no authentication (the worst of them)
+
+`POST /api/v1/payments/webhooks/payfast` with `{"verified": true}` and a known payment UUID used
+to mark that payment completed, activate the membership and issue a receipt — no secret, no
+signature. Two things combined: the route took `provider` as a **path parameter**, so the caller
+chose which verifier ran, and the PayFast stub honoured a `verified` field that arrived in the
+request body. The `ENVIRONMENT=production` guard requiring `PAYMENT_PROVIDER=stitch` did not
+help, because the route never read that setting.
+
+What holds now:
+
+- `settings.PAYMENT_PROVIDER` decides the verifier. The URL never does. A `{provider}` path
+  segment is accepted only as an assertion to cross-check, and naming a different provider is
+  `403` rather than a switch to that provider's verifier.
+- An unrecognised provider in the path is `404`. An unrecognised or empty `PAYMENT_PROVIDER` is
+  `503` at request time and a `ValidationError` at startup — `PAYMENT_PROVIDER` is a `Literal`
+  now, and `get_default_payment_provider()` raises instead of quietly falling back to Ozow,
+  which is what used to hide a typo.
+- `verified` is gone from `PaymentWebhookRequest`. Nothing in a request body can assert its own
+  authenticity.
+- A provider holding no signing secret (`can_verify_webhooks = False`, currently PayFast)
+  refuses every webhook unless `ENVIRONMENT=local` **and** the explicit
+  `PAYMENT_ALLOW_UNVERIFIED_STUB_WEBHOOKS` opt-in is set. Settings validation refuses that
+  variable outside `local`, and both halves are re-read at verification time, so a mutated
+  setting is not enough either. The route refuses such a provider before verification as well.
+- Verification runs *before* any payment lookup or state change.
+- Webhook idempotency keys on a previously **verified** delivery. It used to key on `event_id`
+  alone, so an unauthenticated caller could burn an `event_id` with a bad signature and have the
+  genuine delivery answered `already_processed` without it ever being applied. A rejected
+  attempt is still recorded for audit, and is promoted in place when the genuine delivery
+  arrives.
+
+`backend/tests/api/routes/test_payment_webhook_auth.py` pins all of this down, including that a
+genuine Svix-signed Stitch webhook still completes a payment end to end.
 
 ## Known issues a reviewer will hit
 
@@ -376,20 +417,14 @@ Being explicit about these rather than letting them be discovered:
 
 **The things that are wrong, in the order I would fix them.**
 
-1. **Make the webhook route read `settings.PAYMENT_PROVIDER` instead of a path parameter**, and
-   delete the `verified` field from `PaymentWebhookRequest`. As written, the caller picks the
-   verifier and the PayFast fake accepts `{"verified": true}`. Fake providers should not be
-   reachable from an HTTP route at all.
-2. **Lock the session row when booking.** `SELECT … FOR UPDATE`, plus a
-   `CHECK (spots_booked <= capacity)` and a unique constraint on `(session_id, consumer_id)`.
-   Then either drop the denormalised counter or make `COUNT(bookings)` the only source of
-   truth — not both.
-3. **Route everything through `GymScopedRepository`.** The automatic tenant filter exists and is
+1. **Route everything through `GymScopedRepository`.** The automatic tenant filter exists and is
    tested; 87 hand-written `gym_id` predicates are 87 chances to forget one. And put auth on
    the WebSocket endpoints.
-4. **Insert the webhook event row first, catch `IntegrityError`, return 200** — and make the
-   uniqueness `(provider, event_id)`, and make the idempotency check respect `signature_valid`.
-5. **Delete `models_legacy.py`'s `Item` model and the `/items` router**, and collapse `User`
+2. **Insert the webhook event row first and catch `IntegrityError`** instead of the
+   select-then-insert the route still does, and make the uniqueness `(provider, event_id)`
+   rather than `event_id` alone. (The idempotency check now respects `signature_valid` — see
+   "Fixed since the audit" — but the race between the check and the insert remains.)
+3. **Delete `models_legacy.py`'s `Item` model and the `/items` router**, and collapse `User`
    into the same identity model as `Staff`. Three identity tables inherited from a template is
    an architectural decision I never actually made.
 

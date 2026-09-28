@@ -28,6 +28,8 @@ from tests.api.routes.test_staff_memberships import _consumer_headers, _staff_he
 
 
 class _MockStitchProvider:
+    can_verify_webhooks = True
+
     def initiate(self, payment: Payment):
         class _Result:
             provider_reference = "stitch-pir-123"
@@ -385,6 +387,7 @@ def test_stitch_webhook_endpoint_with_svix_headers(
 
     provider = _RecordingProvider()
     monkeypatch.setattr(payments_route, "get_payment_provider", lambda _name: provider)
+    monkeypatch.setattr(payments_route.settings, "PAYMENT_PROVIDER", "stitch")
 
     headers, _consumer = _consumer_headers(client, db)
     gym = db.exec(select(Gym)).first()
@@ -466,6 +469,7 @@ def test_stitch_webhook_rejects_invalid_svix_signature(
     monkeypatch.setattr(
         payments_route.settings, "STITCH_WEBHOOK_SECRET", "whsec_dGVzdHNlY3JldA=="
     )
+    monkeypatch.setattr(payments_route.settings, "PAYMENT_PROVIDER", "stitch")
 
     webhook = client.post(
         "/api/v1/payments/webhook",
@@ -509,6 +513,7 @@ def test_stitch_webhook_valid_svix_signature_is_idempotent(
     monkeypatch.setattr(
         payments_route.settings, "STITCH_WEBHOOK_SECRET", "whsec_dGVzdHNlY3JldA=="
     )
+    monkeypatch.setattr(payments_route.settings, "PAYMENT_PROVIDER", "stitch")
 
     payload = {
         "event_id": f"evt-{uuid4()}",
@@ -582,6 +587,7 @@ def test_stitch_sandbox_callback_signature_is_accepted(
     monkeypatch.setattr(
         payments_route.settings, "STITCH_WEBHOOK_SECRET", "whsec_dGVzdHNlY3JldA=="
     )
+    monkeypatch.setattr(payments_route.settings, "PAYMENT_PROVIDER", "stitch")
 
     payload = {
         "event_id": f"evt-{uuid4()}",
