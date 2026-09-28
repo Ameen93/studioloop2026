@@ -19,6 +19,18 @@ class BookingStatus(StrEnum):
     CHECKED_IN = "checked_in"
 
 
+# Every booking status that occupies a spot in a class session. A
+# PENDING_PAYMENT booking holds its spot while payment clears and a CHECKED_IN
+# booking obviously still occupies one; only CANCELLED releases it. This is the
+# set class_sessions.spots_booked tracks, and the set the partial unique index
+# uq_booking_session_consumer_active treats as an active booking.
+OCCUPYING_BOOKING_STATUSES = (
+    BookingStatus.PENDING_PAYMENT,
+    BookingStatus.BOOKED,
+    BookingStatus.CHECKED_IN,
+)
+
+
 class BookingSource(StrEnum):
     DIRECT = "direct"
     MARKETPLACE = "marketplace"

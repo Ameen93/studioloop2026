@@ -87,8 +87,13 @@ def test_story_10_2_attendance_report(client: TestClient, db: Session) -> None:
     membership = GymMembership(gym_id=gym.id, consumer_id=consumer.id, membership_tier=GymMembershipTier.PREMIUM, status=GymMembershipStatus.ACTIVE)
     db.add(membership)
 
-    record1 = CheckInRecord(gym_id=gym.id, consumer_id=consumer.id, checked_in_at=datetime.now(UTC) - timedelta(days=1))
-    record2 = CheckInRecord(gym_id=gym.id, consumer_id=consumer.id, checked_in_at=datetime.now(UTC) - timedelta(hours=3))
+    # `period=weekly` is a calendar week TO DATE in _resolve_period: it starts at
+    # `today - today.weekday()`, i.e. this Monday. A record placed a day ago
+    # therefore falls outside the window whenever the test runs on a Monday,
+    # which made this assertion fail one day in seven. Both records go inside
+    # today, which is inside the window on every day of the week.
+    record1 = CheckInRecord(gym_id=gym.id, consumer_id=consumer.id, checked_in_at=datetime.now(UTC) - timedelta(hours=3))
+    record2 = CheckInRecord(gym_id=gym.id, consumer_id=consumer.id, checked_in_at=datetime.now(UTC) - timedelta(hours=1))
     db.add(record1)
     db.add(record2)
     db.commit()
@@ -129,8 +134,11 @@ def test_story_10_4_class_performance_report(client: TestClient, db: Session) ->
     _consumer_headers_data, consumer = _consumer_headers(client, db)
 
     session = _seed_space_and_session(db, gym, title="Morning Yoga", capacity=10)
+    # Two bookings on one class means two different consumers: a consumer may
+    # hold only one active booking per session (uq_booking_session_consumer_active).
+    _second_headers, consumer_2 = _consumer_headers(client, db)
     booking1 = Booking(gym_id=gym.id, consumer_id=consumer.id, session_id=session.id, status=BookingStatus.CHECKED_IN)
-    booking2 = Booking(gym_id=gym.id, consumer_id=consumer.id, session_id=session.id, status=BookingStatus.BOOKED)
+    booking2 = Booking(gym_id=gym.id, consumer_id=consumer_2.id, session_id=session.id, status=BookingStatus.BOOKED)
     db.add(booking1)
     db.add(booking2)
     db.commit()
@@ -204,10 +212,13 @@ def test_story_10_7_consumer_stats_dashboard(client: TestClient, db: Session) ->
     assert gym is not None
     consumer_headers, consumer = _consumer_headers(client, db)
 
+    # Attending Yoga twice means two Yoga *sessions*, not two bookings on one:
+    # a consumer may hold only one active booking per session.
     yoga = _seed_space_and_session(db, gym, title="Yoga")
+    yoga_again = _seed_space_and_session(db, gym, title="Yoga")
     boxing = _seed_space_and_session(db, gym, title="Boxing")
     b1 = Booking(gym_id=gym.id, consumer_id=consumer.id, session_id=yoga.id, status=BookingStatus.CHECKED_IN, checked_in_at=datetime.now(UTC) - timedelta(days=7))
-    b2 = Booking(gym_id=gym.id, consumer_id=consumer.id, session_id=yoga.id, status=BookingStatus.CHECKED_IN, checked_in_at=datetime.now(UTC) - timedelta(days=1))
+    b2 = Booking(gym_id=gym.id, consumer_id=consumer.id, session_id=yoga_again.id, status=BookingStatus.CHECKED_IN, checked_in_at=datetime.now(UTC) - timedelta(days=1))
     b3 = Booking(gym_id=gym.id, consumer_id=consumer.id, session_id=boxing.id, status=BookingStatus.CHECKED_IN, checked_in_at=datetime.now(UTC) - timedelta(days=14))
     db.add_all([b1, b2, b3])
     db.commit()

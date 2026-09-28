@@ -19,12 +19,20 @@ from app.seed.spaces import GYM_SPACE_ASSIGNMENTS
 
 
 @pytest.fixture(scope="module")
-def db_session():
+def db_session(db: Session):
     """Provide a clean database session for seed tests.
 
     Resets seed data before tests to ensure isolation from other test modules
     that may have created test data (e.g., RBAC tests creating test gyms).
+
+    Takes the session-scoped `db` fixture purely to release it first. That
+    session is left idle-in-transaction by any seeder that short-circuits on an
+    already-populated database, or by whichever test ran last, and the ACCESS
+    SHARE locks it holds block the TRUNCATE inside reset_seed_data until the
+    statement times out. Without this the whole module errors on any database
+    that is not freshly created — which is to say, on every second run.
     """
+    db.rollback()
     with Session(engine) as session:
         # Reset to clean slate - seed tests need to verify exact counts
         reset_seed_data(session)

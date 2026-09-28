@@ -618,8 +618,15 @@ async def _handle_payment_webhook(
                 booking = session.get(Booking, payment.related_entity_id)
                 if booking and booking.status == BookingStatus.PENDING_PAYMENT:
                     booking.mark_cancelled()
-                    # Release the held spot
-                    class_session = session.get(ClassSession, booking.session_id)
+                    # Release the held spot. Locked for the same reason the
+                    # booking routes lock: this is a read-modify-write of
+                    # spots_booked, and a booking request may be racing it.
+                    class_session = session.exec(
+                        select(ClassSession)
+                        .where(ClassSession.id == booking.session_id)
+                        .with_for_update()
+                        .execution_options(populate_existing=True)
+                    ).first()
                     if class_session and class_session.spots_booked > 0:
                         class_session.spots_booked -= 1
                         session.add(class_session)

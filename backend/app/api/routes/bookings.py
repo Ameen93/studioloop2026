@@ -4,6 +4,7 @@ from uuid import UUID
 import jwt
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import col, select
 
 from app.api.deps import CurrentConsumer, CurrentStaff, SessionDep
@@ -125,11 +126,80 @@ class SearchResult(BaseModel):
     phone: str | None
 
 
-def _get_session_or_404(session: SessionDep, session_id: UUID) -> ClassSession:
-    class_session = session.get(ClassSession, session_id)
+def _get_session_or_404(
+    session: SessionDep, session_id: UUID, *, lock: bool = False
+) -> ClassSession:
+    """Load a class session, optionally taking a row lock on it.
+
+    Pass ``lock=True`` for anything that reads ``spots_booked`` and then writes
+    it. ``SELECT ... FOR UPDATE`` serialises the check and the increment against
+    concurrent requests for the same class; without it two callers could both
+    see the last spot free and both take it.
+
+    ``populate_existing`` is not optional here. Without it SQLAlchemy returns
+    whatever instance the identity map already holds without refreshing its
+    columns, so we would acquire the lock and then decide on a stale
+    ``spots_booked`` — the lock would be real and useless.
+    """
+    if lock:
+        class_session = session.exec(
+            select(ClassSession)
+            .where(ClassSession.id == session_id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        ).first()
+    else:
+        class_session = session.get(ClassSession, session_id)
     if not class_session or not class_session.is_active:
         raise HTTPException(status_code=404, detail="Class session not found")
     return class_session
+
+
+def _active_booking(
+    session: SessionDep, session_id: UUID, consumer_id: UUID
+) -> Booking | None:
+    """The consumer's existing non-cancelled booking for this class, if any.
+
+    Mirrors the partial unique index ``uq_booking_session_consumer_active`` so
+    the API can answer 409 rather than let the database raise. Callers must
+    already hold the class session's row lock for this to be race-free.
+    """
+    return session.exec(
+        select(Booking).where(
+            Booking.session_id == session_id,
+            Booking.consumer_id == consumer_id,
+            col(Booking.status) != BookingStatus.CANCELLED,
+        )
+    ).first()
+
+
+def _class_is_full(class_session: ClassSession) -> bool:
+    """capacity == 0 means unlimited throughout this codebase."""
+    return bool(class_session.capacity) and (
+        class_session.spots_booked >= class_session.capacity
+    )
+
+
+def _commit_booking(session: SessionDep) -> None:
+    """Commit, translating the booking invariants' database errors into 409s.
+
+    Both invariants are checked in Python under the class session's row lock, so
+    getting here means something outside this path wrote. The constraints are
+    still the last word — this only keeps the API from answering 500 when they
+    speak.
+    """
+    try:
+        session.commit()
+    except IntegrityError as exc:
+        session.rollback()
+        message = str(exc.orig)
+        if "uq_booking_session_consumer_active" in message:
+            raise HTTPException(
+                status_code=409, detail="You already have a booking for this class"
+            ) from exc
+        if "ck_class_session_spots_within_capacity" in message:
+            raise HTTPException(status_code=409, detail="Class is full") from exc
+        raise
 
 
 def _is_membership_valid(
@@ -197,7 +267,9 @@ def book_with_membership(
     current_consumer: CurrentConsumer,
     session: SessionDep,
 ) -> Booking:
-    class_session = _get_session_or_404(session, payload.session_id)
+    # Lock the class session row: everything from here to the commit is the
+    # check-then-increment that used to race.
+    class_session = _get_session_or_404(session, payload.session_id, lock=True)
     if class_session.gym_id != payload.gym_id:
         raise HTTPException(status_code=400, detail="Session does not belong to gym")
 
@@ -207,7 +279,12 @@ def book_with_membership(
     if not valid or membership is None:
         raise HTTPException(status_code=400, detail=message)
 
-    if class_session.capacity and class_session.spots_booked >= class_session.capacity:
+    if _active_booking(session, payload.session_id, current_consumer.id):
+        raise HTTPException(
+            status_code=409, detail="You already have a booking for this class"
+        )
+
+    if _class_is_full(class_session):
         raise HTTPException(status_code=409, detail="Class is full")
 
     booking = Booking(
@@ -222,7 +299,7 @@ def book_with_membership(
     class_session.spots_booked += 1
     session.add(booking)
     session.add(class_session)
-    session.commit()
+    _commit_booking(session)
     session.refresh(booking)
     return booking
 
@@ -237,7 +314,8 @@ def book_pay_per_class(
     current_consumer: CurrentConsumer,
     session: SessionDep,
 ) -> PayPerClassResponse:
-    class_session = _get_session_or_404(session, payload.session_id)
+    # Lock the class session row for the whole check-then-increment below.
+    class_session = _get_session_or_404(session, payload.session_id, lock=True)
     if class_session.gym_id != payload.gym_id:
         raise HTTPException(status_code=400, detail="Session does not belong to gym")
 
@@ -262,10 +340,18 @@ def book_pay_per_class(
         session.add(class_session)
         session.flush()
 
-    if class_session.capacity and class_session.spots_booked >= class_session.capacity:
+    # After the stale sweep, so a lapsed pending booking does not block a retry.
+    if _active_booking(session, payload.session_id, current_consumer.id):
+        raise HTTPException(
+            status_code=409, detail="You already have a booking for this class"
+        )
+
+    if _class_is_full(class_session):
         raise HTTPException(status_code=409, detail="Class is full")
     if payload.amount_cents != class_session.price_cents:
-        raise HTTPException(status_code=400, detail="Payment amount does not match class price")
+        raise HTTPException(
+            status_code=400, detail="Payment amount does not match class price"
+        )
 
     booking = Booking(
         gym_id=payload.gym_id,
@@ -301,7 +387,7 @@ def book_pay_per_class(
     initiation = provider.initiate(payment)
     payment.provider_reference = initiation.provider_reference
     session.add(payment)
-    session.commit()
+    _commit_booking(session)
     session.refresh(booking)
 
     return PayPerClassResponse(
@@ -322,7 +408,13 @@ def cancel_booking(
     if not booking or booking.consumer_id != current_consumer.id:
         raise HTTPException(status_code=404, detail="Booking not found")
 
-    class_session = session.get(ClassSession, booking.session_id)
+    # Lock: the decrement below is the same read-modify-write as the increment.
+    class_session = session.exec(
+        select(ClassSession)
+        .where(ClassSession.id == booking.session_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    ).first()
     if class_session is None:
         raise HTTPException(status_code=404, detail="Class session not found")
 
@@ -417,9 +509,26 @@ def accept_waitlist_offer(
     if not entry.expires_at or entry.expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=400, detail="Waitlist offer expired")
 
-    class_session = session.get(ClassSession, entry.session_id)
+    # Lock: accepting an offer increments spots_booked like any other booking.
+    # This path had no capacity check at all, so it could oversell a class even
+    # single-threaded; the check is now here as well as in the database.
+    class_session = session.exec(
+        select(ClassSession)
+        .where(ClassSession.id == entry.session_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    ).first()
     if class_session is None:
         raise HTTPException(status_code=404, detail="Class session not found")
+
+    if _active_booking(session, entry.session_id, entry.consumer_id):
+        raise HTTPException(
+            status_code=409, detail="You already have a booking for this class"
+        )
+    if _class_is_full(class_session):
+        raise HTTPException(
+            status_code=409, detail="The spot was taken before the offer was accepted"
+        )
 
     booking = Booking(
         gym_id=entry.gym_id,
@@ -433,7 +542,7 @@ def accept_waitlist_offer(
     session.add(booking)
     session.add(entry)
     session.add(class_session)
-    session.commit()
+    _commit_booking(session)
     session.refresh(booking)
     return booking
 

@@ -190,15 +190,19 @@ The waitlist is coherent: `position`, `offered_at`/`expires_at`, and
 `offer()`/`accept()`/`expire()` transitions, with an offer issued synchronously to the
 lowest-position entry when a booking is cancelled.
 
-**Booking a full class has no concurrency protection at all** — read `spots_booked`, compare to
-`capacity`, increment, commit. No row lock, no unique constraint on
+**Booking a full class used to have no concurrency protection at all** — read `spots_booked`,
+compare to `capacity`, increment, commit. No row lock, no unique constraint on
 `(session_id, consumer_id)`, no `CHECK (spots_booked <= capacity)`, no version column. Under
-Postgres' default `READ COMMITTED`, concurrent requests for the last spot all pass the check
-and all increment, and last-writer-wins can leave the counter *below* the number of `Booking`
-rows. `realtime.py` independently recomputes the same number from `COUNT(bookings)`, so there
-are two disagreeing sources of truth. Not overselling a class is the one invariant a booking
-product exists to uphold, and this does not uphold it. A `SELECT … FOR UPDATE` on the session
-row, or a conditional `UPDATE … WHERE spots_booked < capacity RETURNING`, is the fix.
+Postgres' default `READ COMMITTED`, concurrent requests for the last spot all passed the check
+and all incremented, and last-writer-wins could leave the counter *below* the number of
+`Booking` rows. `realtime.py` independently recomputed the same number from `COUNT(bookings)`,
+so there were two disagreeing sources of truth. Not overselling a class is the one invariant a
+booking product exists to uphold, and this did not uphold it.
+
+Booking now takes `SELECT … FOR UPDATE` on the session row, the two invariants are constraints
+in the schema, and `spots_booked` is the only count — see
+[Booking had no concurrency control](#booking-had-no-concurrency-control) for what changed and
+how the lock was verified.
 
 ### The schema-drift migration
 
@@ -414,6 +418,52 @@ emitted into a script, and it is still idempotent. Both paths are verified: `ale
 head` online, and `alembic upgrade head --sql` piped into `psql -v ON_ERROR_STOP=1` on an empty
 database, which reaches head cleanly.
 
+### Booking had no concurrency control
+
+Booking a class was a read-check-increment on `class_sessions.spots_booked` with no row lock,
+no uniqueness on `(session_id, consumer_id)`, no capacity constraint and no version column, so
+classes could oversell and a consumer could double-book. `with_for_update` appeared nowhere in
+the repository. Separately, `realtime.py` recomputed occupancy from `COUNT(bookings)` where
+`status == BOOKED`, giving a second answer that disagreed with the stored counter.
+
+**The database first.** Migration `b5f1c07d9a33`:
+
+- `uq_booking_session_consumer_active` — a **partial** unique index on
+  `(session_id, consumer_id) WHERE status <> 'CANCELLED'`. Partial on purpose: a plain unique
+  constraint would stop a consumer ever re-booking a class they had cancelled, which the cancel
+  endpoint supports. "One *active* booking per consumer per session" is the invariant that was
+  actually missing, and `test_rebooking_after_cancelling_is_still_allowed` pins the difference.
+- `ck_class_session_spots_within_capacity` — `spots_booked >= 0 AND (capacity = 0 OR
+  spots_booked <= capacity)`. `capacity = 0` means unlimited everywhere in this codebase, so the
+  check exempts it rather than declaring every such class instantly full.
+- Existing rows are repaired before the constraints go on, so the migration is safe against a
+  populated database: duplicate active bookings are collapsed to the earliest and the rest
+  **cancelled rather than deleted**, then `spots_booked` is recomputed from the bookings behind
+  it, then clamped to `capacity`. The repair statements are module-level constants so the test
+  suite runs the migration's own SQL rather than a copy of it.
+
+**Then the application.** `SELECT … FOR UPDATE` (with `populate_existing`, without which
+SQLAlchemy hands back a stale identity-map row and the lock is real but useless) wraps the
+capacity check and the increment in `book_with_membership`, `book_pay_per_class`,
+`accept_waitlist_offer`, `cancel_booking`, and the payment-webhook path that releases a held
+spot. `accept_waitlist_offer` also gained the capacity check it never had. Constraint violations
+are translated to `409`, so the database has the last word without the API returning `500`.
+
+**One count, not two.** `class_sessions.spots_booked` is the single source of truth: it is the
+number the row lock protects and the check constraint bounds, and `realtime.py` now reads it
+instead of recomputing. `count_occupying_bookings()` recomputes from bookings only to *assert*
+the two agree. The old query was wrong twice over — it ignored `PENDING_PAYMENT` bookings
+holding a spot and `CHECKED_IN` bookings still occupying one. In the seeded database, **846 of
+917 sessions disagreed** between the two; the seed itself set the counter independently of the
+bookings it created, which is now fixed too.
+
+**How the lock was verified.** `test_booking_concurrency.py` runs each booking attempt on its
+own `Session` in its own thread, so two real Postgres backends contend for the same row — a
+`TestClient` request cannot do this, because it serialises through one session. A barrier makes
+every worker reach the capacity check before any of them commits. With `FOR UPDATE` removed
+from the worker, **all 10 concurrent bookings succeed into a 3-spot class**; with it, exactly 3
+do.
+
 ## Known issues a reviewer will hit
 
 Being explicit about these rather than letting them be discovered:
@@ -441,7 +491,12 @@ Being explicit about these rather than letting them be discovered:
    select-then-insert the route still does, and make the uniqueness `(provider, event_id)`
    rather than `event_id` alone. (The idempotency check now respects `signature_valid` — see
    "Fixed since the audit" — but the race between the check and the insert remains.)
-3. **Delete `models_legacy.py`'s `Item` model and the `/items` router**, and collapse `User`
+3. **Give `bookings.status` a database-level constraint.** The booking invariants are enforced in
+   the schema now, but the status column is still a bare `VARCHAR(20)` whose values are
+   SQLAlchemy Enum *names*; nothing stops a write putting an unrecognised string there. The same
+   is true of `payments.status`, which is what makes the payment "state machine" a misnomer
+   below.
+4. **Delete `models_legacy.py`'s `Item` model and the `/items` router**, and collapse `User`
    into the same identity model as `Staff`. Three identity tables inherited from a template is
    an architectural decision I never actually made.
 
@@ -485,9 +540,9 @@ backend/
     models/          SQLModel domain models (plus models_legacy.py, template leftovers)
     repositories/    GymScopedRepository — tested, unused
     services/        payments/ (Stitch + two fakes), notifications/
-    alembic/         26 migrations, linear
+    alembic/         27 migrations, linear
     seed/            synthetic demo data
-  tests/             34 files, 460 tests
+  tests/             36 files, 486 tests
 frontend/
   apps/              consumer-web, gym-web, web, consumer-mobile, gym-mobile,
                      marketing-consumers, marketing-gyms

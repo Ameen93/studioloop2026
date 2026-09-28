@@ -19,7 +19,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from sqlmodel import Session, col, select
 
 from app.core.db import engine
-from app.models.booking import Booking, BookingStatus
+from app.models.booking import OCCUPYING_BOOKING_STATUSES, Booking
 from app.models.class_session import ClassSession
 from app.models.waitlist_entry import WaitlistEntry, WaitlistStatus
 
@@ -82,30 +82,56 @@ manager = ConnectionManager()
 # =============================================================================
 
 
+def count_occupying_bookings(db: Session, session_id: UUID) -> int:
+    """Recompute occupancy from the bookings behind it.
+
+    This is a reconciliation helper, NOT a second source of truth:
+    ``class_sessions.spots_booked`` is the source of truth, because it is the
+    number the booking routes hold a row lock over and the number
+    ``ck_class_session_spots_within_capacity`` constrains. Use this to assert
+    the two agree, or to repair the counter — never to answer a request.
+    """
+    return len(
+        db.exec(
+            select(Booking).where(
+                Booking.session_id == session_id,
+                col(Booking.status).in_(OCCUPYING_BOOKING_STATUSES),
+            )
+        ).all()
+    )
+
+
 def _get_session_availability(session_id: UUID) -> dict[str, object] | None:
-    """Fetch current availability for a class session from the database."""
+    """Fetch current availability for a class session from the database.
+
+    This used to recompute the number from ``COUNT(bookings)`` where
+    ``status == BOOKED``, which disagreed with ``class_sessions.spots_booked``
+    twice over: it missed PENDING_PAYMENT bookings holding a spot and CHECKED_IN
+    bookings still occupying one, and it was not the number the booking routes
+    enforce capacity against. In the seeded database, 846 of 917 sessions
+    disagreed between the two.
+
+    There is now one source of truth — the stored counter — and this reads it.
+    """
     with Session(engine) as db:
         class_session = db.get(ClassSession, session_id)
         if not class_session:
             return None
 
-        # Count active bookings
-        active_bookings = db.exec(
-            select(Booking).where(
-                Booking.session_id == session_id,
-                Booking.status == BookingStatus.BOOKED,
-            )
-        ).all()
-
-        spots_booked = len(active_bookings)
-        spots_remaining = max(0, class_session.capacity - spots_booked)
+        spots_booked = class_session.spots_booked
+        unlimited = class_session.capacity == 0
+        spots_remaining = (
+            None if unlimited else max(0, class_session.capacity - spots_booked)
+        )
 
         return {
             "session_id": str(session_id),
             "capacity": class_session.capacity,
             "spots_booked": spots_booked,
+            # capacity == 0 means unlimited everywhere else in this codebase, so
+            # such a class is never full and has no finite remaining count.
             "spots_remaining": spots_remaining,
-            "is_full": spots_remaining == 0,
+            "is_full": (not unlimited) and spots_remaining == 0,
             "waitlist_enabled": class_session.waitlist_enabled,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }

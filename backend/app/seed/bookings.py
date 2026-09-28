@@ -7,10 +7,15 @@ future bookings (confirmed, waiting) for testing all flows.
 
 from datetime import datetime, timezone
 
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from app.models import Booking, ClassSession, Consumer
-from app.models.booking import BookingSource, BookingStatus, BookingType
+from app.models.booking import (
+    OCCUPYING_BOOKING_STATUSES,
+    BookingSource,
+    BookingStatus,
+    BookingType,
+)
 from app.models.class_session import ClassSessionStatus
 
 
@@ -103,6 +108,30 @@ def seed_bookings(session: Session) -> int:
             )
             session.add(booking)
             count += 1
+
+    session.flush()
+
+    # class_sessions.spots_booked is seeded independently (a percentage of
+    # capacity), so without this it disagrees with the bookings actually created
+    # here — 846 of 917 sessions did, which is how the two-sources-of-truth
+    # problem showed up in practice. spots_booked is the source of truth for
+    # occupancy, so bring it in line with the rows that back it.
+    for cs in sessions_list:
+        occupied = len(
+            session.exec(
+                select(Booking).where(
+                    Booking.session_id == cs.id,
+                    col(Booking.status).in_(OCCUPYING_BOOKING_STATUSES),
+                )
+            ).all()
+        )
+        if cs.capacity and occupied > cs.capacity:
+            # Would violate ck_class_session_spots_within_capacity. The seed
+            # books 2-5 consumers regardless of capacity, so widen the class
+            # rather than drop a booking.
+            cs.capacity = occupied
+        cs.spots_booked = occupied
+        session.add(cs)
 
     session.commit()
     return count
