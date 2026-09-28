@@ -401,6 +401,19 @@ seeding or quietly ignoring it — a misconfiguration fails the deploy instead o
 accounts. `scripts/seed.py` enforces the same rule itself, so running it by hand is guarded too.
 `SEED_DEMO_DATA` defaults to off and is never a way to seed a deployed environment.
 
+### `alembic upgrade head --sql` failed
+
+`c4b7ce0c5a91_add_gym_membership_unique_constraint.py` called `sa.inspect(op.get_bind())` to
+ask whether its constraint already existed. In offline (`--sql`) mode the bind is a
+`MockConnection` with no database behind it, so that raised `NoInspectionAvailable` and broke
+the whole chain — you could not generate a migration script for review without a live database.
+
+The existence check is now a `DO $$ … $$` block against `pg_constraint`, which Postgres
+evaluates itself. The same statement is correct whether executed against a live connection or
+emitted into a script, and it is still idempotent. Both paths are verified: `alembic upgrade
+head` online, and `alembic upgrade head --sql` piped into `psql -v ON_ERROR_STOP=1` on an empty
+database, which reaches head cleanly.
+
 ## Known issues a reviewer will hit
 
 Being explicit about these rather than letting them be discovered:
@@ -410,10 +423,6 @@ Being explicit about these rather than letting them be discovered:
   handful of those are real bugs rather than stub noise — several `order_by()` calls pass a
   Python `datetime` value where the model column was meant
   (`bookings.py:491`, `class_scheduling.py:768`, `:962`, `:1024`).
-- **`alembic upgrade head` works against a real empty database, but `--sql` offline mode does
-  not.** `c4b7ce0c5a91_add_gym_membership_unique_constraint.py` calls `sa.inspect(bind)` inside
-  `upgrade()`, which raises `NoInspectionAvailable` against a mock connection. It is the only
-  migration that reflects the live schema.
 - **`frontend/apps/web` is commented as the legacy app and is still the deployed admin
   surface** (`sl-admin` in the Vercel config). The label and the deployment disagree.
 - The two Astro apps define no `lint`, `test` or `type-check` scripts, so `turbo` silently
