@@ -389,6 +389,18 @@ What holds now:
 `backend/tests/api/routes/test_payment_webhook_auth.py` pins all of this down, including that a
 genuine Svix-signed Stitch webhook still completes a payment end to end.
 
+### The seed script ran on every deploy
+
+`backend/scripts/prestart.sh` is the Dockerfile `CMD`, and its last line was an unconditional
+`python scripts/seed.py`. Every deploy therefore re-provisioned demo accounts with publicly
+known passwords (`staffpass123`, `password123`).
+
+Seeding now happens only when `ENVIRONMENT=local`. Anywhere else prestart skips it and says so.
+If `SEED_DEMO_DATA` is set outside `local`, prestart **aborts with a non-zero exit** rather than
+seeding or quietly ignoring it — a misconfiguration fails the deploy instead of creating those
+accounts. `scripts/seed.py` enforces the same rule itself, so running it by hand is guarded too.
+`SEED_DEMO_DATA` defaults to off and is never a way to seed a deployed environment.
+
 ## Known issues a reviewer will hit
 
 Being explicit about these rather than letting them be discovered:
@@ -398,10 +410,6 @@ Being explicit about these rather than letting them be discovered:
   handful of those are real bugs rather than stub noise — several `order_by()` calls pass a
   Python `datetime` value where the model column was meant
   (`bookings.py:491`, `class_scheduling.py:768`, `:962`, `:1024`).
-- **The seed script runs on every deploy.** `backend/scripts/prestart.sh` ends with
-  `python scripts/seed.py`, and that script has no `ENVIRONMENT` guard, so a production deploy
-  provisions demo accounts with known passwords (`staffpass123`, `password123`). This needs a
-  guard before this project is ever deployed again.
 - **`alembic upgrade head` works against a real empty database, but `--sql` offline mode does
   not.** `c4b7ce0c5a91_add_gym_membership_unique_constraint.py` calls `sa.inspect(bind)` inside
   `upgrade()`, which raises `NoInspectionAvailable` against a mock connection. It is the only
