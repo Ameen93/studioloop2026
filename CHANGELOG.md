@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-09-28 — Audit fixes: webhook auth, deploy seeding, booking concurrency, green CI
+
+### Fixed
+- **The payment webhook had no authentication.** The route took `provider` as a path parameter
+  so the caller chose the verifier, and the PayFast stub honoured a `verified` field in the
+  request body. `settings.PAYMENT_PROVIDER` decides now, the field is gone, and a provider that
+  cannot check a signature refuses outside an opted-in local machine.
+- **The seed script ran on every deploy**, provisioning accounts with publicly known passwords.
+  Seeding is confined to `ENVIRONMENT=local`, and `SEED_DEMO_DATA` set anywhere else aborts
+  prestart rather than seeding.
+- **Booking had no concurrency control.** `SELECT … FOR UPDATE` around the capacity check and
+  the increment, a partial unique index on `(session_id, consumer_id)`, a capacity `CHECK`
+  constraint, and one source of truth for the spot count instead of two disagreeing ones.
+- **`alembic upgrade head --sql` failed** at `c4b7ce0c5a91`, the one migration that reflected
+  the live schema.
+- **Backend CI was red** — `ruff check`, `ruff format --check` and `mypy` all pass now.
+- Two pre-existing test-suite defects: `tests/seed` erroring on any second run, and an
+  attendance assertion that failed every Monday.
+
+See [Fixed since the audit](README.md#fixed-since-the-audit) in the README for what each defect
+was, what holds instead, and how it was verified.
+
 ## 2026-02-28 — Unified Design System + Live Deployment
 
 ### Added
