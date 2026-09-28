@@ -29,7 +29,7 @@ SEED_CONSUMERS: list[dict[str, Any]] = [
     },
     # Zulu names
     {
-        "email": "thandi.nkosi@gmail.com",
+        "email": "thandi.nkosi@example.com",
         "first_name": "Thandi",
         "last_name": "Nkosi",
         "phone": "+27 83 456 7890",
@@ -40,7 +40,7 @@ SEED_CONSUMERS: list[dict[str, Any]] = [
         "role": UserRole.CONSUMER,
     },
     {
-        "email": "sipho.dlamini@outlook.com",
+        "email": "sipho.dlamini@example.com",
         "first_name": "Sipho",
         "last_name": "Dlamini",
         "phone": "+27 72 234 5678",
@@ -51,7 +51,7 @@ SEED_CONSUMERS: list[dict[str, Any]] = [
         "role": UserRole.CONSUMER,
     },
     {
-        "email": "nomvula.zulu@yahoo.com",
+        "email": "nomvula.zulu@example.com",
         "first_name": "Nomvula",
         "last_name": "Zulu",
         "phone": "+27 84 876 5432",
@@ -63,7 +63,7 @@ SEED_CONSUMERS: list[dict[str, Any]] = [
     },
     # Afrikaans names
     {
-        "email": "pieter.vandermerwe@gmail.com",
+        "email": "pieter.vandermerwe@example.com",
         "first_name": "Pieter",
         "last_name": "van der Merwe",
         "phone": "+27 82 345 6789",
@@ -74,7 +74,7 @@ SEED_CONSUMERS: list[dict[str, Any]] = [
         "role": UserRole.CONSUMER,
     },
     {
-        "email": "annemarie.botha@outlook.com",
+        "email": "annemarie.botha@example.com",
         "first_name": "Annemarie",
         "last_name": "Botha",
         "phone": "+27 73 567 8901",
@@ -85,7 +85,7 @@ SEED_CONSUMERS: list[dict[str, Any]] = [
         "role": UserRole.CONSUMER,
     },
     {
-        "email": "johan.pretorius@gmail.com",
+        "email": "johan.pretorius@example.com",
         "first_name": "Johan",
         "last_name": "Pretorius",
         "phone": "+27 81 234 5678",
@@ -97,7 +97,7 @@ SEED_CONSUMERS: list[dict[str, Any]] = [
     },
     # Indian names
     {
-        "email": "priya.naidoo@gmail.com",
+        "email": "priya.naidoo@example.com",
         "first_name": "Priya",
         "last_name": "Naidoo",
         "phone": "+27 82 789 0123",
@@ -108,7 +108,7 @@ SEED_CONSUMERS: list[dict[str, Any]] = [
         "role": UserRole.CONSUMER,
     },
     {
-        "email": "raj.pillay@outlook.com",
+        "email": "raj.pillay@example.com",
         "first_name": "Raj",
         "last_name": "Pillay",
         "phone": "+27 74 321 0987",
@@ -119,7 +119,7 @@ SEED_CONSUMERS: list[dict[str, Any]] = [
         "role": UserRole.CONSUMER,
     },
     {
-        "email": "fatima.patel@yahoo.com",
+        "email": "fatima.patel@example.com",
         "first_name": "Fatima",
         "last_name": "Patel",
         "phone": "+27 83 654 3210",
@@ -131,7 +131,7 @@ SEED_CONSUMERS: list[dict[str, Any]] = [
     },
     # English names
     {
-        "email": "john.smith@gmail.com",
+        "email": "john.smith@example.com",
         "first_name": "John",
         "last_name": "Smith",
         "phone": "+27 82 111 2222",
@@ -142,7 +142,7 @@ SEED_CONSUMERS: list[dict[str, Any]] = [
         "role": UserRole.CONSUMER,
     },
     {
-        "email": "sarah.jones@outlook.com",
+        "email": "sarah.jones@example.com",
         "first_name": "Sarah",
         "last_name": "Jones",
         "phone": "+27 71 333 4444",
@@ -154,7 +154,7 @@ SEED_CONSUMERS: list[dict[str, Any]] = [
     },
     # Sotho names
     {
-        "email": "lerato.molefe@gmail.com",
+        "email": "lerato.molefe@example.com",
         "first_name": "Lerato",
         "last_name": "Molefe",
         "phone": "+27 82 555 6666",
@@ -165,7 +165,7 @@ SEED_CONSUMERS: list[dict[str, Any]] = [
         "role": UserRole.CONSUMER,
     },
     {
-        "email": "mpho.mokoena@yahoo.com",
+        "email": "mpho.mokoena@example.com",
         "first_name": "Mpho",
         "last_name": "Mokoena",
         "phone": "+27 84 777 8888",
@@ -177,7 +177,7 @@ SEED_CONSUMERS: list[dict[str, Any]] = [
     },
     # Xhosa names
     {
-        "email": "andile.mthembu@gmail.com",
+        "email": "andile.mthembu@example.com",
         "first_name": "Andile",
         "last_name": "Mthembu",
         "phone": "+27 73 999 0000",
@@ -188,7 +188,7 @@ SEED_CONSUMERS: list[dict[str, Any]] = [
         "role": UserRole.CONSUMER,
     },
     {
-        "email": "noluthando.ngcobo@outlook.com",
+        "email": "noluthando.ngcobo@example.com",
         "first_name": "Noluthando",
         "last_name": "Ngcobo",
         "phone": "+27 82 123 4567",
