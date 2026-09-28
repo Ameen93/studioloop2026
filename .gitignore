@@ -45,3 +45,23 @@ docs/demo-walkthrough.md
 # OS
 .DS_Store
 Thumbs.db
+
+# Local-only agent / process notes (kept on disk, never published)
+.dev-notes/
+
+# AI-agent and planning process artefacts (kept locally, not part of the codebase)
+.claude/
+_bmad/
+_bmad-output/
+design-mockups-premium-luxe/
+design-mockups-warm-earth/
+kanban.json
+
+# Astro build cache
+.astro/
+frontend/public/assets/marketing/manifest.json
+frontend/public/assets/marketing/review.html
+scripts/comfyui_client.py
+scripts/generate_assets.py
+backend/.tmp/
+.mcp.json
