@@ -24,6 +24,10 @@
 - Cleaned `.gitignore`, removed tracked `dist/` directories
 
 ### Live URLs
+
+> Historical record. These deployments are retired: the Railway backend no longer
+> exists (404), so any frontend still resolving has no working API behind it.
+
 - Gym Web: https://sl-gym.vercel.app
 - Consumer Web: https://sl-consumer.vercel.app
 - Marketing (Gyms): https://sl-marketing-gyms.vercel.app

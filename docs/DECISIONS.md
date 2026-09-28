@@ -1,7 +1,7 @@
 ---
 project: studioloop2026
 type: decisions
-status: active
+status: parked
 stack: FastAPI, SQLModel, PostgreSQL, React 19, Expo, Vite, Tailwind, Turborepo, Stitch, Railway, Vercel
 domain: fitness, saas, marketplace
 last_analyzed: 2026-03-14

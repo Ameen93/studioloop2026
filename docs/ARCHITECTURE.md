@@ -1,7 +1,7 @@
 ---
 project: studioloop2026
 type: architecture
-status: active
+status: parked
 stack: FastAPI, SQLModel, PostgreSQL, React 19, Expo, Vite, Tailwind, Turborepo, pnpm, Stitch, Railway, Vercel
 domain: fitness, saas, marketplace
 last_analyzed: 2026-03-14
@@ -23,9 +23,9 @@ tags: studioloop, architecture, multi-tenant, fastapi, react, expo
 | Payments | Stitch (GraphQL) | Pay By Bank, VRP |
 | Webhooks | Svix | Payment webhook routing + signing |
 | Email | SMTP + Jinja2 | Transactional emails |
-| Migrations | Alembic | 30+ migration versions |
+| Migrations | Alembic | 26 migration versions, linear chain |
 | Monitoring | Sentry | Error tracking (non-local) |
-| Testing (Backend) | pytest | 32 integration test files |
+| Testing (Backend) | pytest | 34 test files, 460 tests |
 | Build System | Turborepo 2.7 | Monorepo build orchestration |
 | Package Mgr | pnpm 10.28 | Frontend dependency management |
 | Web Framework | React 19.1 | Staff + consumer portals |

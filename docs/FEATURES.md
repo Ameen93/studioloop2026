@@ -1,7 +1,7 @@
 ---
 project: studioloop2026
 type: features
-status: active
+status: parked
 stack: FastAPI, SQLModel, PostgreSQL, React 19, Expo, Vite, Tailwind, Turborepo, Stitch, Railway, Vercel
 domain: fitness, saas, marketplace
 last_analyzed: 2026-03-14
@@ -10,7 +10,11 @@ tags: studioloop, features, fitness, saas
 
 # Features & Capabilities
 
-## Implemented Features (15 Epics Complete)
+## Implemented Features
+
+> Parked April 2026. "Implemented" here means the code exists and its tests pass
+> locally — not that it was production-hardened or ever ran against real users. See the
+> README for what is half-built.
 
 ### Authentication & Identity (Epic 1)
 - Email registration/login with JWT (access: 24h, refresh: 7d)
