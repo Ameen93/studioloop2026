@@ -59,7 +59,7 @@ jobs:
       POSTGRES_SERVER: localhost
       POSTGRES_USER: postgres
       FIRST_SUPERUSER: admin@example.com
-      FIRST_SUPERUSER_PASSWORD: changethis
+      FIRST_SUPERUSER_PASSWORD: CiTestPass123
     steps:
       - uses: actions/checkout@v4
 
@@ -103,7 +103,7 @@ jobs:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: app_test
       FIRST_SUPERUSER: admin@example.com
-      FIRST_SUPERUSER_PASSWORD: changethis
+      FIRST_SUPERUSER_PASSWORD: CiTestPass123
     steps:
       - uses: actions/checkout@v4
 

@@ -8,7 +8,6 @@ import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import {
   marketplaceViewMarketplaceSubscriptionStatus,
-  marketplaceManageMarketplaceSubscription,
   staffMembershipsListConsumerMemberships,
   analyticsConsumerClassHistory,
 } from '@sl/api-client';
