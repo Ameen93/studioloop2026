@@ -169,8 +169,8 @@ _PLAN_ALLOCATIONS: dict[MarketplacePlanTier, int] = {
 }
 
 _PLAN_PRICES: dict[MarketplacePlanTier, int] = {
-    MarketplacePlanTier.EIGHT: 79900,      # R799/month
-    MarketplacePlanTier.TWELVE: 99900,     # R999/month
+    MarketplacePlanTier.EIGHT: 79900,  # R799/month
+    MarketplacePlanTier.TWELVE: 99900,  # R999/month
     MarketplacePlanTier.UNLIMITED: 149900,  # R1,499/month
 }
 

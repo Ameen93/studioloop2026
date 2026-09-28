@@ -215,7 +215,6 @@ def list_gyms(
     gym name, slug, email, and city.
     """
 
-
     stmt = select(Gym)
 
     if search:
@@ -278,7 +277,6 @@ def approve_gym(
 ) -> AdminGymActionResponse:
     """Approve a gym application by setting is_active=True."""
 
-
     gym = session.get(Gym, gym_id)
     if not gym:
         raise HTTPException(
@@ -336,7 +334,6 @@ def reject_gym(
 ) -> AdminGymActionResponse:
     """Reject a gym application with a reason."""
 
-
     gym = session.get(Gym, gym_id)
     if not gym:
         raise HTTPException(
@@ -383,7 +380,6 @@ def suspend_gym(
     reason: str = Query(max_length=1000),
 ) -> AdminGymActionResponse:
     """Suspend an active gym."""
-
 
     gym = session.get(Gym, gym_id)
     if not gym:
@@ -441,7 +437,6 @@ def reactivate_gym(
     gym_id: UUID,
 ) -> AdminGymActionResponse:
     """Reactivate a suspended gym."""
-
 
     gym = session.get(Gym, gym_id)
     if not gym:
@@ -513,7 +508,6 @@ def list_complaints(
 ) -> ComplaintListResponse:
     """List complaints with optional filters."""
 
-
     stmt = select(Complaint)
 
     if status_filter is not None:
@@ -567,7 +561,6 @@ def create_complaint(
     payload: ComplaintCreate,
 ) -> ComplaintPublic:
     """Create a new complaint on behalf of a consumer."""
-
 
     # Validate consumer exists
     consumer = session.get(Consumer, payload.consumer_id)
@@ -636,7 +629,6 @@ def get_complaint(
 ) -> ComplaintPublic:
     """Get a specific complaint by ID."""
 
-
     complaint = session.get(Complaint, complaint_id)
     if not complaint:
         raise HTTPException(
@@ -670,7 +662,6 @@ def update_complaint(
     payload: ComplaintUpdate,
 ) -> ComplaintPublic:
     """Update a complaint: assign, change status, add notes, resolve."""
-
 
     complaint = session.get(Complaint, complaint_id)
     if not complaint:
@@ -762,7 +753,6 @@ def issue_credits(
     If marketplace_subscription_id is not provided, credits are applied
     to the consumer's active marketplace subscription (if any).
     """
-
 
     # Validate consumer exists
     consumer = session.get(Consumer, consumer_id)
@@ -870,7 +860,6 @@ def platform_health(
     subscriptions, complaints, and payments.
     """
 
-
     total_gyms = session.exec(select(func.count()).select_from(Gym)).one()
 
     active_gyms = session.exec(
@@ -936,7 +925,6 @@ def get_gym_data(
     Returns members, recent bookings, and recent payments
     for the specified gym. Creates an audit log entry.
     """
-
 
     gym = session.get(Gym, gym_id)
     if not gym:
@@ -1068,7 +1056,6 @@ def list_audit_logs(
     gym_id: UUID | None = Query(default=None),
 ) -> AuditLogListResponse:
     """List audit logs with optional filters."""
-
 
     stmt = select(AuditLog)
 

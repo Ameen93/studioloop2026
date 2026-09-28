@@ -19,7 +19,7 @@ import hmac
 import logging
 import time
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, cast
 
 import httpx
 
@@ -173,7 +173,8 @@ class StitchProvider:
         result = resp.json()
         if errors := result.get("errors"):
             raise RuntimeError(f"Stitch GraphQL error: {errors}")
-        return result["data"]
+        # resp.json() is Any; the GraphQL envelope's "data" is an object.
+        return cast(dict[str, Any], result["data"])
 
     def initiate(self, payment: Payment) -> PaymentInitiationResult:
         """Create a payment request or recurring consent via Stitch."""

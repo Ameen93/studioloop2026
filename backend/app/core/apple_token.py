@@ -5,6 +5,7 @@ and issuer before trusting any claims from the token.
 """
 
 import logging
+from typing import Any, cast
 
 import jwt
 from jwt import PyJWKClient
@@ -19,7 +20,7 @@ APPLE_ISSUER = "https://appleid.apple.com"
 _jwk_client = PyJWKClient(APPLE_JWKS_URL, cache_jwk_set=True, lifespan=3600)
 
 
-def verify_apple_id_token(id_token: str) -> dict:
+def verify_apple_id_token(id_token: str) -> dict[str, Any]:
     """Decode and verify an Apple ID token using Apple's public JWKS.
 
     Args:
@@ -40,4 +41,5 @@ def verify_apple_id_token(id_token: str) -> dict:
         audience=settings.APPLE_CLIENT_ID,
         issuer=APPLE_ISSUER,
     )
-    return decoded
+    # jwt.decode is typed as returning Any; the claims are a JSON object.
+    return cast(dict[str, Any], decoded)

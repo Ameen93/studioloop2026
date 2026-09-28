@@ -4,7 +4,7 @@ Creates realistic class templates for each gym with varied class types,
 colors, and default configurations.
 """
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlmodel import Session, select
 
@@ -15,7 +15,7 @@ from app.models.staff import StaffRole
 if TYPE_CHECKING:
     from app.models import Gym
 
-TEMPLATE_DEFS: list[dict] = [
+TEMPLATE_DEFS: list[dict[str, Any]] = [
     {
         "name": "Morning HIIT Blast",
         "class_type": ClassType.HIIT,
@@ -125,8 +125,8 @@ def seed_class_templates(session: Session, gyms: list["Gym"]) -> int:
     ).all()
 
     spaces_by_gym: dict[str, dict[str, Space]] = {}
-    for space in all_spaces:
-        spaces_by_gym.setdefault(str(space.gym_id), {})[space.name] = space
+    for gym_space in all_spaces:
+        spaces_by_gym.setdefault(str(gym_space.gym_id), {})[gym_space.name] = gym_space
 
     instructors_by_gym: dict[str, list[Staff]] = {}
     for staff in all_staff:
@@ -139,8 +139,8 @@ def seed_class_templates(session: Session, gyms: list["Gym"]) -> int:
         instructor_idx = 0
 
         for tdef in TEMPLATE_DEFS:
-            space = gym_spaces.get(tdef["space_name"])
-            if not space:
+            template_space = gym_spaces.get(tdef["space_name"])
+            if not template_space:
                 continue
 
             instructor_id = None
@@ -158,7 +158,7 @@ def seed_class_templates(session: Session, gyms: list["Gym"]) -> int:
                 default_capacity=tdef["default_capacity"],
                 default_price_cents=tdef["default_price_cents"],
                 color=tdef["color"],
-                default_space_id=space.id,
+                default_space_id=template_space.id,
                 default_instructor_staff_id=instructor_id,
                 waitlist_enabled=True,
             )

@@ -5,6 +5,7 @@ booking confirmations, class reminders, payment receipts, gym messages, etc.
 """
 
 from datetime import datetime, timedelta, timezone
+from typing import Any
 
 from sqlmodel import Session, select
 
@@ -220,7 +221,7 @@ def seed_notifications(session: Session) -> int:
 
 def _pick_channel_and_status(
     index: int, now: datetime
-) -> tuple[NotificationChannel, NotificationStatus, dict]:
+) -> tuple[NotificationChannel, NotificationStatus, dict[str, Any]]:
     """Pick a channel and status based on index for deterministic distribution."""
     # Channel: 40% IN_APP, 25% EMAIL, 20% PUSH, 15% WHATSAPP
     channel_roll = index % 20
@@ -235,7 +236,7 @@ def _pick_channel_and_status(
 
     # Status: 50% DELIVERED, 25% SENT, 15% PENDING, 10% FAILED
     status_roll = index % 20
-    status_times: dict = {
+    status_times: dict[str, Any] = {
         "sent_at": None,
         "delivered_at": None,
         "failed_at": None,

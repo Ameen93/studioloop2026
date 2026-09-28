@@ -7,7 +7,7 @@ Uses SA payment providers (Ozow, PayFast) with ZAR currency.
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from app.models import (
     Booking,
@@ -64,6 +64,11 @@ def seed_payments(session: Session) -> int:
             PaymentProviderName.OZOW if i % 10 < 7 else PaymentProviderName.PAYFAST
         )
 
+        # completed_at/failed_at are None on the branches that did not reach
+        # that state, so the declared type has to allow it.
+        completed_at: datetime | None
+        failed_at: datetime | None
+
         # Most membership payments succeed
         if membership.status == GymMembershipStatus.ACTIVE:
             status = PaymentStatus.COMPLETED
@@ -115,7 +120,7 @@ def seed_payments(session: Session) -> int:
     ppc_bookings = session.exec(
         select(Booking).where(
             Booking.booking_type == BookingType.PAY_PER_CLASS,
-            Booking.price_paid_cents > 0,
+            col(Booking.price_paid_cents) > 0,
         )
     ).all()
 
@@ -172,9 +177,11 @@ def seed_payments(session: Session) -> int:
             completed_at=completed_at,
             failed_at=failed_at,
             failure_reason=failure_reason,
-            refunded_at=completed_at + timedelta(days=2)
-            if status == PaymentStatus.REFUNDED
-            else None,
+            refunded_at=(
+                completed_at + timedelta(days=2)
+                if status == PaymentStatus.REFUNDED and completed_at
+                else None
+            ),
             retry_count=1 if status == PaymentStatus.FAILED else 0,
         )
         session.add(payment)

@@ -618,7 +618,7 @@ def enroll_membership(
             GymMembership.gym_id == payload.gym_id,
             GymMembership.consumer_id == current_consumer.id,
             col(GymMembership.is_active).is_(True),
-            GymMembership.status.in_(  # type: ignore[union-attr]
+            col(GymMembership.status).in_(
                 [GymMembershipStatus.ACTIVE, GymMembershipStatus.PENDING_PAYMENT]
             ),
         )

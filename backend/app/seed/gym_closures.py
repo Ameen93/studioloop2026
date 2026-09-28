@@ -6,7 +6,7 @@ and ad-hoc maintenance/event closures per gym.
 
 from datetime import date
 
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from app.models import Gym, GymClosure
 
@@ -79,12 +79,11 @@ def seed_gym_closures(session: Session, gyms: list[Gym]) -> int:
         all_closures.extend(specific)
 
         # Existing DB closures for this gym
-        existing_dates = {
-            closure_date
-            for closure_date in session.exec(
-                select(GymClosure.closure_date).where(GymClosure.gym_id == gym.id)
+        existing_dates = set(
+            session.exec(
+                select(col(GymClosure.closure_date)).where(GymClosure.gym_id == gym.id)
             ).all()
-        }
+        )
 
         # Track dates seen during this run as well (prevents duplicate adds before flush)
         seen_dates = set(existing_dates)

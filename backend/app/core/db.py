@@ -1,3 +1,5 @@
+from typing import Any
+
 from sqlmodel import Session, create_engine, select
 
 from app import crud
@@ -5,7 +7,7 @@ from app.core.config import settings
 from app.models import User, UserCreate
 
 _db_url = str(settings.SQLALCHEMY_DATABASE_URI)
-_engine_kwargs: dict = {"pool_pre_ping": True}
+_engine_kwargs: dict[str, Any] = {"pool_pre_ping": True}
 if "neon.tech" in _db_url:
     _engine_kwargs["connect_args"] = {"sslmode": "require"}
 

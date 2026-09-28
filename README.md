@@ -464,21 +464,61 @@ every worker reach the capacity check before any of them commits. With `FOR UPDA
 from the worker, **all 10 concurrent bookings succeed into a 3-spot class**; with it, exactly 3
 do.
 
+### Backend CI was red
+
+`ruff format --check app/` wanted 6 files reformatted, `ruff check app/` reported one `C416`,
+and `mypy app/` reported 29 errors across 13 files. All three pass now: `87 files already
+formatted`, `All checks passed!`, `Success: no issues found in 87 source files`.
+
+**The four `order_by()` findings were not the bugs they looked like.** An earlier note here
+claimed `bookings.py:491` and `class_scheduling.py:768/:962/:1024` passed "a Python `datetime`
+value where the model column was meant". They did not. `ClassSession.start_time` is an
+`InstrumentedAttribute` at runtime and the emitted SQL was always correct —
+`ORDER BY class_sessions.start_time DESC` — and `col(ClassSession.start_time)` generates a
+byte-identical statement. mypy flagged them because SQLModel annotates the class attribute as
+`datetime` rather than `Mapped[datetime]`. They are fixed with `col()`, which is the idiomatic
+SQLModel spelling, but no query was ever ordering by a constant.
+
+**One genuine bug did surface, indirectly.** `seed/class_templates.py` built its templates with
+`default_space_id=space.id`, where `space` was the leftover binding from an earlier
+`for space in all_spaces` loop — the last space in the *whole database*. It happened to be
+correct only because an inner `space = gym_spaces.get(...)` shadowed it on every iteration.
+Renaming the inner variable to satisfy mypy exposed the outer reference, so the shadowing was
+load-bearing. Both names are now distinct and the line reads `template_space.id`.
+
+The rest were honest small fixes: bare `dict` annotations parameterised, two `cast()`s where a
+library returns `Any`, `col()` where a model column was compared or selected, four unannotated
+`session` parameters in `class_scheduling.py` helpers (which is what made their return values
+`Any`), `datetime | None` where a variable genuinely holds both, `session.execute(text(...))`
+instead of SQLModel's `exec()` for raw SQL, and one 5-entity `select()` reduced to 3 by
+selecting the related rows whole rather than column by column — SQLModel's `select()` overloads
+stop at four.
+
+Exactly one `# type: ignore` was added, narrowed to its error code with a comment:
+`main.py`'s `add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)`, where
+slowapi types the handler as `(Request, RateLimitExceeded)` and Starlette declares
+`(Request, Exception)`. The narrowing is correct at runtime because Starlette only dispatches
+that handler for `RateLimitExceeded`. Two *pre-existing* blanket ignores were removed as
+unnecessary.
+
 ## Known issues a reviewer will hit
 
 Being explicit about these rather than letting them be discovered:
 
-- **CI is red on `master`.** `ruff format --check app/` wants 6 files reformatted,
-  `ruff check app/` reports one `C416`, and `mypy app/` reports 29 errors across 13 files. A
-  handful of those are real bugs rather than stub noise — several `order_by()` calls pass a
-  Python `datetime` value where the model column was meant
-  (`bookings.py:491`, `class_scheduling.py:768`, `:962`, `:1024`).
 - **`frontend/apps/web` is commented as the legacy app and is still the deployed admin
   surface** (`sl-admin` in the Vercel config). The label and the deployment disagree.
 - The two Astro apps define no `lint`, `test` or `type-check` scripts, so `turbo` silently
   skips them.
 - `AGENTS.md`-style contributor docs are no longer in the repository, so any instruction they
-  carried (including a claim that CI passes) does not apply here.
+  carried does not apply here.
+- **The backend test suite shares one database and one session-scoped fixture, with no
+  per-test rollback**, so tests are not isolated from each other and order matters. Two
+  consequences were fixed (`tests/seed` erroring on any second run, and an attendance
+  assertion that failed every Monday), but the underlying design is unchanged: a test that
+  passes inside the full suite may fail on its own, and vice versa. `conftest.py` says as much
+  — "cleanup has proven flaky due FK/lock ordering in session-scoped fixtures".
+- **Only the backend is verified here.** The frontend apps were not built, linted or tested as
+  part of this pass.
 
 ## What I would do differently
 

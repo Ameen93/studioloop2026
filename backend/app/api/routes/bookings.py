@@ -577,13 +577,7 @@ def list_consumer_bookings(
 ) -> ConsumerBookingsResponse:
     """List the authenticated consumer's bookings with class and gym details."""
     query = (
-        select(
-            Booking,
-            ClassSession.title,
-            ClassSession.start_time,
-            ClassSession.end_time,
-            Gym.name,
-        )
+        select(Booking, ClassSession, Gym)
         .join(ClassSession, col(ClassSession.id) == col(Booking.session_id))
         .join(Gym, col(Gym.id) == col(Booking.gym_id))
         .where(Booking.consumer_id == current_consumer.id)
@@ -597,7 +591,7 @@ def list_consumer_bookings(
     total = len(session.exec(count_query).all())
 
     rows = session.exec(
-        query.order_by(ClassSession.start_time.desc()).offset(offset).limit(limit)
+        query.order_by(col(ClassSession.start_time).desc()).offset(offset).limit(limit)
     ).all()
 
     items = [
@@ -605,15 +599,15 @@ def list_consumer_bookings(
             id=booking.id,
             status=booking.status,
             booking_type=booking.booking_type,
-            class_name=class_name,
-            gym_name=gym_name,
-            start_time=start_time,
-            end_time=end_time,
+            class_name=class_session.title,
+            gym_name=gym.name,
+            start_time=class_session.start_time,
+            end_time=class_session.end_time,
             created_at=booking.created_at,
             price_paid_cents=booking.price_paid_cents,
             cancellation_refunded=booking.cancellation_refunded,
         )
-        for booking, class_name, start_time, end_time, gym_name in rows
+        for booking, class_session, gym in rows
     ]
 
     return ConsumerBookingsResponse(items=items, total=total)

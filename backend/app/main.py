@@ -29,7 +29,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("X-Frame-Options", "DENY")
-        response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        response.headers.setdefault(
+            "Referrer-Policy", "strict-origin-when-cross-origin"
+        )
         if settings.ENVIRONMENT == "production":
             response.headers.setdefault(
                 "Strict-Transport-Security",
@@ -68,7 +70,10 @@ app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
 app.add_middleware(SecurityHeadersMiddleware)
 
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+# slowapi types its handler as (Request, RateLimitExceeded) while Starlette
+# declares (Request, Exception); the narrowing is correct at runtime because
+# Starlette only dispatches here for RateLimitExceeded.
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
@@ -97,7 +102,9 @@ async def readiness_check() -> dict[str, str]:
     """
     try:
         with Session(engine) as session:
-            session.exec(text("SELECT 1"))
+            # execute(), not SQLModel exec(): exec() is typed for select()
+            # statements, and this is raw SQL.
+            session.execute(text("SELECT 1"))
     except Exception:
         raise HTTPException(
             status_code=503,

@@ -4,6 +4,7 @@ Provides helpers for validating frontend redirect URIs and building
 redirect responses with tokens in URL fragments (never sent to server logs).
 """
 
+from typing import Any
 from urllib.parse import urlencode
 
 from fastapi import HTTPException, status
@@ -39,7 +40,9 @@ def validate_oauth_redirect_uri(uri: str) -> str:
     return uri
 
 
-def build_oauth_redirect_response(redirect_uri: str, data: dict) -> RedirectResponse:
+def build_oauth_redirect_response(
+    redirect_uri: str, data: dict[str, Any]
+) -> RedirectResponse:
     """Build a redirect response with data encoded in the URL fragment.
 
     Uses URL fragment (#) so tokens never hit server logs.

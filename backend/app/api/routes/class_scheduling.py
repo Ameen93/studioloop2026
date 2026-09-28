@@ -11,7 +11,7 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import field_validator, model_validator
 from sqlalchemy import text
-from sqlmodel import Field, SQLModel, col, select
+from sqlmodel import Field, Session, SQLModel, col, select
 
 from app.api.deps import (
     CurrentStaff,
@@ -268,7 +268,9 @@ def _serialize_session(cs: ClassSession) -> ClassSessionFullResponse:
     )
 
 
-def _get_active_session(session, class_session_id: UUID, gym_id: UUID) -> ClassSession:
+def _get_active_session(
+    session: Session, class_session_id: UUID, gym_id: UUID
+) -> ClassSession:
     cs = session.exec(
         select(ClassSession).where(
             ClassSession.id == class_session_id,
@@ -288,7 +290,7 @@ def _get_active_session(session, class_session_id: UUID, gym_id: UUID) -> ClassS
     return cs
 
 
-def _check_space_exists(session, space_id: UUID, gym_id: UUID) -> Space:
+def _check_space_exists(session: Session, space_id: UUID, gym_id: UUID) -> Space:
     space = session.exec(
         select(Space).where(
             Space.id == space_id,
@@ -309,7 +311,7 @@ def _check_space_exists(session, space_id: UUID, gym_id: UUID) -> Space:
 
 
 def _has_space_conflict(
-    session,
+    session: Session,
     gym_id: UUID,
     space_id: UUID,
     start: datetime,
@@ -330,7 +332,7 @@ def _has_space_conflict(
 
 
 def _has_instructor_conflict(
-    session,
+    session: Session,
     gym_id: UUID,
     instructor_id: UUID,
     start: datetime,
@@ -765,7 +767,7 @@ def list_pending_sessions(
             col(ClassSession.is_active).is_(True),
             ClassSession.approval_status == ApprovalStatus.PENDING_APPROVAL,
         )
-        .order_by(ClassSession.start_time)
+        .order_by(col(ClassSession.start_time))
     ).all()
     return [_serialize_session(cs) for cs in sessions_list]
 
@@ -959,7 +961,7 @@ def get_calendar(
     if status_filter:
         q = q.where(ClassSession.status == status_filter)
 
-    q = q.order_by(ClassSession.start_time)
+    q = q.order_by(col(ClassSession.start_time))
     sessions_list = session.exec(q).all()
 
     # Look up template colors for sessions that have a template
@@ -1021,7 +1023,7 @@ def list_class_sessions(
             ClassSession.gym_id == current_staff.gym_id,
             col(ClassSession.is_active).is_(True),
         )
-        .order_by(ClassSession.start_time.desc())
+        .order_by(col(ClassSession.start_time).desc())
         .offset(offset)
         .limit(limit)
     ).all()

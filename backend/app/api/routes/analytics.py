@@ -553,7 +553,16 @@ def consumer_class_history(
         if s.instructor_staff_id
     }
     gym_ids = {s.gym_id for _b, s in rows}
-    gyms = {g.id: g for g in session.exec(select(Gym).where(col(Gym.id).in_(list(gym_ids)))).all()} if gym_ids else {}
+    gyms = (
+        {
+            g.id: g
+            for g in session.exec(
+                select(Gym).where(col(Gym.id).in_(list(gym_ids)))
+            ).all()
+        }
+        if gym_ids
+        else {}
+    )
     items: list[ConsumerClassHistoryItem] = []
     for b, s in rows:
         instructor_name: str | None = None
